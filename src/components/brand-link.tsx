@@ -10,10 +10,10 @@ export function BrandLink() {
       style={{ display: "flex", alignItems: "center", lineHeight: 1 }}
     >
       <Image
-        src="/brand-logo.svg"
+        src="/techgotgan-logo.png"
         alt=""
         aria-hidden="true"
-        width={127}
+        width={79}
         height={28}
       />
     </Link>
