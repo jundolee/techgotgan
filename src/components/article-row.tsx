@@ -48,12 +48,12 @@ export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, on
         <div className={`article-row-main${article.thumbnail_url ? " has-thumbnail" : ""}`}>
           <div className="article-row-copy">
             <ArticleLink articleId={article.id} articleTitle={article.title} href={href}
-              className="article-row-link" onRead={onRead}>
+              className="article-row-link" onRead={onRead} onReadChange={onReadChange}>
               <h3>{article.title}</h3>
             </ArticleLink>
             {article.excerpt && (
               <ArticleLink articleId={article.id} articleTitle={article.title} href={href}
-                className="article-row-excerpt" onRead={onRead}>
+                className="article-row-excerpt" onRead={onRead} onReadChange={onReadChange}>
                 <p>{article.excerpt}</p>
               </ArticleLink>
             )}
@@ -61,7 +61,7 @@ export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, on
           </div>
           {article.thumbnail_url && (
             <ArticleLink articleId={article.id} articleTitle={article.title} href={href}
-              className="article-row-thumb" onRead={onRead}>
+              className="article-row-thumb" onRead={onRead} onReadChange={onReadChange}>
               <AspectRatio ratio={4 / 3} className="article-row-thumb-aspect" width="144px"
                 style={{ borderRadius: 8, overflow: "hidden", background: "var(--seed-color-bg-neutral-weak)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- 외부 블로그 썸네일 */}

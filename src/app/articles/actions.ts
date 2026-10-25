@@ -4,18 +4,17 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
-  incrementArticleClickCount,
   listArticles,
   markAllArticlesRead,
   markAllArticlesUnread,
-  markArticleRead,
+  markArticleReadAndIncrementClickCount,
   markArticleUnread,
   searchArticles,
   setArticleFavorite,
   type ArticleListItem,
 } from "@/lib/data/articles";
 import { getArticlePreview, getRelatedArticles, type ArticlePreview, type RelatedArticle } from "@/lib/data/related-articles";
-import { getCurrentUser } from "@/lib/supabase/current-user";
+import { getCurrentUser, getVerifiedUserId } from "@/lib/supabase/current-user";
 
 async function getCurrentUserId(): Promise<string | null> {
   const user = await getCurrentUser();
@@ -30,27 +29,25 @@ async function redirectToLogin(): Promise<never> {
   redirect(`/login?next=${encodeURIComponent(next)}`);
 }
 
-export async function markArticleReadAction(articleId: string) {
-  if (!articleId) return;
-  const userId = await getCurrentUserId();
+export async function markArticleReadAction(articleId: string): Promise<"saved" | "unauthenticated" | "failed"> {
+  if (!articleId) return "saved";
+  const userId = await getVerifiedUserId();
 
-  // 클릭수 집계와 읽음 처리는 서로 독립적인 값이라 하나가 실패해도 다른 하나는 반영돼야 한다 —
-  // 예전엔 순차로 await해서 클릭수 RPC가 실패하면(일시적 오류 등) 읽음 처리까지 통째로 건너뛰던 버그가 있었음.
+  // 읽음 저장과 클릭 수 증가는 한 번의 DB RPC에서 처리해 네트워크 왕복과 저장 상태 불일치를 줄인다.
   // 읽음 처리는 열람(누구나 자유)에 곁들여지는 부수 효과라, 로그인 안 한 사람은 로그인으로 보내는 대신
   // (링크를 새 탭에서 여는 도중 원래 탭이 로그인 화면으로 튀는 건 나쁜 경험) 그냥 조용히 건너뛴다.
-  const results = await Promise.allSettled([
-    incrementArticleClickCount(articleId),
-    userId ? markArticleRead(userId, articleId) : Promise.resolve(),
-  ]);
-  for (const result of results) {
-    if (result.status === "rejected") {
-      console.error("markArticleReadAction 부분 실패:", result.reason);
-    }
+  try {
+    await markArticleReadAndIncrementClickCount(userId, articleId);
+  } catch (error) {
+    console.error("markArticleReadAction 부분 실패:", error);
+    return userId ? "failed" : "unauthenticated";
   }
   // 주의: 여기서 revalidatePath("/")를 호출하면 기사 클릭 시 열린 인터셉트 모달(@modal)이
   // 활성 경로(/articles/[id])의 서버 재검증(refresh)에 의해 파괴되어 전체 페이지로 튕기는 버그가 발생함.
   // 읽음 표시는 ArticleList의 로컬 상태에 즉시 반영되므로
   // DB에만 안전하게 반영하고 캐시 무효화 라우팅 트리거는 생략한다.
+  if (!userId) return "unauthenticated";
+  return "saved";
 }
 
 export async function getArticlePreviewAction(articleId: string): Promise<{

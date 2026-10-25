@@ -619,4 +619,10 @@
 **검증**: 실행 경로 `/sources?tab=active`는 유지하고 `@attacker.example/`, `//attacker.example/`, absolute external URL, backslash 경로는 모두 `/`로 대체되는지 확인했다. TypeScript 검사와 프로덕션 빌드는 통과했다.
 **영향**: `src/lib/safe-next-path.ts`, `src/app/login/page.tsx`, `src/app/login/actions.ts`, `src/app/auth/callback/route.ts`, `src/app/admin-login/page.tsx`, `src/app/admin-login/actions.ts`, `src/app/topics/[category]/page.tsx`.
 
+### 2026-10-25 — 글 클릭 읽음 저장 왕복과 낙관적 상태 보정
+**배경**: 글을 열 때 목록에서는 읽음으로 사라지지만 새로고침하면 안읽음으로 돌아올 수 있었다. 클릭 이벤트는 즉시 로컬 목록을 바꾸고, 별도 Server Action이 읽음 상태와 클릭 수를 저장했으나 저장 실패·비로그인 여부를 목록에 반영하지 않았다. 인증 확인도 `getUser()`의 Auth 서버 왕복을 사용했다.
+**수정**: 목록은 클릭 즉시 유지하되, Server Action 결과가 비로그인 또는 실패면 읽음 오버라이드를 되돌린다. 인증은 검증된 JWT claims의 subject를 사용하고, 읽음 상태 upsert와 클릭 수 증가는 한 번의 DB RPC로 묶는다.
+**적용 상태**: 마이그레이션을 `magisa-reader` Supabase SQL Editor에 적용했고, `service_role` 실행 허용 및 `anon` 실행 거부를 조회해 확인했다. 앱 코드는 아직 배포되지 않아 프로덕션에서 클릭 지연 및 새로고침 후 보존을 종단 간 확인하지 않았다.
+**영향**: `src/app/articles/actions.ts`, `src/components/article-link.tsx`, `src/components/article-row.tsx`, `src/components/article-preview-panel.tsx`, `src/lib/data/articles.ts`, `src/lib/supabase/current-user.ts`, `supabase/migrations/0020_mark_article_read_and_increment_click_count.sql`.
+
 
