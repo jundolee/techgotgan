@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Text } from "@seed-design/react";
 import { RelatedArticleList } from "@/components/related-article-list";
@@ -67,6 +67,7 @@ export function ArticlePreviewPanel({
   related: RelatedArticle[];
 }) {
   const router = useRouter();
+  const [, startTransition] = useTransition();
   const backdropRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -128,7 +129,14 @@ export function ArticlePreviewPanel({
       setIsLoadingRelated(true);
       window.history.pushState({ articleId }, "", `/articles/${encodeURIComponent(articleId)}`);
       bodyRef.current?.scrollTo({ top: 0, behavior: "instant" });
-      void markArticleReadAction(articleId);
+      startTransition(async () => {
+        try {
+          const result = await markArticleReadAction(articleId);
+          if (result !== "saved") console.error("관련 글 읽음 상태를 저장하지 못했습니다.", result);
+        } catch (error) {
+          console.error("관련 글 읽음 상태 저장 실패:", error);
+        }
+      });
 
       try {
         const data = await getArticlePreviewAction(articleId);
@@ -142,7 +150,7 @@ export function ArticlePreviewPanel({
         setIsLoadingRelated(false);
       }
     },
-    [currentArticle.id, isLoadingRelated]
+    [currentArticle.id, isLoadingRelated, startTransition]
   );
 
   useEffect(() => {

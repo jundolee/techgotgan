@@ -27,3 +27,24 @@ export const getCurrentUser = cache(async () => {
   return user;
 });
 
+/**
+ * Verify the session token and return only its subject for mutation actions.
+ * With asymmetric signing keys Supabase verifies claims locally using its cached
+ * JWKS, avoiding the Auth user-lookup round trip made by getUser().
+ */
+export async function getVerifiedUserId(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const hasAuthCookie = cookieStore
+    .getAll()
+    .some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
+
+  if (!hasAuthCookie) return null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || !data) return null;
+
+  const userId = data.claims.sub;
+  return typeof userId === "string" ? userId : null;
+}
+

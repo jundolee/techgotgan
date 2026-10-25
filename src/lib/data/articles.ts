@@ -169,11 +169,14 @@ export async function searchArticles(query: string, userId: string | null): Prom
   return attachUserState(articles, userId);
 }
 
-// 방문자 구분 없이 모든 유저에게 공통으로 보이는 전역 카운터라 read_status와 달리 articles 테이블에 그대로 둔다.
-// 동시 클릭에도 안전하도록 "column + 1" 원자적 증가를 DB 함수(RPC)로 처리한다.
-export async function incrementArticleClickCount(articleId: string): Promise<void> {
+// 읽음 저장과 전역 클릭 수 증가를 DB RPC 한 번으로 처리해 왕복 지연을 줄인다.
+// 비로그인 열람도 클릭 수는 집계하되, user_id가 없으면 개인 읽음 상태는 기록하지 않는다.
+export async function markArticleReadAndIncrementClickCount(userId: string | null, articleId: string): Promise<void> {
   const supabase = createServiceClient();
-  const { error } = await supabase.rpc("increment_article_click_count", { target_id: articleId });
+  const { error } = await supabase.rpc("mark_article_read_and_increment_click_count", {
+    target_user_id: userId,
+    target_article_id: articleId,
+  });
   if (error) throw error;
 }
 

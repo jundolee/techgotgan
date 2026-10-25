@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type MouseEvent, type ReactNode } from "react";
+import { type CSSProperties, type MouseEvent, type ReactNode, useTransition } from "react";
 import Link from "next/link";
 import { markArticleReadAction } from "@/app/articles/actions";
 
@@ -13,13 +13,15 @@ interface ArticleLinkProps {
   className?: string;
   // 서버 액션 응답(revalidatePath)을 기다리지 않고 클릭 즉시 목록에 읽음으로 반영하기 위한 낙관적 업데이트 콜백.
   onRead?: (articleId: string) => void;
+  onReadChange?: (articleId: string, isRead: boolean) => void;
 }
 
 /**
  * 클릭 시 앱 안의 상세 경로로 이동해 인터셉트 모달을 열고 읽음 처리를 트리거한다.
  * 새 탭이나 직접 URL 진입에서는 같은 경로의 독립 상세 페이지를 보여준다.
  */
-export function ArticleLink({ articleId, articleTitle, href, children, style, className, onRead }: ArticleLinkProps) {
+export function ArticleLink({ articleId, articleTitle, href, children, style, className, onRead, onReadChange }: ArticleLinkProps) {
+  const [, startTransition] = useTransition();
   const trackClick = () => {
     // GTM 맞춤 이벤트 트리거(article_click)로 GA4에서 아티클명 기준 집계가 가능하도록 push
     (window as { dataLayer?: unknown[] }).dataLayer?.push({
@@ -28,8 +30,17 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
       article_title: articleTitle,
     });
     onRead?.(articleId);
-    // 내비게이션 트랜지션을 블로킹하지 않도록 fire-and-forget으로 비동기 호출
-    void markArticleReadAction(articleId);
+    // Server Action은 React transition 안에서 실행한다. 실패하거나 로그인되지 않은 경우에는
+    // 낙관적으로 바꾼 목록 상태를 되돌려 새로고침 전후 표시가 달라지지 않게 한다.
+    startTransition(async () => {
+      try {
+        const result = await markArticleReadAction(articleId);
+        if (result !== "saved") onReadChange?.(articleId, false);
+      } catch (error) {
+        onReadChange?.(articleId, false);
+        console.error("글 읽음 상태 저장 실패:", error);
+      }
+    });
   };
 
   return (
