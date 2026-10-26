@@ -6,7 +6,12 @@ import { Badge, Text } from "@seed-design/react";
 import { RelatedArticleList } from "@/components/related-article-list";
 import { ArticleSummaryCopy } from "@/components/article-summary-copy";
 import { ShareButton } from "@/components/share-button";
-import { getArticlePreviewAction, getRelatedArticlesAction, markArticleReadAction } from "@/app/articles/actions";
+import {
+  getArticlePreviewAction,
+  getRelatedArticlesAction,
+  markArticleReadAction,
+  markArticleReadFallbackAction,
+} from "@/app/articles/actions";
 import { CATEGORY_MAP, type CategoryId } from "@/lib/categories";
 import { cleanKeyPoint } from "@/lib/summary-utils";
 import type { ArticlePreview, RelatedArticle } from "@/lib/data/related-articles";
@@ -99,6 +104,12 @@ export function ArticlePreviewPanel({
       .catch((error) => console.error("Failed to load related article previews:", error));
     return () => { cancelled = true; };
   }, [currentArticle.id, currentRelated.length, initialRelated.length]);
+
+  useEffect(() => {
+    void markArticleReadFallbackAction(currentArticle.id).then((result) => {
+      if (result === "failed") console.error("모달을 연 글의 읽음 상태 저장을 재시도하지 못했습니다.");
+    });
+  }, [currentArticle.id]);
 
   const isClosingRef = useRef(false);
 

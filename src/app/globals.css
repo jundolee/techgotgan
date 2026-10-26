@@ -669,6 +669,66 @@ h3 {
   gap: 24px;
 }
 
+.article-preview-backdrop-instant {
+  animation: modal-backdrop-fade-in 0.12s ease-out;
+}
+
+.article-preview-dialog-instant {
+  min-height: min(520px, 72vh);
+  animation: modal-dialog-pop-in 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.article-preview-opening-title {
+  color: var(--seed-color-fg-neutral, #25282c);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.article-preview-opening-body {
+  gap: 16px;
+}
+
+.article-preview-opening-line {
+  height: 14px;
+  width: 100%;
+  border-radius: 7px;
+  background: var(--seed-color-bg-neutral-weak, #f2f3f4);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.article-preview-opening-line-short {
+  width: 38%;
+}
+
+.article-preview-opening-line-medium {
+  width: 68%;
+}
+
+.article-preview-opening-line-title {
+  width: 88%;
+  height: 28px;
+  margin-bottom: 14px;
+}
+
+.article-preview-opening-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--seed-color-stroke-neutral-subtle, #e5e7e9);
+  border-radius: 18px;
+}
+
+.article-preview-opening-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
 @media (max-width: 640px) {
   .article-preview-backdrop {
     inset: 0 0 auto;
@@ -682,6 +742,11 @@ h3 {
     width: 100%;
     max-height: 90dvh;
     border-radius: 20px 20px 0 0;
+  }
+
+  .article-preview-dialog-instant {
+    min-height: min(72dvh, 640px);
+    animation: sheet-slide-up 0.14s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .article-preview-drag-handle {
