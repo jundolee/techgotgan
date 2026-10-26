@@ -22,6 +22,8 @@ const MIN_AUTO_SEARCH_LENGTH = 2;
 
 const PAGE_SIZE_OPTIONS = [10, 30, 50] as const;
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
+type ArticleView = "list" | "card";
+const ARTICLE_VIEW_STORAGE_KEY = "techgotgan-article-view";
 const EMPTY_READ_IDS = new Set<string>();
 const EMPTY_FAVORITE_OVERRIDES = new Map<string, boolean>();
 
@@ -52,6 +54,17 @@ export function ArticleList({
   const [shortQuerySubmitted, setShortQuerySubmitted] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<PageSize>(30);
+  const [view, setView] = useState<ArticleView>("card");
+
+  useEffect(() => {
+    const storedView = window.localStorage.getItem(ARTICLE_VIEW_STORAGE_KEY);
+    if (storedView === "list" || storedView === "card") setView(storedView);
+  }, []);
+
+  function changeView(nextView: ArticleView) {
+    setView(nextView);
+    window.localStorage.setItem(ARTICLE_VIEW_STORAGE_KEY, nextView);
+  }
 
   // 검색 결과로 목록을 갈아끼우는 상태 — null이면 "검색 중이 아님"을 뜻하고, 이때는 아래에서 매 렌더마다
   // articles는 서버가 내려준 기준 목록이다. 검색어를 지울 때도 대개는 setSearchResults(null)만으로 충분하고,
@@ -341,6 +354,10 @@ export function ArticleList({
 
       <div className={`article-bulk-actions${searchExpanded ? " search-expanded" : ""}`}>
         <div className="article-list-preferences">
+          <div className="article-view-switch" role="group" aria-label="글 보기 방식">
+            <button type="button" aria-pressed={view === "list"} onClick={() => changeView("list")}>리스트</button>
+            <button type="button" aria-pressed={view === "card"} onClick={() => changeView("card")}>카드</button>
+          </div>
           <SourceFilterSelect sources={sources} current={sourceId} onChange={(value) => {
             setSourceId(value);
             setPage(1);
@@ -362,7 +379,7 @@ export function ArticleList({
         <ReadAllControls onMarkAllRead={handleMarkAllRead} />
       </div>
 
-      {!queryTooShort && <ul style={{ display: "flex", flexDirection: "column", listStyle: "none", padding: 0, margin: 0 }}>
+      {!queryTooShort && <ul className={`article-card-grid${view === "list" ? " is-list-view" : ""}`}>
         {pagedArticles.map((article, index) => (
           // 페이지 첫 3개는 스크롤 전에 바로 보이는 썸네일이라 lazy 대신 우선 로드 (ArticleRow 참고).
           <ArticleRow
