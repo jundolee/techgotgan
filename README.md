@@ -18,6 +18,8 @@
 
 2026년 10월 19일부터 25일까지 모은 글 43편을 주제와 발행처별로 훑어볼 수 있습니다. 당시 AI/ML 글이 전체의 30%를 차지했고, 각 항목에서 원문으로 이어집니다.
 
+[![2026년 43주차 큐레이션 카드: 탭은 열 개 말고, 읽을 글부터 찾기](https://www.techgotgan.co.kr/digest/2026-W43/opengraph-image)](https://www.techgotgan.co.kr/digest/2026-W43?utm_source=github&utm_medium=readme&utm_campaign=weekly_digest_2026w43)
+
 [2026년 43주차 큐레이션 열기](https://www.techgotgan.co.kr/digest/2026-W43?utm_source=github&utm_medium=readme&utm_campaign=weekly_digest_2026w43)
 
 ## 더 보고 싶은 블로그가 있나요?
