@@ -6,7 +6,7 @@ export interface ArticleRemovalRequestState {
 }
 
 const RESEND_EMAILS_ENDPOINT = "https://api.resend.com/emails";
-const ADMIN_EMAIL = "yijunsuc@gmail.com";
+const DEFAULT_FEEDBACK_RECIPIENT = "yijunsuc@gmail.com";
 const MAX_ARTICLE_URL_LENGTH = 2_048;
 const MAX_REASON_LENGTH = 2_000;
 
@@ -83,7 +83,7 @@ export async function submitArticleRemovalRequest(
       },
       body: JSON.stringify({
         from,
-        to: [ADMIN_EMAIL],
+        to: [process.env.FEEDBACK_TO_EMAIL?.trim() || DEFAULT_FEEDBACK_RECIPIENT],
         reply_to: contactEmail || undefined,
         subject: `게시글 삭제 요청: ${articleUrl.hostname}`,
         text,
