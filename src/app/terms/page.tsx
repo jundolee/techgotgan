@@ -116,11 +116,15 @@ export default function TermsPage() {
         </Section>
 
         <Section title="12. 문의">
-          서비스 이용 조건, 권리 침해 신고, 기타 문의 사항은 서비스 내 운영 문의 채널을 통해 접수할 수 있습니다.
+          서비스 이용 조건 및 일반 문의는 제안 채널로, 권리 침해 신고와 게시글 삭제·수정 요청은 전용 요청 페이지로 접수할 수 있습니다.
           <p style={{ marginTop: 8 }}>
-            문의 채널:{" "}
+            일반 문의:{" "}
             <Link href="/suggest" style={{ textDecoration: "underline", color: "var(--seed-color-fg-brand, #eb641c)" }}>
               블로그 추천 및 서비스 의견 남기기
+            </Link>
+            {" "}· 권리 침해 및 게시글 요청:{" "}
+            <Link href="/content-removal" style={{ textDecoration: "underline", color: "var(--seed-color-fg-brand, #eb641c)" }}>
+              게시글 삭제 요청
             </Link>
           </p>
         </Section>
