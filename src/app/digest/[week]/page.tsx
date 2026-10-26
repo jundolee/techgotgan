@@ -78,7 +78,10 @@ export default async function WeeklyDigestPage({ params }: PageProps) {
           isPartOf: { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
         }}
       />
-      <DigestHeader />
+      <DigestHeader
+        shareTitle={`${digest.label} 테크 큐레이션`}
+        shareUrl={`/digest/${digest.week}`}
+      />
       <DigestBreadcrumbs current={digest.label} />
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)">

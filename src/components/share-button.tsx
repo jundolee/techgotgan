@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ActionButton } from "seed-design/ui/action-button";
 import { SITE_NAME } from "@/app/seo";
+import { trackShareActionCompleted } from "@/lib/analytics";
 
 export function ShareButton({
   title,
@@ -11,6 +12,8 @@ export function ShareButton({
   variant,
   style,
   compact = false,
+  shareSurface = "article",
+  shareCampaign = "article_share_2026q4",
 }: {
   title: string;
   url: string;
@@ -18,6 +21,8 @@ export function ShareButton({
   variant?: "ghost" | "neutralWeak" | "neutralOutline" | "neutralSolid" | "brandOutline";
   style?: React.CSSProperties;
   compact?: boolean;
+  shareSurface?: "article" | "weekly_digest";
+  shareCampaign?: string;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -52,9 +57,18 @@ export function ShareButton({
   }
 
   async function handleShare() {
-    const fullUrl = typeof window !== "undefined" && !url.startsWith("http")
-      ? `${window.location.origin}${url}`
-      : url;
+    let fullUrl = url;
+    try {
+      const shareUrl = new URL(url, window.location.href);
+      if (shareUrl.origin === window.location.origin) {
+        shareUrl.searchParams.set("utm_source", "techgotgan");
+        shareUrl.searchParams.set("utm_medium", "share");
+        shareUrl.searchParams.set("utm_campaign", shareCampaign);
+      }
+      fullUrl = shareUrl.toString();
+    } catch {
+      // If a share target is not a valid URL, keep the original value as a fallback.
+    }
     const shareText = `${title} (via ${SITE_NAME})`;
 
     // 1. 모바일 등 Web Share API 지원 브라우저
@@ -65,6 +79,7 @@ export function ShareButton({
           text: title,
           url: fullUrl,
         });
+        trackShareActionCompleted("web_share", shareSurface);
         return;
       } catch (err: unknown) {
         // 사용자가 공유 창을 직접 닫거나 취소한 경우(AbortError)에는 복사 전환 없이 종료
@@ -78,6 +93,7 @@ export function ShareButton({
     // 2. 데스크톱 및 Web Share 실패 시 클립보드 복사 실행
     const success = await copyToClipboard(fullUrl);
     if (success) {
+      trackShareActionCompleted("link_copy", shareSurface);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
