@@ -7,6 +7,7 @@ import {
   listArticles,
   markAllArticlesRead,
   markAllArticlesUnread,
+  markArticleRead,
   markArticleReadAndIncrementClickCount,
   markArticleUnread,
   searchArticles,
@@ -48,6 +49,26 @@ export async function markArticleReadAction(articleId: string): Promise<"saved" 
   // DB에만 안전하게 반영하고 캐시 무효화 라우팅 트리거는 생략한다.
   if (!userId) return "unauthenticated";
   return "saved";
+}
+
+/**
+ * Persist a read state after the intercepted preview actually mounts in the browser.
+ * Keep this mutation out of the Server Component render path because Next can render
+ * dynamic routes while prefetching links the user has not opened.
+ */
+export async function markArticleReadFallbackAction(articleId: string): Promise<"saved" | "unauthenticated" | "failed"> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(articleId)) {
+    return "failed";
+  }
+  try {
+    const userId = await getVerifiedUserId();
+    if (!userId) return "unauthenticated";
+    await markArticleRead(userId, articleId);
+    return "saved";
+  } catch (error) {
+    console.error("Fallback article read persistence failed:", error);
+    return "failed";
+  }
 }
 
 export async function getArticlePreviewAction(articleId: string): Promise<{
