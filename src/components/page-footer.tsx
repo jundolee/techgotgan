@@ -13,6 +13,10 @@ export function PageFooter() {
           개인정보처리방침
         </Link>
         <span className="app-footer-separator" aria-hidden="true">·</span>
+        <Link href="/suggest#feature-feedback" className="app-footer-link">
+          기능 피드백
+        </Link>
+        <span className="app-footer-separator" aria-hidden="true">·</span>
         <a href="/feed.xml" className="app-footer-link">
           RSS
         </a>
