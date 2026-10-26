@@ -55,25 +55,27 @@ export async function markArticleReadAction(articleId: string): Promise<"saved" 
   }
   const userId = await getArticleReadUserId();
 
-  // 읽음 저장과 클릭 수 증가는 한 번의 DB RPC에서 처리해 네트워크 왕복과 저장 상태 불일치를 줄인다.
+  // 클릭 수는 RPC로 집계하고, 읽음 상태는 아래에서 테이블에 직접 upsert한다.
   // 읽음 처리는 열람(누구나 자유)에 곁들여지는 부수 효과라, 로그인 안 한 사람은 로그인으로 보내는 대신
   // (링크를 새 탭에서 여는 도중 원래 탭이 로그인 화면으로 튀는 건 나쁜 경험) 그냥 조용히 건너뛴다.
   try {
     await markArticleReadAndIncrementClickCount(userId, articleId);
   } catch (error) {
-    console.error("markArticleReadAction 부분 실패:", error);
-    if (!userId) return "unauthenticated";
-
-    // The click counter RPC and read-state upsert are atomic. If the RPC itself is unavailable,
-    // retry the user's read state directly so a click still survives a feed refresh.
-    try {
-      await markArticleRead(userId, articleId);
-      return "saved";
-    } catch (fallbackError) {
-      console.error("markArticleReadAction 읽음 상태 fallback 실패:", fallbackError);
-      return "failed";
-    }
+    // The counter RPC can be deployed with an older function body that increments clicks but
+    // does not write read_status. Keep article reading independent from that migration state.
+    console.error("markArticleReadAction 클릭 수 RPC 실패:", error);
   }
+  if (!userId) return "unauthenticated";
+
+  try {
+    // Idempotent upsert guarantees the row exists even if the production RPC reports success
+    // without applying its read_status write.
+    await markArticleRead(userId, articleId);
+  } catch (error) {
+    console.error("markArticleReadAction 읽음 상태 upsert 실패:", error);
+    return "failed";
+  }
+
   // 주의: 여기서 revalidatePath("/")를 호출하면 기사 클릭 시 열린 인터셉트 모달(@modal)이
   // 활성 경로(/articles/[id])의 서버 재검증(refresh)에 의해 파괴되어 전체 페이지로 튕기는 버그가 발생함.
   // 읽음 표시는 ArticleList의 로컬 상태에 즉시 반영되므로
