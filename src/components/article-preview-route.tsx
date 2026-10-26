@@ -4,6 +4,7 @@ import { ArticlePreviewPanel } from "@/components/article-preview-panel";
 import { getArticlePreview } from "@/lib/data/related-articles";
 import { markArticleRead } from "@/lib/data/articles";
 import { getCurrentUser } from "@/lib/supabase/current-user";
+import { canViewArticleSummary } from "@/lib/article-summary-access";
 
 export async function ArticlePreviewRoute({ articleId }: { articleId: string }) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(articleId)) notFound();
@@ -11,13 +12,13 @@ export async function ArticlePreviewRoute({ articleId }: { articleId: string }) 
   let article = null;
   let user = null;
   try {
-    const [fetchedArticle, currentUser] = await Promise.all([
-      getArticlePreview(articleId),
-      getCurrentUser().catch((error) => {
-        console.error("Failed to resolve user for article read fallback:", error);
-        return null;
-      }),
-    ]);
+    const currentUser = await getCurrentUser().catch((error) => {
+      console.error("Failed to resolve user for article read fallback:", error);
+      return null;
+    });
+    const fetchedArticle = await getArticlePreview(articleId, {
+      includeSummary: canViewArticleSummary(currentUser?.email),
+    });
     article = fetchedArticle;
     user = currentUser;
   } catch (error) {
@@ -40,5 +41,5 @@ export async function ArticlePreviewRoute({ articleId }: { articleId: string }) 
     });
   }
 
-  return <ArticlePreviewPanel article={article} related={[]} />;
+  return <ArticlePreviewPanel article={article} related={[]} canViewSummary={canViewArticleSummary(user?.email)} />;
 }

@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 
-test("onboarding modal screenshots exist in public/onboarding", () => {
+test("onboarding modal screenshots exist in their access-controlled asset locations", () => {
   const step1 = path.join(process.cwd(), "public/onboarding/step1-feed.png");
-  const step2 = path.join(process.cwd(), "public/onboarding/step2-ai-summary.png");
+  const step2 = path.join(process.cwd(), "private-assets/onboarding/step2-ai-summary.png");
   const step3 = path.join(process.cwd(), "public/onboarding/step3-unread-sync.png");
 
   assert.ok(fs.existsSync(step1), "step1-feed.png must exist");
-  assert.ok(fs.existsSync(step2), "step2-ai-summary.png must exist");
+  assert.ok(fs.existsSync(step2), "private step2-ai-summary.png must exist");
   assert.ok(fs.existsSync(step3), "step3-unread-sync.png must exist");
 
   const stat1 = fs.statSync(step1);

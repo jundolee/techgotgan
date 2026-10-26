@@ -13,6 +13,13 @@ export function PageFooter() {
           개인정보처리방침
         </Link>
         <span className="app-footer-separator" aria-hidden="true">·</span>
+        <a
+          href="mailto:yijunsuc@gmail.com?subject=%EA%B2%8C%EC%8B%9C%EA%B8%80%20%EC%82%AD%EC%A0%9C%20%EC%9A%94%EC%B2%AD&body=%EC%9B%90%EB%AC%B8%20%EA%B2%8C%EC%8B%9C%EA%B8%80%20URL%3A%0A%EC%82%AD%EC%A0%9C%20%EC%9A%94%EC%B2%AD%20%EC%82%AC%EC%9C%A0%3A%0A"
+          className="app-footer-link"
+        >
+          게시글 삭제 요청
+        </a>
+        <span className="app-footer-separator" aria-hidden="true">·</span>
         <a href="/feed.xml" className="app-footer-link">
           RSS
         </a>

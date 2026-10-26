@@ -31,7 +31,7 @@ const STEPS: StepData[] = [
     badgeTone: "blue",
     title: "긴 기술 아티클도 1분 만에! AI 핵심 브리핑",
     subtitle: "문제 배경, 기술 스택, 실무 교훈까지 3줄로 명쾌하게 정리했어요. 바쁜 출퇴근길에도 핵심 인사이트만 빠르게 챙겨보세요.",
-    imageSrc: "/onboarding/step2-ai-summary.png",
+    imageSrc: "/api/admin/summary-preview-image",
     imageAlt: "AI 엔지니어링 브리핑 요약 화면 캡처",
   },
   {
@@ -64,7 +64,8 @@ function hasSeenOnboarding(): boolean {
   return false;
 }
 
-export function OnboardingModal() {
+export function OnboardingModal({ isSummaryAdmin }: { isSummaryAdmin: boolean }) {
+  const steps = isSummaryAdmin ? STEPS : STEPS.filter((_, index) => index !== 1);
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -90,7 +91,7 @@ export function OnboardingModal() {
   }, []);
 
   const handleNext = () => {
-    if (currentStep < STEPS.length - 1) {
+    if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
       handleClose();
@@ -110,7 +111,7 @@ export function OnboardingModal() {
       if (e.key === "Escape") {
         handleClose();
       } else if (e.key === "ArrowRight") {
-        if (currentStep < STEPS.length - 1) setCurrentStep((p) => p + 1);
+        if (currentStep < steps.length - 1) setCurrentStep((p) => p + 1);
       } else if (e.key === "ArrowLeft") {
         if (currentStep > 0) setCurrentStep((p) => p - 1);
       }
@@ -118,12 +119,12 @@ export function OnboardingModal() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, currentStep, handleClose]);
+  }, [isOpen, currentStep, handleClose, steps.length]);
 
   if (!isOpen) return null;
 
-  const step = STEPS[currentStep];
-  const isLast = currentStep === STEPS.length - 1;
+  const step = steps[currentStep];
+  const isLast = currentStep === steps.length - 1;
 
   return (
     <div
@@ -142,7 +143,7 @@ export function OnboardingModal() {
         {/* 상단 닫기 및 진행 인디케이터 바 */}
         <div className="onboarding-top-bar">
           <div className="onboarding-step-indicator">
-            {STEPS.map((_, i) => (
+            {steps.map((_, i) => (
               <span
                 key={i}
                 className={`onboarding-step-bar ${i <= currentStep ? "active" : ""}`}
@@ -182,6 +183,7 @@ export function OnboardingModal() {
               width={700}
               height={380}
               priority
+              unoptimized={step.imageSrc.startsWith("/api/")}
               className="onboarding-clean-image"
             />
           </div>
