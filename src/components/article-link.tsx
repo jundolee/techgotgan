@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type MouseEvent, type ReactNode, useEffect, useState } from "react";
+import { type CSSProperties, type MouseEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { markArticleReadAction, markArticleReadFallbackAction } from "@/app/articles/actions";
@@ -17,6 +17,12 @@ interface ArticleLinkProps {
   onReadChange?: (articleId: string, isRead: boolean) => void;
 }
 
+declare global {
+  interface Window {
+    __techgotganPendingArticlePath?: string;
+  }
+}
+
 /**
  * 클릭 시 앱 안의 상세 경로로 이동해 인터셉트 모달을 열고 읽음 처리를 트리거한다.
  * 새 탭이나 직접 URL 진입에서는 같은 경로의 독립 상세 페이지를 보여준다.
@@ -24,6 +30,7 @@ interface ArticleLinkProps {
 export function ArticleLink({ articleId, articleTitle, href, children, style, className, onRead, onReadChange }: ArticleLinkProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const linkRef = useRef<HTMLAnchorElement>(null);
   const [pendingNavigation, setPendingNavigation] = useState<{ sourcePath: string; targetPath: string } | null>(null);
 
   useEffect(() => {
@@ -33,7 +40,9 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
     return () => window.clearTimeout(timeoutId);
   }, [pathname, pendingNavigation]);
 
-  const trackClick = () => {
+  const articlePath = `/articles/${encodeURIComponent(articleId)}`;
+
+  const trackClick = useCallback(() => {
     // GTM 맞춤 이벤트 트리거(article_click)로 GA4에서 아티클명 기준 집계가 가능하도록 push
     (window as { dataLayer?: unknown[] }).dataLayer?.push({
       event: "article_click",
@@ -66,7 +75,22 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
           console.error("글 읽음 상태 fallback 저장도 실패했습니다.", fallbackError);
         }
       });
-  };
+  }, [articleId, articleTitle, onReadChange]);
+
+  useEffect(() => {
+    linkRef.current?.setAttribute("data-article-hydrated", "true");
+    if (window.__techgotganPendingArticlePath !== articlePath) return;
+
+    // The root-layout bridge catches clicks that arrive before this client component hydrates.
+    // Replay them through the App Router as soon as the matching link becomes interactive.
+    window.__techgotganPendingArticlePath = undefined;
+    window.setTimeout(() => {
+      trackClick();
+      setPendingNavigation({ sourcePath: pathname, targetPath: articlePath });
+      router.push(articlePath, { scroll: false });
+      onRead?.(articleId);
+    }, 0);
+  }, [articleId, articlePath, onRead, pathname, router, trackClick]);
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (event.defaultPrevented) return;
@@ -77,8 +101,12 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
       return;
     }
 
-    const articlePath = `/articles/${encodeURIComponent(articleId)}`;
     if (href !== articlePath || !articleId) return;
+
+    // The pre-hydration bridge may have captured this same click before React attached its handler.
+    if (window.__techgotganPendingArticlePath === articlePath) {
+      window.__techgotganPendingArticlePath = undefined;
+    }
 
     // Route through the App Router explicitly so the article intercepting route is used on
     // every hydrated, same-window click instead of allowing a browser document navigation.
@@ -94,9 +122,11 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
     <>
       <Link
         href={href}
+        ref={linkRef}
         // Dynamic article routes only need their prefetched loading shell. Forcing the full route
         // rendered every visible article preview in the background and competed with real clicks.
         prefetch="auto"
+        data-article-link="true"
         style={style}
         className={className}
         onClick={handleClick}

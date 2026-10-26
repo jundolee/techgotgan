@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
 import { GoogleTagManager } from "@next/third-parties/google";
 import { AmplitudeAnalytics } from "@/components/amplitude-analytics";
 import { PageFooter } from "@/components/page-footer";
@@ -99,6 +100,21 @@ export default function RootLayout({
       {ANALYTICS_ENABLED && <GoogleTagManager gtmId={GTM_CONTAINER_ID} />}
       {ANALYTICS_ENABLED && <AmplitudeAnalytics />}
       <body>
+        <Script id="article-navigation-bridge" strategy="beforeInteractive">
+          {`(() => {
+            document.addEventListener("click", (event) => {
+              if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              const target = event.target;
+              if (!(target instanceof Element)) return;
+              const anchor = target.closest('a[data-article-link="true"]');
+              if (!anchor || anchor.getAttribute("data-article-hydrated") === "true") return;
+              const url = new URL(anchor.href, window.location.href);
+              if (url.origin !== window.location.origin || !/^\\/articles\\/[0-9a-f-]+$/i.test(url.pathname)) return;
+              event.preventDefault();
+              window.__techgotganPendingArticlePath = url.pathname;
+            }, true);
+          })();`}
+        </Script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd).replace(/</g, "\\u003c") }}
