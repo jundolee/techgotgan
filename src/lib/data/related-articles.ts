@@ -47,23 +47,31 @@ const MAX_RELATED_ARTICLES = 3;
 const TAG_OVERLAP_CANDIDATE_LIMIT = 200;
 const RELATED_ARTICLE_SELECT = "id,title,category,tags,published_at,source:sources(title)";
 
-export async function getArticlePreview(articleId: string): Promise<ArticlePreview | null> {
+export async function getArticlePreview(
+  articleId: string,
+  options: { includeSummary?: boolean } = {}
+): Promise<ArticlePreview | null> {
   const supabase = createServiceClient();
   const articlePromise = supabase
     .from("articles")
     .select("id,title,url,excerpt,published_at,category,tags,source:sources(title)")
     .eq("id", articleId)
     .maybeSingle();
-  const summaryPromise = supabase
-    .from("article_summary_jobs")
-    .select("status,lead,key_points,extraction_status,prompt_version")
-    .eq("article_id", articleId)
-    .in("prompt_version", [
-      ARTICLE_SUMMARY_PROMPT_VERSION,
-      LEGACY_ARTICLE_SUMMARY_PROMPT_VERSION,
-      EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION,
-    ]);
-  const [{ data, error }, summaryResult] = await Promise.all([articlePromise, summaryPromise]);
+  const summaryPromise = options.includeSummary
+    ? supabase
+      .from("article_summary_jobs")
+      .select("status,lead,key_points,extraction_status,prompt_version")
+      .eq("article_id", articleId)
+      .in("prompt_version", [
+        ARTICLE_SUMMARY_PROMPT_VERSION,
+        LEGACY_ARTICLE_SUMMARY_PROMPT_VERSION,
+        EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION,
+      ])
+    : null;
+  const [{ data, error }, summaryResult] = await Promise.all([
+    articlePromise,
+    summaryPromise ?? Promise.resolve(null),
+  ]);
   if (error) throw error;
   if (!data) return null;
 
@@ -71,16 +79,16 @@ export async function getArticlePreview(articleId: string): Promise<ArticlePrevi
   let summary: ArticlePreview["summary"] = null;
   let summaryBasis: ArticlePreview["summaryBasis"] = null;
   let summaryStatus: ArticlePreview["summaryStatus"] = null;
-  if (summaryResult.error) {
+  if (summaryResult?.error) {
     if (summaryResult.error.code === "42P01") {
       console.warn("article_summary_jobs table is not installed yet; no article summary is available.");
     } else {
       console.error("Failed to read article summary:", summaryResult.error.message);
     }
   } else {
-    const current = summaryResult.data?.find((row) => row.prompt_version === ARTICLE_SUMMARY_PROMPT_VERSION);
-    const legacyV1 = summaryResult.data?.find((row) => row.prompt_version === LEGACY_ARTICLE_SUMMARY_PROMPT_VERSION);
-    const earliest = summaryResult.data?.find((row) => row.prompt_version === EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION);
+    const current = summaryResult?.data?.find((row) => row.prompt_version === ARTICLE_SUMMARY_PROMPT_VERSION);
+    const legacyV1 = summaryResult?.data?.find((row) => row.prompt_version === LEGACY_ARTICLE_SUMMARY_PROMPT_VERSION);
+    const earliest = summaryResult?.data?.find((row) => row.prompt_version === EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION);
     const currentReady = current?.status === "ready" && Array.isArray(current.key_points);
     const legacyV1Ready = legacyV1?.status === "ready" && Array.isArray(legacyV1.key_points);
     const earliestReady = earliest?.status === "ready" && Array.isArray(earliest.key_points);

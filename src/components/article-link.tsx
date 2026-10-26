@@ -118,7 +118,7 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
           <div className="article-preview-backdrop article-preview-backdrop-instant" aria-hidden="true">
             <section className="article-preview-dialog article-preview-dialog-instant">
               <header className="article-preview-header">
-                <span className="article-preview-opening-title">AI 요약을 여는 중</span>
+                <span className="article-preview-opening-title">게시글을 여는 중</span>
               </header>
               <div className="article-preview-body article-preview-opening-body">
                 <div className="article-preview-opening-line article-preview-opening-line-short" />
@@ -131,7 +131,7 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
               </div>
             </section>
           </div>
-          <span className="article-preview-opening-status" role="status" aria-live="polite">AI 요약을 여는 중입니다.</span>
+          <span className="article-preview-opening-status" role="status" aria-live="polite">게시글을 불러오고 있습니다.</span>
         </>
       )}
     </>

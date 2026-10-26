@@ -16,6 +16,7 @@ import {
 } from "@/lib/data/articles";
 import { getArticlePreview, getRelatedArticles, type ArticlePreview, type RelatedArticle } from "@/lib/data/related-articles";
 import { getCurrentUser, getVerifiedUserId } from "@/lib/supabase/current-user";
+import { canViewArticleSummary } from "@/lib/article-summary-access";
 
 async function getCurrentUserId(): Promise<string | null> {
   const user = await getCurrentUser();
@@ -106,7 +107,8 @@ export async function getArticlePreviewAction(articleId: string): Promise<{
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(articleId)) {
     return null;
   }
-  const articlePromise = getArticlePreview(articleId);
+  const user = await getCurrentUser();
+  const articlePromise = getArticlePreview(articleId, { includeSummary: canViewArticleSummary(user?.email) });
   const relatedPromise = getRelatedArticles(articleId);
 
   const [article, initialRelated] = await Promise.all([articlePromise, relatedPromise]);

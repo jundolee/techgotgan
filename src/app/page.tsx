@@ -7,7 +7,7 @@ import { ArticleList } from "@/components/article-list";
 import { ArticleListSkeleton } from "@/components/article-list-skeleton";
 import { PageHeader } from "@/components/page-header";
 import { HeaderAuthSlot } from "@/components/header-auth-slot";
-import { OnboardingModal } from "@/components/onboarding-modal";
+import { OnboardingModalSlot } from "@/components/onboarding-modal-slot";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { CATEGORY_MAP, type CategoryId } from "@/lib/categories";
 
@@ -106,7 +106,9 @@ export default async function Home({
       </Text>
 
 
-      <OnboardingModal />
+      <Suspense fallback={null}>
+        <OnboardingModalSlot />
+      </Suspense>
 
       <Suspense fallback={<ArticleListSkeleton />}>
         <ArticleListSection

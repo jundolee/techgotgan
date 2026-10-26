@@ -67,9 +67,11 @@ function summaryBasisNotice(basis: ArticlePreview["summaryBasis"]): string {
 export function ArticlePreviewPanel({
   article: initialArticle,
   related: initialRelated,
+  canViewSummary,
 }: {
   article: ArticlePreview;
   related: RelatedArticle[];
+  canViewSummary: boolean;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -626,7 +628,7 @@ export function ArticlePreviewPanel({
               </div>
 
               {/* 2. [최상위 계층] ✨ AI 엔지니어링 3-Box 브리핑 카드 */}
-              {currentArticle.summary ? (
+              {canViewSummary && (currentArticle.summary ? (
                 <section
                   aria-labelledby="ai-summary-heading"
                   style={{
@@ -717,7 +719,7 @@ export function ArticlePreviewPanel({
                     {summaryNotice(currentArticle.summaryStatus)}
                   </Text>
                 </section>
-              )}
+              ))}
 
               {/* 3. [데스크톱 인라인 액션] 원문 읽기 CTA 버튼 */}
               <div className="article-preview-inline-cta">
