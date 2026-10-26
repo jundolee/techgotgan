@@ -28,6 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = `${digest.label} 테크 큐레이션`;
   const description = getPageDescription(digest.label, digest.dateRangeLabel, digest.articleCount);
+  const shareImage = `${SITE_URL}/digest/${digest.week}/opengraph-image`;
 
   return {
     title,
@@ -39,6 +40,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url: `${SITE_URL}/digest/${digest.week}`,
       locale: "ko_KR",
       type: "website",
+      images: [{
+        url: shareImage,
+        width: 1200,
+        height: 630,
+        alt: `${digest.label} 테크 블로그 큐레이션 공유 카드`,
+      }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | ${SITE_NAME}`,
+      description,
+      images: [shareImage],
     },
   };
 }
