@@ -25,16 +25,18 @@ async function getCurrentUserId(): Promise<string | null> {
 
 async function getArticleReadUserId(): Promise<string | null> {
   try {
-    const userId = await getVerifiedUserId();
+    // Feed state is attached with getCurrentUser(). Use the same verified Auth identity for
+    // writes so the read row is queried under exactly the same user ID after a reload.
+    const userId = await getCurrentUserId();
     if (userId) return userId;
   } catch (error) {
-    console.warn("JWT claim verification failed while saving article read state; retrying with Auth:", error);
+    console.warn("Auth user lookup failed while saving article read state; retrying with verified claims:", error);
   }
 
   try {
-    return await getCurrentUserId();
+    return await getVerifiedUserId();
   } catch (error) {
-    console.error("Auth fallback failed while saving article read state:", error);
+    console.error("Verified JWT claim fallback failed while saving article read state:", error);
     return null;
   }
 }
