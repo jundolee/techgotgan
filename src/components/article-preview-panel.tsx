@@ -83,6 +83,7 @@ export function ArticlePreviewPanel({
   const [overrideArticle, setOverrideArticle] = useState<ArticlePreview | null>(null);
   const [overrideRelated, setOverrideRelated] = useState<RelatedArticle[] | null>(null);
   const [prevInitialId, setPrevInitialId] = useState(initialArticle.id);
+  const persistedReadForRef = useRef<string | null>(null);
   const relatedLoadStartedForRef = useRef<string | null>(null);
 
   if (initialArticle.id !== prevInitialId) {
@@ -94,6 +95,21 @@ export function ArticlePreviewPanel({
   const currentArticle = overrideArticle ?? initialArticle;
   const currentRelated = overrideRelated ?? initialRelated;
   const [isLoadingRelated, setIsLoadingRelated] = useState(false);
+
+  useEffect(() => {
+    if (persistedReadForRef.current === currentArticle.id) return;
+    persistedReadForRef.current = currentArticle.id;
+
+    // A navigation can interrupt the original article-link action. Persist again only after
+    // the preview has mounted, so this write cannot be cancelled by opening the modal.
+    void markArticleReadFallbackAction(currentArticle.id).then((result) => {
+      if (result === "failed") {
+        console.error("기사 미리보기를 연 뒤 읽음 상태를 저장하지 못했습니다.");
+      }
+    }).catch((error) => {
+      console.error("기사 미리보기 읽음 상태 저장 요청에 실패했습니다.", error);
+    });
+  }, [currentArticle.id]);
 
   useEffect(() => {
     if (initialRelated.length > 0 || currentRelated.length > 0 || relatedLoadStartedForRef.current === currentArticle.id) return;
