@@ -132,7 +132,7 @@ export async function getRelatedArticlesAction(articleId: string): Promise<Relat
 export async function markArticleUnreadAction(formData: FormData): Promise<"ok" | "unauthenticated"> {
   const id = String(formData.get("id") ?? "");
   if (!id) return "ok";
-  const userId = await getCurrentUserId();
+  const userId = await getArticleReadUserId();
   if (!userId) return "unauthenticated";
   await markArticleUnread(userId, id);
   return "ok";
