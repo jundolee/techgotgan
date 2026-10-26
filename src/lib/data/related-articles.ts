@@ -3,12 +3,9 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { fetchCachedRpcFromSupabase } from "@/lib/supabase/cached-rest";
 import {
   ARTICLE_SUMMARY_PROMPT_VERSION,
-  PREVIOUS_ARTICLE_SUMMARY_PROMPT_VERSION,
   LEGACY_ARTICLE_SUMMARY_PROMPT_VERSION,
   EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION,
-  isArticleSummaryEnabled,
 } from "@/lib/ingestion/article-summary";
-import { summarizeArticlesDirect } from "@/lib/ingestion/run-summary-jobs";
 
 export interface RelatedArticle {
   id: string;
@@ -52,11 +49,21 @@ const RELATED_ARTICLE_SELECT = "id,title,category,tags,published_at,source:sourc
 
 export async function getArticlePreview(articleId: string): Promise<ArticlePreview | null> {
   const supabase = createServiceClient();
-  const { data, error } = await supabase
+  const articlePromise = supabase
     .from("articles")
     .select("id,title,url,excerpt,published_at,category,tags,source:sources(title)")
     .eq("id", articleId)
     .maybeSingle();
+  const summaryPromise = supabase
+    .from("article_summary_jobs")
+    .select("status,lead,key_points,extraction_status,prompt_version")
+    .eq("article_id", articleId)
+    .in("prompt_version", [
+      ARTICLE_SUMMARY_PROMPT_VERSION,
+      LEGACY_ARTICLE_SUMMARY_PROMPT_VERSION,
+      EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION,
+    ]);
+  const [{ data, error }, summaryResult] = await Promise.all([articlePromise, summaryPromise]);
   if (error) throw error;
   if (!data) return null;
 
@@ -64,16 +71,6 @@ export async function getArticlePreview(articleId: string): Promise<ArticlePrevi
   let summary: ArticlePreview["summary"] = null;
   let summaryBasis: ArticlePreview["summaryBasis"] = null;
   let summaryStatus: ArticlePreview["summaryStatus"] = null;
-  const summaryResult = await supabase
-    .from("article_summary_jobs")
-    .select("status,lead,key_points,extraction_status,prompt_version")
-    .eq("article_id", articleId)
-    .in("prompt_version", [
-      ARTICLE_SUMMARY_PROMPT_VERSION,
-      PREVIOUS_ARTICLE_SUMMARY_PROMPT_VERSION,
-      LEGACY_ARTICLE_SUMMARY_PROMPT_VERSION,
-      EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION,
-    ]);
   if (summaryResult.error) {
     if (summaryResult.error.code === "42P01") {
       console.warn("article_summary_jobs table is not installed yet; no article summary is available.");
@@ -82,44 +79,12 @@ export async function getArticlePreview(articleId: string): Promise<ArticlePrevi
     }
   } else {
     const current = summaryResult.data?.find((row) => row.prompt_version === ARTICLE_SUMMARY_PROMPT_VERSION);
-    const prevV2 = summaryResult.data?.find((row) => row.prompt_version === PREVIOUS_ARTICLE_SUMMARY_PROMPT_VERSION);
     const legacyV1 = summaryResult.data?.find((row) => row.prompt_version === LEGACY_ARTICLE_SUMMARY_PROMPT_VERSION);
     const earliest = summaryResult.data?.find((row) => row.prompt_version === EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION);
-    let currentReady = current?.status === "ready" && Array.isArray(current.key_points);
-    const prevV2Ready = prevV2?.status === "ready" && Array.isArray(prevV2.key_points);
+    const currentReady = current?.status === "ready" && Array.isArray(current.key_points);
     const legacyV1Ready = legacyV1?.status === "ready" && Array.isArray(legacyV1.key_points);
     const earliestReady = earliest?.status === "ready" && Array.isArray(earliest.key_points);
-    let selected = currentReady
-      ? current
-      : prevV2Ready
-      ? prevV2
-      : legacyV1Ready
-      ? legacyV1
-      : earliestReady
-      ? earliest
-      : current;
-
-    // AI 요약이 활성화되어 있으나 아직 준비되지 않은 경우(대기열 처리 지연 등),
-    // 사용자가 글을 확인하는 시점에 온디맨드로 즉시 생성하여 제공
-    if (!currentReady && !prevV2Ready && !legacyV1Ready && !earliestReady && isArticleSummaryEnabled()) {
-      try {
-        const directResult = await summarizeArticlesDirect([articleId], supabase);
-        if (directResult.ready > 0) {
-          const { data: refreshed } = await supabase
-            .from("article_summary_jobs")
-            .select("status,lead,key_points,extraction_status,prompt_version")
-            .eq("article_id", articleId)
-            .eq("prompt_version", ARTICLE_SUMMARY_PROMPT_VERSION)
-            .maybeSingle();
-          if (refreshed?.status === "ready" && Array.isArray(refreshed.key_points)) {
-            selected = refreshed;
-            currentReady = true;
-          }
-        }
-      } catch (onDemandErr) {
-        console.warn(`On-demand summary generation failed for article ${articleId}:`, onDemandErr);
-      }
-    }
+    const selected = currentReady ? current : legacyV1Ready ? legacyV1 : earliestReady ? earliest : current;
 
     if (selected) {
       const allowedStatuses = ["pending", "processing", "ready", "unavailable", "failed"] as const;

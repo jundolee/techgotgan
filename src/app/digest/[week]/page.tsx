@@ -28,6 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = `${digest.label} 테크 큐레이션`;
   const description = getPageDescription(digest.label, digest.dateRangeLabel, digest.articleCount);
+  const shareImage = `${SITE_URL}/digest/${digest.week}/opengraph-image`;
 
   return {
     title,
@@ -39,6 +40,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url: `${SITE_URL}/digest/${digest.week}`,
       locale: "ko_KR",
       type: "website",
+      images: [{
+        url: shareImage,
+        width: 1200,
+        height: 630,
+        alt: `${digest.label} 테크 블로그 큐레이션 공유 카드`,
+      }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | ${SITE_NAME}`,
+      description,
+      images: [shareImage],
     },
   };
 }
@@ -78,7 +91,10 @@ export default async function WeeklyDigestPage({ params }: PageProps) {
           isPartOf: { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
         }}
       />
-      <DigestHeader />
+      <DigestHeader
+        shareTitle={`${digest.label} 테크 큐레이션`}
+        shareUrl={`/digest/${digest.week}`}
+      />
       <DigestBreadcrumbs current={digest.label} />
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)">

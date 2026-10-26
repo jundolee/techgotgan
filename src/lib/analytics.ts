@@ -25,3 +25,19 @@ export function trackArticleSearchCompleted(
     has_source_filter: hasSourceFilter,
   });
 }
+
+/** Record completed share actions without sending article titles, IDs, or URLs. */
+export function trackShareActionCompleted(
+  method: "web_share" | "link_copy",
+  surface: "article" | "weekly_digest"
+): void {
+  if (
+    process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" ||
+    !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY
+  ) return;
+
+  track("share_action_completed", {
+    share_method: method,
+    share_surface: surface,
+  });
+}
