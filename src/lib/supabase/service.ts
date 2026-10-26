@@ -15,5 +15,10 @@ export function createServiceClient() {
 
   return createClient(url, serviceRoleKey, {
     auth: { persistSession: false },
+    // Per-user state such as read_status must reflect a write from the previous request.
+    // Keep these Supabase REST reads outside the Next.js Data Cache.
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
   });
 }
