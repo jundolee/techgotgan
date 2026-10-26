@@ -2,8 +2,8 @@
 
 import { type CSSProperties, type MouseEvent, type ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { markArticleReadAction } from "@/app/articles/actions";
+import { usePathname, useRouter } from "next/navigation";
+import { markArticleReadAction, markArticleReadFallbackAction } from "@/app/articles/actions";
 
 interface ArticleLinkProps {
   articleId: string;
@@ -23,6 +23,7 @@ interface ArticleLinkProps {
  */
 export function ArticleLink({ articleId, articleTitle, href, children, style, className, onRead, onReadChange }: ArticleLinkProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [pendingNavigation, setPendingNavigation] = useState<{ sourcePath: string; targetPath: string } | null>(null);
 
   useEffect(() => {
@@ -39,17 +40,54 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
       article_id: articleId,
       article_title: articleTitle,
     });
-    onRead?.(articleId);
     // Keep the read/click write independent from the navigation transition so its network
     // response cannot delay opening the intercepted preview.
     void markArticleReadAction(articleId)
-      .then((result) => {
-        if (result === "unauthenticated") onReadChange?.(articleId, false);
-        if (result === "failed") console.error("글 읽음 상태 저장이 지연되었습니다. 모달 라우트에서 재시도합니다.");
+      .then(async (result) => {
+        if (result === "saved") return;
+        if (result === "unauthenticated") {
+          onReadChange?.(articleId, false);
+          return;
+        }
+
+        const fallbackResult = await markArticleReadFallbackAction(articleId);
+        if (fallbackResult !== "saved") {
+          onReadChange?.(articleId, false);
+          console.error("글 읽음 상태 저장에 실패해 목록 표시를 되돌렸습니다.");
+        }
       })
-      .catch((error) => {
-        console.error("글 읽음 상태 저장이 지연되었습니다. 모달 라우트에서 재시도합니다.", error);
+      .catch(async (error) => {
+        console.error("글 읽음 상태 저장 요청이 실패했습니다. fallback 저장을 시도합니다.", error);
+        try {
+          const fallbackResult = await markArticleReadFallbackAction(articleId);
+          if (fallbackResult !== "saved") onReadChange?.(articleId, false);
+        } catch (fallbackError) {
+          onReadChange?.(articleId, false);
+          console.error("글 읽음 상태 fallback 저장도 실패했습니다.", fallbackError);
+        }
       });
+  };
+
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (event.defaultPrevented) return;
+    trackClick();
+
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      onRead?.(articleId);
+      return;
+    }
+
+    const articlePath = `/articles/${encodeURIComponent(articleId)}`;
+    if (href !== articlePath || !articleId) return;
+
+    // Route through the App Router explicitly so the article intercepting route is used on
+    // every hydrated, same-window click instead of allowing a browser document navigation.
+    event.preventDefault();
+    setPendingNavigation({ sourcePath: pathname, targetPath: articlePath });
+    router.push(articlePath, { scroll: false });
+    // Keep this Link mounted long enough to paint the optimistic modal shell before the unread
+    // filter removes its row from the list.
+    window.setTimeout(() => onRead?.(articleId), 0);
   };
 
   return (
@@ -61,14 +99,16 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
         prefetch="auto"
         style={style}
         className={className}
-        onClick={trackClick}
-        onNavigate={() => setPendingNavigation({ sourcePath: pathname, targetPath: href })}
+        onClick={handleClick}
         // 휠 버튼(가운데)이나 우클릭으로 여는 경우 "click"이 아니라 "auxclick"이 발생해 onClick만으로는
         // 읽음 처리가 누락됨. 우클릭 메뉴에서 실제로 "새 탭에서 링크 열기"를 선택했는지는 JS로 알 수 없어
         // (메뉴 선택은 브라우저 네이티브 UI라 관측 불가) 우클릭 자체를 "열었다"로 간주하는 근사치 처리다 —
         // 메뉴를 취소하거나 "링크 복사" 등 다른 항목을 골라도 읽음 처리된다.
         onAuxClick={(e: MouseEvent<HTMLAnchorElement>) => {
-          if (e.button === 1 || e.button === 2) trackClick();
+          if (e.button === 1 || e.button === 2) {
+            trackClick();
+            onRead?.(articleId);
+          }
         }}
       >
         {children}

@@ -22,6 +22,22 @@ async function getCurrentUserId(): Promise<string | null> {
   return user?.id ?? null;
 }
 
+async function getArticleReadUserId(): Promise<string | null> {
+  try {
+    const userId = await getVerifiedUserId();
+    if (userId) return userId;
+  } catch (error) {
+    console.warn("JWT claim verification failed while saving article read state; retrying with Auth:", error);
+  }
+
+  try {
+    return await getCurrentUserId();
+  } catch (error) {
+    console.error("Auth fallback failed while saving article read state:", error);
+    return null;
+  }
+}
+
 // 즐겨찾기/전체 읽음 처리처럼 사용자가 명시적으로 누르는 상호작용은 로그인이 필요하다 — 현재 페이지로
 // 되돌아올 수 있도록 referer를 next로 실어 로그인 화면으로 보낸다 (docs/decisions.md 참고).
 async function redirectToLogin(): Promise<never> {
@@ -31,8 +47,10 @@ async function redirectToLogin(): Promise<never> {
 }
 
 export async function markArticleReadAction(articleId: string): Promise<"saved" | "unauthenticated" | "failed"> {
-  if (!articleId) return "saved";
-  const userId = await getVerifiedUserId();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(articleId)) {
+    return "failed";
+  }
+  const userId = await getArticleReadUserId();
 
   // 읽음 저장과 클릭 수 증가는 한 번의 DB RPC에서 처리해 네트워크 왕복과 저장 상태 불일치를 줄인다.
   // 읽음 처리는 열람(누구나 자유)에 곁들여지는 부수 효과라, 로그인 안 한 사람은 로그인으로 보내는 대신
@@ -41,7 +59,17 @@ export async function markArticleReadAction(articleId: string): Promise<"saved" 
     await markArticleReadAndIncrementClickCount(userId, articleId);
   } catch (error) {
     console.error("markArticleReadAction 부분 실패:", error);
-    return userId ? "failed" : "unauthenticated";
+    if (!userId) return "unauthenticated";
+
+    // The click counter RPC and read-state upsert are atomic. If the RPC itself is unavailable,
+    // retry the user's read state directly so a click still survives a feed refresh.
+    try {
+      await markArticleRead(userId, articleId);
+      return "saved";
+    } catch (fallbackError) {
+      console.error("markArticleReadAction 읽음 상태 fallback 실패:", fallbackError);
+      return "failed";
+    }
   }
   // 주의: 여기서 revalidatePath("/")를 호출하면 기사 클릭 시 열린 인터셉트 모달(@modal)이
   // 활성 경로(/articles/[id])의 서버 재검증(refresh)에 의해 파괴되어 전체 페이지로 튕기는 버그가 발생함.
@@ -61,7 +89,7 @@ export async function markArticleReadFallbackAction(articleId: string): Promise<
     return "failed";
   }
   try {
-    const userId = await getVerifiedUserId();
+    const userId = await getArticleReadUserId();
     if (!userId) return "unauthenticated";
     await markArticleRead(userId, articleId);
     return "saved";

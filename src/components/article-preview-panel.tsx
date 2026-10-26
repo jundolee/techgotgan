@@ -105,12 +105,6 @@ export function ArticlePreviewPanel({
     return () => { cancelled = true; };
   }, [currentArticle.id, currentRelated.length, initialRelated.length]);
 
-  useEffect(() => {
-    void markArticleReadFallbackAction(currentArticle.id).then((result) => {
-      if (result === "failed") console.error("모달을 연 글의 읽음 상태 저장을 재시도하지 못했습니다.");
-    });
-  }, [currentArticle.id]);
-
   const isClosingRef = useRef(false);
 
   const dragStartYRef = useRef<number | null>(null);
@@ -155,10 +149,20 @@ export function ArticlePreviewPanel({
       bodyRef.current?.scrollTo({ top: 0, behavior: "instant" });
       startTransition(async () => {
         try {
-          const result = await markArticleReadAction(articleId);
-          if (result !== "saved") console.error("관련 글 읽음 상태를 저장하지 못했습니다.", result);
+          let result = await markArticleReadAction(articleId);
+          if (result === "failed") result = await markArticleReadFallbackAction(articleId);
+          if (result !== "saved" && result !== "unauthenticated") {
+            console.error("관련 글 읽음 상태 저장에 실패했습니다.", result);
+          }
         } catch (error) {
-          console.error("관련 글 읽음 상태 저장 실패:", error);
+          try {
+            const result = await markArticleReadFallbackAction(articleId);
+            if (result !== "saved" && result !== "unauthenticated") {
+              console.error("관련 글 읽음 상태 fallback 저장에 실패했습니다.", result);
+            }
+          } catch (fallbackError) {
+            console.error("관련 글 읽음 상태 저장 실패:", error, fallbackError);
+          }
         }
       });
 
