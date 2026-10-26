@@ -30,15 +30,15 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
       article_title: articleTitle,
     });
     onRead?.(articleId);
-    // Server Action은 React transition 안에서 실행한다. 실패하거나 로그인되지 않은 경우에는
-    // 낙관적으로 바꾼 목록 상태를 되돌려 새로고침 전후 표시가 달라지지 않게 한다.
+    // Server Action은 React transition 안에서 실행한다. 로그인되지 않은 경우만 읽음 표시를 되돌린다.
+    // 로그인 사용자의 저장 실패는 모달 라우트의 멱등 fallback이 재시도하므로 UI 상태를 유지한다.
     startTransition(async () => {
       try {
         const result = await markArticleReadAction(articleId);
-        if (result !== "saved") onReadChange?.(articleId, false);
+        if (result === "unauthenticated") onReadChange?.(articleId, false);
+        if (result === "failed") console.error("글 읽음 상태 저장이 지연되었습니다. 모달 라우트에서 재시도합니다.");
       } catch (error) {
-        onReadChange?.(articleId, false);
-        console.error("글 읽음 상태 저장 실패:", error);
+        console.error("글 읽음 상태 저장이 지연되었습니다. 모달 라우트에서 재시도합니다.", error);
       }
     });
   };
