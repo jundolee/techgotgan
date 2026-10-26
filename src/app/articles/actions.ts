@@ -70,6 +70,16 @@ export async function getArticlePreviewAction(articleId: string): Promise<{
   return { article, related };
 }
 
+export async function getRelatedArticlesAction(articleId: string): Promise<RelatedArticle[]> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(articleId)) {
+    return [];
+  }
+  const initialRelated = await getRelatedArticles(articleId);
+  if (initialRelated.length > 0) return initialRelated;
+  const article = await getArticlePreview(articleId);
+  return article ? getRelatedArticles(article.id, article.category, article.tags) : [];
+}
+
 export async function markArticleUnreadAction(formData: FormData): Promise<"ok" | "unauthenticated"> {
   const id = String(formData.get("id") ?? "");
   if (!id) return "ok";

@@ -6,7 +6,7 @@ import { Badge, Text } from "@seed-design/react";
 import { RelatedArticleList } from "@/components/related-article-list";
 import { ArticleSummaryCopy } from "@/components/article-summary-copy";
 import { ShareButton } from "@/components/share-button";
-import { getArticlePreviewAction, markArticleReadAction } from "@/app/articles/actions";
+import { getArticlePreviewAction, getRelatedArticlesAction, markArticleReadAction } from "@/app/articles/actions";
 import { CATEGORY_MAP, type CategoryId } from "@/lib/categories";
 import { cleanKeyPoint } from "@/lib/summary-utils";
 import type { ArticlePreview, RelatedArticle } from "@/lib/data/related-articles";
@@ -76,6 +76,7 @@ export function ArticlePreviewPanel({
   const [overrideArticle, setOverrideArticle] = useState<ArticlePreview | null>(null);
   const [overrideRelated, setOverrideRelated] = useState<RelatedArticle[] | null>(null);
   const [prevInitialId, setPrevInitialId] = useState(initialArticle.id);
+  const relatedLoadStartedForRef = useRef<string | null>(null);
 
   if (initialArticle.id !== prevInitialId) {
     setPrevInitialId(initialArticle.id);
@@ -86,6 +87,18 @@ export function ArticlePreviewPanel({
   const currentArticle = overrideArticle ?? initialArticle;
   const currentRelated = overrideRelated ?? initialRelated;
   const [isLoadingRelated, setIsLoadingRelated] = useState(false);
+
+  useEffect(() => {
+    if (initialRelated.length > 0 || currentRelated.length > 0 || relatedLoadStartedForRef.current === currentArticle.id) return;
+    relatedLoadStartedForRef.current = currentArticle.id;
+    let cancelled = false;
+    getRelatedArticlesAction(currentArticle.id)
+      .then((related) => {
+        if (!cancelled) setOverrideRelated(related);
+      })
+      .catch((error) => console.error("Failed to load related article previews:", error));
+    return () => { cancelled = true; };
+  }, [currentArticle.id, currentRelated.length, initialRelated.length]);
 
   const isClosingRef = useRef(false);
 
