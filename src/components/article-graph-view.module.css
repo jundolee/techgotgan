@@ -1,0 +1,48 @@
+.explorer { display:grid; grid-template-columns:minmax(0,1fr) 270px; min-height:570px; overflow:hidden; color:#d9dee8; background:#171a21; border:1px solid #2a2f39; border-radius:15px; box-shadow:0 16px 50px #12151c22; }
+.graphPane { min-width:0; display:flex; flex-direction:column; }
+.graphTopline { display:flex; justify-content:space-between; gap:12px; padding:14px 18px; color:#8992a1; border-bottom:1px solid #2a2f39; font:10px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.08em; }
+.canvas { position:relative; min-width:0; height:560px; background-color:#171a21; background-image:radial-gradient(#3b414d 1px,transparent 1px); background-size:22px 22px; }
+.svg { display:block; width:100%; height:100%; overflow:visible; }
+.edge { fill:none; stroke-width:1.2; opacity:.62; }
+.edge_semantic { stroke:#789f8c; }
+.edge_topic { stroke:#8093ae; }
+.edge_unscored { stroke:#b28e5c; stroke-dasharray:2 3; }
+.edge_related { stroke:#737887; stroke-dasharray:3 4; }
+.graphNode { cursor:pointer; outline:none; }
+.hitArea { fill:transparent; }
+.nodeDot { stroke:#171a21; stroke-width:2; transition:r .15s ease,filter .15s ease; }
+.nodeHalo { fill:none; stroke:#edaa7a; stroke-width:1; opacity:.62; }
+.graphNode:hover .nodeDot,.graphNode:focus .nodeDot { filter:drop-shadow(0 0 7px #edaa7aaa); }
+.graphNode:focus .nodeHalo { stroke-width:2; }
+.label,.activeLabel { fill:#929baa; font:12px/1.3 -apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif; pointer-events:none; }
+.activeLabel { fill:#f2c2a2; font-weight:600; }
+.legend { position:absolute; left:16px; bottom:14px; display:flex; flex-wrap:wrap; gap:12px; padding:9px 11px; color:#9aa2ae; background:#20242c; border:1px solid #333945; border-radius:8px; font-size:11px; }
+.legend span { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+.legend i { width:7px; height:7px; border-radius:50%; background:#9a9da9; }
+.legend .legendCurrent { background:#e38b54; }.legend .legendSemantic { background:#8bb7a1; }.legend .legendOther { background:#8da4bf; }
+.legend .legendUnscored { background:#c4a36e; }
+.inspector { display:flex; flex-direction:column; align-items:flex-start; gap:12px; padding:24px 20px; background:#1d2028; border-left:1px solid #2a2f39; }
+.inspectorKicker { color:#e39a6d; font:10px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; text-transform:uppercase; letter-spacing:.08em; }
+.source { margin:0; color:#8992a1; font-size:12px; line-height:1.5; }
+.inspector h2 { margin:0; color:#edf0f5; font-size:17px; line-height:1.5; overflow-wrap:anywhere; }
+.relationship { margin:0; color:#a8afbb; font-size:13px; line-height:1.7; }
+.score { margin:0; color:#c9d1dc; font-size:13px; }.score strong { margin-left:6px; color:#9bc5ac; font:600 15px ui-monospace,SFMono-Regular,Menlo,monospace; }.score span { color:#8992a1; font-size:11px; }
+.insight { width:100%; display:flex; flex-direction:column; gap:8px; margin-top:4px; padding:12px; border-left:2px solid #8bb7a1; background:#232831; border-radius:0 8px 8px 0; }
+.insight > span { color:#a9cfb9; font-size:11px; font-weight:700; }
+.insight p { margin:0; color:#e0e4eb; font-size:13px; line-height:1.6; }
+.insight blockquote { margin:0; color:#aab2be; font-size:11px; line-height:1.55; }
+.insight small { color:#87909e; font-size:10px; line-height:1.5; }
+.insightUnavailable { margin:0; color:#8992a1; font-size:11px; line-height:1.6; }
+.actions { display:flex; flex-direction:column; align-items:flex-start; gap:12px; margin-top:8px; }
+.primaryAction { padding:9px 12px; color:#211913; background:#e8a071; border-radius:7px; font-size:12px; font-weight:700; text-decoration:none; }
+.primaryAction:hover { background:#f0b389; }
+.secondaryAction { color:#a8afbb; font-size:12px; text-decoration:underline; text-underline-offset:3px; }
+@media(max-width:800px) { .explorer { grid-template-columns:minmax(0,1fr) 230px; } }
+@media(max-width:640px) {
+  .explorer { grid-template-columns:1fr; }
+  .canvas { height:430px; }
+  .inspector { border-left:0; border-top:1px solid #2a2f39; padding:18px; }
+  .actions { flex-direction:row; flex-wrap:wrap; align-items:center; }
+  .legend { gap:9px; left:10px; bottom:10px; font-size:10px; }
+}
+@media(prefers-reduced-motion:reduce) { .nodeDot { transition:none; } }

@@ -753,6 +753,7 @@ export function ArticlePreviewPanel({
               {/* 4. [지식 확장] AI 벡터 시맨틱 연관 기사 리스트 */}
               <div style={{ borderTop: "1px solid var(--seed-color-stroke-neutral-subtle)", paddingTop: 16 }}>
                 <RelatedArticleList
+                  articleId={currentArticle.id}
                   items={currentRelated.map((item) => ({ ...item, href: `/articles/${encodeURIComponent(item.id)}` }))}
                   onSelectArticle={handleSelectRelated}
                 />

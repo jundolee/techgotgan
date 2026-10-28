@@ -41,3 +41,12 @@ export function trackShareActionCompleted(
     share_surface: surface,
   });
 }
+
+/** Measure graph exploration without collecting article IDs, titles, or search text. */
+export function trackArticleGraphInteraction(
+  action: "node_selected" | "neighbors_loaded" | "detail_opened" | "insight_shown",
+  properties: { node_kind?: string; graph_size?: number; added_nodes?: number; added_edges?: number }
+): void {
+  if (process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" || !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY) return;
+  track("article_graph_interaction", { action, ...properties });
+}

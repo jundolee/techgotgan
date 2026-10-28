@@ -37,9 +37,11 @@ function categoryLabel(category: string | null): string | null {
 export function RelatedArticleList({
   items,
   onSelectArticle,
+  articleId,
 }: {
   items: RelatedArticleListItem[];
   onSelectArticle?: (articleId: string) => void;
+  articleId?: string;
 }) {
   if (items.length === 0) return null;
 
@@ -60,6 +62,12 @@ export function RelatedArticleList({
       <Text as="p" textStyle="t2Regular" color={MUTED} style={{ marginBottom: 12 }}>
         {hasSemantic ? "AI 벡터 임베딩으로 분석한 기술적 연관 글이에요." : "주제나 기술 맥락이 닿는 글이에요."}
       </Text>
+
+      {articleId && (
+        <Link href={`/articles/${encodeURIComponent(articleId)}/connections`} style={{ display: "inline-block", marginBottom: 12, color: "var(--seed-color-fg-brand)", textDecoration: "underline" }}>
+          글 연결 그래프 보기 →
+        </Link>
+      )}
 
       <ul style={{ listStyle: "none", display: "flex", flexDirection: "column" }}>
         {items.map((item) => {
