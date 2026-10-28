@@ -11,6 +11,7 @@ export interface RelatedArticle {
   id: string;
   title: string;
   sourceTitle: string | null;
+  excerpt: string | null;
   category: string;
   publishedAt: string | null;
   similarityScore?: number | null;
@@ -34,6 +35,7 @@ export interface ArticlePreview {
 interface RelatedArticleRow {
   id: string;
   title: string;
+  excerpt: string | null;
   category: string;
   tags: string[] | null;
   published_at: string | null;
@@ -43,9 +45,10 @@ interface RelatedArticleRow {
     | null;
 }
 
-const MAX_RELATED_ARTICLES = 3;
+const DEFAULT_RELATED_ARTICLES = 3;
+const MAX_RELATED_ARTICLES = 12;
 const TAG_OVERLAP_CANDIDATE_LIMIT = 200;
-const RELATED_ARTICLE_SELECT = "id,title,category,tags,published_at,source:sources(title)";
+const RELATED_ARTICLE_SELECT = "id,title,excerpt,category,tags,published_at,source:sources(title)";
 
 export async function getArticlePreview(articleId: string): Promise<ArticlePreview | null> {
   const supabase = createServiceClient();
@@ -119,7 +122,7 @@ export async function getArticlePreview(articleId: string): Promise<ArticlePrevi
 }
 
 function getSafeLimit(limit?: number): number {
-  if (limit === undefined || !Number.isFinite(limit)) return MAX_RELATED_ARTICLES;
+  if (limit === undefined || !Number.isFinite(limit)) return DEFAULT_RELATED_ARTICLES;
   return Math.min(MAX_RELATED_ARTICLES, Math.max(0, Math.trunc(limit)));
 }
 
@@ -148,6 +151,7 @@ function toRelatedArticle(row: RelatedArticleRow): RelatedArticle {
     id: row.id,
     title: row.title,
     sourceTitle: source?.title ?? null,
+    excerpt: row.excerpt,
     category: row.category,
     publishedAt: row.published_at,
   };
@@ -200,6 +204,7 @@ export async function getRelatedArticles(
           id: row.related_article_id,
           title: row.title,
           sourceTitle: row.source_title,
+          excerpt: row.excerpt,
           category: row.category ?? "general",
           publishedAt: row.published_at,
           similarityScore: row.score,
