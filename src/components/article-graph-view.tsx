@@ -229,7 +229,7 @@ export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, exp
         <p>{selectedInsight.explanation}</p>
         {selectedInsight.currentEvidence && <blockquote>“{selectedInsight.currentEvidence}”</blockquote>}
         {selectedInsight.relatedEvidence && <blockquote>“{selectedInsight.relatedEvidence}”</blockquote>}
-        <small>OpenAI가 공개된 글 발췌를 비교해 작성했습니다. 인용이 연결 설명의 근거입니다.</small>
+        <small>OpenAI가 공개된 글의 제목과 발췌를 비교했습니다. 표시된 인용이 설명의 근거입니다.</small>
       </section>}
       {!selectedInsight && selectedInsightEdge && <button type="button" className={styles.primaryAction} disabled={insightLoading} onClick={() => void explainSelectedConnection()}>{insightLoading ? "근거 비교 중…" : "왜 연결됐나요?"}</button>}
       {insightMessage && <p className={styles.insightUnavailable} role="status">{insightMessage}</p>}
