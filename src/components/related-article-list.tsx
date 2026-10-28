@@ -63,7 +63,7 @@ export function RelatedArticleList({
         {hasSemantic ? "내용이 비슷한 글을 먼저 보여드려요. 같은 문제나 해결책을 다룬다는 뜻은 아니에요." : "같은 주제나 기술 태그의 글이에요. 최근 글이 먼저 보일 수 있어요."}
       </Text>
 
-      {articleId && (
+      {articleId && (process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_ARTICLE_CONNECTION_ENABLED === "true") && (
         <Link href={`/articles/${encodeURIComponent(articleId)}/connections`} style={{ display: "inline-block", marginBottom: 12, color: "var(--seed-color-fg-brand)", textDecoration: "underline" }}>
           글 연결 그래프 보기 →
         </Link>

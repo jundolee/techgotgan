@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 import { PageHeader } from "@/components/page-header";
 import { getArticlePreview, getRelatedArticles } from "@/lib/data/related-articles";
@@ -19,6 +19,9 @@ export default async function ArticleConnectionsPage({ params, searchParams }: {
 }) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();
+  if (process.env.NODE_ENV !== "development" && process.env.NEXT_PUBLIC_ARTICLE_CONNECTION_ENABLED !== "true") {
+    redirect(`/articles/${encodeURIComponent(id)}`);
+  }
   await connection();
   const { trail } = await searchParams;
   const previousIds = typeof trail === "string" ? trail.split(",").filter((value) => UUID.test(value) && value !== id).slice(-LIMIT) : [];
