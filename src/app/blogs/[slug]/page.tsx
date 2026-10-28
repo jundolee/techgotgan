@@ -128,6 +128,17 @@ export default async function BlogPage({ params }: BlogPageProps) {
         </a>
       </header>
 
+      {hub.host === "toss.tech" && (
+        <aside aria-label="취업 준비 가이드" style={{ border: "1px solid var(--seed-color-stroke-neutral-subtle)", borderRadius: 12, padding: 16 }}>
+          <Text as="p" textStyle="t4Regular" color="fg.neutral">
+            토스 프론트엔드 지원을 준비하고 있나요? 공개 기술 글과 함께 읽어볼 질문을 모았습니다.
+          </Text>
+          <Link href="/careers/toss-frontend" style={{ display: "inline-block", marginTop: 8, textDecoration: "underline" }}>
+            지원 전 읽기 가이드 보기 →
+          </Link>
+        </aside>
+      )}
+
       <section aria-labelledby="latest-articles">
         <Text as="h2" id="latest-articles" textStyle="t6Bold" color="fg.neutral" style={{ marginBottom: 16 }}>
           최신 글
