@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { createServiceClient } from "@/lib/supabase/service";
 
 const MODEL = "gpt-5.6-luna";
-const PROMPT_VERSION = "2026-10-28-evidence-checked-v2";
+const PROMPT_VERSION = "2026-10-28-evidence-checked-v3";
 const MAX_ARTICLES_PER_REQUEST = 12;
 const cache = new Map<string, { expiresAt: number; value: ArticleConnectionInsight | null }>();
 
@@ -170,7 +170,9 @@ export async function explainArticleConnections(
       const relation = hasEvidence && ["shared_problem", "shared_approach", "complementary", "contrast"].includes(String(raw.relation)) ? raw.relation as ArticleConnectionInsight["relation"] : "insufficient_evidence";
       const value: ArticleConnectionInsight = {
         relation,
-        explanation: hasEvidence ? raw.explanation.slice(0, 260) : "두 글의 발췌에서 연결 근거를 확인하지 못했습니다.",
+        explanation: hasEvidence || relation === "insufficient_evidence"
+          ? raw.explanation.slice(0, 260)
+          : "두 글의 발췌에서 연결 근거를 확인하지 못했습니다.",
         currentEvidence,
         relatedEvidence,
       };
