@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       const { data, error } = await (await import("@/lib/supabase/service")).createServiceClient().rpc("consume_article_connection_insight_request", {
         requested_day: usageDay,
         requested_hash: requesterHash,
-        daily_limit: 12,
+        daily_limit: 30,
       });
       if (error || data !== true) { rateLimited = true; return false; }
       return true;
