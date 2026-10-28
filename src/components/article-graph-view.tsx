@@ -25,6 +25,8 @@ export interface ArticleConnectionInsight {
   explanation: string;
   currentEvidence: string | null;
   relatedEvidence: string | null;
+  currentEvidenceSource: "title" | "excerpt";
+  relatedEvidenceSource: "title" | "excerpt";
 }
 
 interface Position { x: number; y: number; angle: number; }
@@ -47,7 +49,7 @@ function relationLabel(relation: ArticleConnectionInsight["relation"]): string {
     shared_approach: "공통 접근",
     complementary: "서로 보완하는 사례",
     contrast: "다른 접근",
-    insufficient_evidence: "근거 부족",
+    insufficient_evidence: "확인된 연결 근거 없음",
   };
   return labels[relation];
 }
@@ -227,9 +229,9 @@ export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, exp
       {selectedInsight && <section className={styles.insight} aria-label="두 글의 연결 설명">
         <span>{relationLabel(selectedInsight.relation)}</span>
         <p>{selectedInsight.explanation}</p>
-        {selectedInsight.currentEvidence && <blockquote>“{selectedInsight.currentEvidence}”</blockquote>}
-        {selectedInsight.relatedEvidence && <blockquote>“{selectedInsight.relatedEvidence}”</blockquote>}
-        <small>{selectedInsight.currentEvidence && selectedInsight.relatedEvidence ? "공개된 제목과 발췌에서 확인한 문장을 근거로 사용했습니다." : "제목과 발췌를 비교했지만 직접 인용할 근거는 확인되지 않았습니다."}</small>
+        {selectedInsight.currentEvidence && <blockquote><b>{selectedInsight.currentEvidenceSource === "title" ? "현재 글 제목" : "현재 글 발췌"}</b><br />“{selectedInsight.currentEvidence}”</blockquote>}
+        {selectedInsight.relatedEvidence && <blockquote><b>연결 글 {selectedInsight.relatedEvidenceSource === "title" ? "제목" : "발췌"}</b><br />“{selectedInsight.relatedEvidence}”</blockquote>}
+        <small>{selectedInsight.currentEvidenceSource === "title" || selectedInsight.relatedEvidenceSource === "title" ? "제목에서 확인한 단서만으로 세부 해결 관계를 확정하지 않습니다." : "두 글의 공개 발췌에서 확인한 인용입니다."}</small>
       </section>}
       {!selectedInsight && selectedInsightEdge && <button type="button" className={styles.primaryAction} disabled={insightLoading} onClick={() => void explainSelectedConnection()}>{insightLoading ? "근거 비교 중…" : "왜 연결됐나요?"}</button>}
       {insightMessage && <p className={styles.insightUnavailable} role="status">{insightMessage}</p>}
