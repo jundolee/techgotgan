@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (process.env.NODE_ENV !== "development" && process.env.NEXT_PUBLIC_ARTICLE_CONNECTION_ENABLED !== "true") return new Response(null, { status: 404 });
   await connection();
   const { id } = await params;
   if (!UUID.test(id)) return NextResponse.json({ error: "Invalid article id" }, { status: 400 });
