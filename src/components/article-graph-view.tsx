@@ -45,11 +45,11 @@ function nodeColor(kind: ArticleGraphNode["kind"]): string {
 
 function relationLabel(relation: ArticleConnectionInsight["relation"]): string {
   const labels: Record<ArticleConnectionInsight["relation"], string> = {
-    shared_problem: "공통 문제",
-    shared_approach: "공통 접근",
-    complementary: "서로 보완하는 사례",
-    contrast: "다른 접근",
-    insufficient_evidence: "확인된 연결 근거 없음",
+    shared_problem: "같은 문제를 다뤄요",
+    shared_approach: "비슷한 방식으로 풀었어요",
+    complementary: "서로 보완되는 글이에요",
+    contrast: "다른 해결 방식을 비교해요",
+    insufficient_evidence: "직접 연결은 확인되지 않았어요",
   };
   return labels[relation];
 }
@@ -80,16 +80,16 @@ export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, exp
   const titleOverlap = selectedInsight?.relation === "insufficient_evidence" && selectedInsight.currentEvidenceSource === "title" && selectedInsight.relatedEvidenceSource === "title" && insightSourceNode
     ? commonSpecificTitleTerms(insightSourceNode.title, selected.title)
     : [];
-  const insightLabel = selectedInsight && titleOverlap.length >= 2 ? "제목 수준의 공통 과업" : selectedInsight && titleOverlap.length === 1 ? "넓은 주제의 겹침" : selectedInsight ? relationLabel(selectedInsight.relation) : null;
+  const insightLabel = selectedInsight && titleOverlap.length >= 2 ? "제목에 공통 과업이 있어요" : selectedInsight && titleOverlap.length === 1 ? "넓은 주제가 겹쳐요" : selectedInsight ? relationLabel(selectedInsight.relation) : null;
 
   async function explainSelectedConnection() {
     if (!selectedInsightEdge || insightLoading) return;
     if (!explanationsAvailable) {
-      setInsightMessage("로컬 개발환경에 OPENAI_API_KEY가 없어 연결 설명을 생성하지 않았습니다.");
+      setInsightMessage("지금은 연결 이유를 불러올 수 없어요. 잠시 후 다시 시도해 주세요.");
       return;
     }
     setInsightLoading(true);
-    setInsightMessage("두 글의 공개 발췌를 비교하고 근거를 확인하는 중입니다.");
+    setInsightMessage("두 글을 비교해 보고 있어요…");
     try {
       const response = await fetch("/api/article-graph-insight", {
         method: "POST",
@@ -97,16 +97,16 @@ export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, exp
         body: JSON.stringify({ sourceId: selectedInsightEdge.from, relatedId: selectedInsightEdge.to }),
       });
       const result = await response.json() as { insight?: ArticleConnectionInsight | null; error?: string; rateLimited?: boolean };
-      if (!response.ok) throw new Error(result.error ?? "연결 설명을 불러오지 못했습니다.");
+      if (!response.ok) throw new Error(result.error ?? "연결 이유를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
       if (!result.insight) {
-        setInsightMessage(result.rateLimited ? "오늘의 AI 연결 설명 요청 한도에 도달했습니다." : "공개 발췌가 부족하거나 연결 근거를 확인하지 못했습니다.");
+        setInsightMessage(result.rateLimited ? "오늘은 연결 설명을 모두 사용했어요. 그래프에서 글은 계속 둘러볼 수 있어요." : "두 글의 소개만으로 연결 이유를 확인하기 어려워요.");
         return;
       }
       setEdges((current) => current.map((edge) => edge.from === selectedInsightEdge.from && edge.to === selectedInsightEdge.to ? { ...edge, insight: result.insight } : edge));
       setInsightMessage("");
       trackArticleGraphInteraction("insight_shown", { graph_size: nodes.length });
     } catch (error) {
-      setInsightMessage(error instanceof Error ? error.message : "연결 설명을 불러오지 못했습니다.");
+      setInsightMessage(error instanceof Error ? error.message : "연결 이유를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
     } finally {
       setInsightLoading(false);
     }
@@ -117,10 +117,10 @@ export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, exp
     trackArticleGraphInteraction("node_selected", { node_kind: node.kind, graph_size: nodes.length });
     if (expandedIds.has(node.id) || loadingIds.has(node.id)) return;
     setLoadingIds((current) => new Set(current).add(node.id));
-    setLoadMessage(`“${node.title}”의 연결을 불러오는 중입니다.`);
+    setLoadMessage(`“${node.title}”와 이어지는 글을 찾고 있어요…`);
     try {
       const response = await fetch(`/api/article-graph/${encodeURIComponent(node.id)}`, { cache: "no-store" });
-      if (!response.ok) throw new Error(`연결 데이터를 불러오지 못했습니다 (${response.status}).`);
+      if (!response.ok) throw new Error(`이 글과 이어지는 글을 불러오지 못했어요. 다시 눌러 주세요.`);
       const result = await response.json() as { nodes: ArticleGraphNode[]; edges: ArticleGraphEdge[] };
       const knownNodes = new Set(nodes.map((item) => item.id));
       const knownEdges = new Set(edges.map((edge) => `${edge.from}:${edge.to}`));
@@ -138,9 +138,9 @@ export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, exp
         return [...byPair.values()];
       });
       setExpandedIds((current) => new Set(current).add(node.id));
-      setLoadMessage(newNodeCount || newEdgeCount ? `새 글 ${newNodeCount}편과 연결 ${newEdgeCount}개를 그래프에 추가했습니다.` : "새 글이나 연결이 추가되지 않았습니다. 다른 노드를 펼쳐보세요.");
+      setLoadMessage(newNodeCount || newEdgeCount ? `새 글 ${newNodeCount}편을 찾았어요.` : "새로 찾은 글이 없어요. 다른 점을 눌러 살펴보세요.");
     } catch (error) {
-      setLoadMessage(error instanceof Error ? error.message : "연결 데이터를 불러오지 못했습니다.");
+      setLoadMessage(error instanceof Error ? error.message : "이 글과 이어지는 글을 불러오지 못했어요.");
     } finally {
       setLoadingIds((current) => { const next = new Set(current); next.delete(node.id); return next; });
     }
@@ -198,7 +198,7 @@ export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, exp
 
   return <section className={styles.explorer} aria-label="글 연결 그래프 탐색">
     <div className={styles.graphPane}>
-      <div className={styles.graphTopline}><span>GRAPH VIEW</span><span>{nodes.length} NOTES · {edges.length} LINKS</span></div>
+      <div className={styles.graphTopline}><span>글 연결</span><span>글 {nodes.length}편 · 연결 {edges.length}개</span></div>
       <div className={styles.canvas} ref={canvasRef}>
         <svg className={styles.svg} viewBox={`0 0 ${size.width} ${size.height}`} role="group" aria-label={`현재 글 ${nodes.length}편과 연결 ${edges.length}개`}>
           <defs><radialGradient id="graphGlow"><stop offset="0" stopColor="#e38b54" stopOpacity=".2"/><stop offset="1" stopColor="#e38b54" stopOpacity="0"/></radialGradient></defs>
@@ -218,7 +218,7 @@ export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, exp
             if (!position) return null;
             const active = node.id === selectedId;
             const radius = node.kind === "current" ? 9 : active ? 8 : 6;
-            return <g key={node.id} className={`${styles.graphNode} ${active ? styles.selected : ""}`} role="button" tabIndex={0} aria-pressed={active} aria-label={`${node.title}, 그래프 중심으로 선택`} onClick={() => selectNode(node)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selectNode(node); } }}>
+            return <g key={node.id} className={`${styles.graphNode} ${active ? styles.selected : ""}`} role="button" tabIndex={0} aria-pressed={active} aria-label={`${node.title}, 이어 읽을 글 보기`} onClick={() => selectNode(node)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selectNode(node); } }}>
               <title>{node.title} · {node.sourceTitle ?? "출처 미상"}</title>
               <circle cx={position.x} cy={position.y} r={radius + 12} className={styles.hitArea} />
               {active && <circle cx={position.x} cy={position.y} r={radius + 5} className={styles.nodeHalo} />}
@@ -227,28 +227,27 @@ export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, exp
             </g>;
           })}
         </svg>
-        <div className={styles.legend} aria-label="노드 구분">
-          <span><i className={styles.legendCurrent} />현재 글</span><span><i className={styles.legendSemantic} />Pinecone 점수 있음</span><span><i className={styles.legendOther} />주제 추천</span><span><i className={styles.legendUnscored} />점수 미제공</span>
+        <div className={styles.legend} aria-label="글 연결 표시">
+          <span><i className={styles.legendCurrent} />지금 보는 글</span><span><i className={styles.legendSemantic} />내용이 비슷한 글</span><span><i className={styles.legendOther} />같은 주제 글</span><span><i className={styles.legendUnscored} />함께 볼 글</span>
         </div>
       </div>
     </div>
     <aside className={styles.inspector} aria-live="polite">
-      <span className={styles.inspectorKicker}>{selectedId === nodes[0]?.id ? "시작 글 · 그래프 중심" : "선택한 글 · 그래프 중심"}</span>
+      <span className={styles.inspectorKicker}>{selectedId === nodes[0]?.id ? "지금 보고 있는 글" : "선택한 글"}</span>
       <p className={styles.source}>{selected.sourceTitle ?? "출처 미상"}</p>
       <h2>{selected.title}</h2>
-      <p className={styles.relationship}>{selected.kind === "current" ? "노드를 클릭하면 페이지를 이동하지 않고 그 글의 이웃을 그래프에 불러옵니다." : selected.kind === "semantic" ? "Pinecone 의미 검색 결과입니다. 점수는 글 표현의 유사도이며, 관계의 정확도나 확률은 아닙니다." : selected.kind === "topic" ? "Pinecone 후보가 부족해 같은 주제·태그에서 보충한 글입니다. 최신 글이 먼저 보일 수 있습니다." : selected.kind === "unscored" ? "의미 검색 목록에 있지만 표시 가능한 유사도 점수가 없습니다." : "추천 연결 정보가 제한되어 유사도 점수를 제공하지 않습니다."}</p>
-      {selected.similarityScore !== null && selected.similarityScore !== undefined && <p className={styles.score}>Pinecone 점수 <strong>{selected.similarityScore.toFixed(2)}</strong><span> · 확률값이 아님</span></p>}
+      <p className={styles.relationship}>{selected.kind === "current" ? "주변의 점을 눌러 다른 글을 둘러보세요. 선택한 글을 중심으로 연결이 이어집니다." : selected.kind === "semantic" ? "글 제목과 소개 내용이 비슷해 추천됐어요. 같은 문제를 다룬다고 확정된 것은 아니에요." : selected.kind === "topic" ? "같은 주제나 기술 태그의 글이에요. 최근 글이 먼저 보일 수 있어요." : selected.kind === "unscored" ? "내용이 관련 있을 수 있어 추천됐어요. 자세한 비교는 제공되지 않습니다." : "함께 읽어볼 만한 글로 추천됐어요."}</p>
       {selectedInsight && <section className={styles.insight} aria-label="두 글의 연결 설명">
         <span>{insightLabel}</span>
         <p>{selectedInsight.explanation}</p>
         {selectedInsight.currentEvidence && <blockquote><b>{selectedInsight.currentEvidenceSource === "title" ? "현재 글 제목" : "현재 글 발췌"}</b><br />“{selectedInsight.currentEvidence}”</blockquote>}
         {selectedInsight.relatedEvidence && <blockquote><b>연결 글 {selectedInsight.relatedEvidenceSource === "title" ? "제목" : "발췌"}</b><br />“{selectedInsight.relatedEvidence}”</blockquote>}
-        <small>{selectedInsight.currentEvidenceSource === "title" || selectedInsight.relatedEvidenceSource === "title" ? "제목에서 확인한 단서만으로 세부 해결 관계를 확정하지 않습니다." : "두 글의 공개 발췌에서 확인한 인용입니다."}</small>
+        <small>{selectedInsight.currentEvidenceSource === "title" || selectedInsight.relatedEvidenceSource === "title" ? "제목에서 찾은 공통점이에요. 구체적인 해결 방법까지 같다는 뜻은 아니에요." : "두 글의 소개에서 확인한 문장을 근거로 설명했어요."}</small>
       </section>}
-      {!selectedInsight && selectedInsightEdge && <button type="button" className={styles.primaryAction} disabled={insightLoading} onClick={() => void explainSelectedConnection()}>{insightLoading ? "근거 비교 중…" : "왜 연결됐나요?"}</button>}
+      {!selectedInsight && selectedInsightEdge && <button type="button" className={styles.primaryAction} disabled={insightLoading} onClick={() => void explainSelectedConnection()}>{insightLoading ? "글을 비교하고 있어요…" : "왜 함께 읽어볼까요?"}</button>}
       {insightMessage && <p className={styles.insightUnavailable} role="status">{insightMessage}</p>}
       <div className={styles.actions}>
-        {!expandedIds.has(selected.id) && <button type="button" className={styles.primaryAction} disabled={loadingIds.has(selected.id)} onClick={() => void selectNode(selected)}>{loadingIds.has(selected.id) ? "연결 불러오는 중…" : "이 글의 연결 펼치기"}</button>}
+        {!expandedIds.has(selected.id) && <button type="button" className={styles.primaryAction} disabled={loadingIds.has(selected.id)} onClick={() => void selectNode(selected)}>{loadingIds.has(selected.id) ? "이어 읽을 글을 찾고 있어요…" : "이어 읽을 글 더 보기"}</button>}
         <a className={styles.secondaryAction} href={selected.detailHref} onClick={() => trackArticleGraphInteraction("detail_opened", { node_kind: selected.kind, graph_size: nodes.length })}>글 상세 열기</a>
       </div>
       <p className={styles.liveStatus} aria-live="polite">{loadMessage}</p>
