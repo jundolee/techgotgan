@@ -51,16 +51,16 @@ export function RelatedArticleList({
     <section aria-labelledby="related-articles-heading" style={{ marginTop: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
         <Text as="h2" id="related-articles-heading" textStyle="t6Bold" color="fg.neutral" style={{ letterSpacing: "-0.02em" }}>
-          관련 기사
+          함께 읽을 글
         </Text>
         {hasSemantic && (
           <Badge size="medium" variant="weak" tone="brand">
-            AI 의미 연결
+            내용이 비슷해요
           </Badge>
         )}
       </div>
       <Text as="p" textStyle="t2Regular" color={MUTED} style={{ marginBottom: 12 }}>
-        {hasSemantic ? "AI 벡터 임베딩으로 분석한 기술적 연관 글이에요." : "주제나 기술 맥락이 닿는 글이에요."}
+        {hasSemantic ? "내용이 비슷한 글을 먼저 보여드려요. 같은 문제나 해결책을 다룬다는 뜻은 아니에요." : "같은 주제나 기술 태그의 글이에요. 최근 글이 먼저 보일 수 있어요."}
       </Text>
 
       {articleId && (
@@ -73,10 +73,6 @@ export function RelatedArticleList({
         {items.map((item) => {
           const category = categoryLabel(item.category);
           const publishedAt = formatDate(item.publishedAt);
-          const scorePercent = typeof item.similarityScore === "number"
-            ? Math.max(1, Math.min(99, Math.round(item.similarityScore * 100)))
-            : null;
-
           return (
             <li
               key={item.id}
@@ -99,9 +95,9 @@ export function RelatedArticleList({
                     {item.sourceTitle ?? "알 수 없는 소스"}
                     {category && ` · ${category}`}
                   </Text>
-                  {item.isSemanticMatch && scorePercent !== null && (
+                  {item.isSemanticMatch && (
                     <Badge size="medium" variant="outline" tone="brand">
-                      {`연관도 ${scorePercent}%`}
+                      내용 유사
                     </Badge>
                   )}
                 </div>
