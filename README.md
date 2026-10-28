@@ -6,6 +6,8 @@
 
 회사마다 흩어진 기술 블로그를 하나씩 확인하는 대신, 한곳에서 새 글을 검색하고 관심 있는 주제와 발행처를 살펴볼 수 있습니다. 검색과 글 열람은 가입 없이 바로 이용할 수 있습니다.
 
+기업의 기술 글로 지원을 준비하고 있다면 [토스 프론트엔드 지원 전 읽어볼 글](https://www.techgotgan.co.kr/careers/toss-frontend?utm_source=github&utm_medium=readme&utm_campaign=career_guide_toss_frontend)을 살펴보세요.
+
 ## 이렇게 이용할 수 있어요
 
 1. 홈에서 찾고 싶은 기술이나 도구를 검색합니다. 제목·요약·태그를 대상으로 여러 발행처의 글을 찾습니다.
