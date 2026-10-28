@@ -25,6 +25,7 @@ function toConnectionSource(article: {
 }
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV !== "development" && process.env.NEXT_PUBLIC_ARTICLE_CONNECTION_ENABLED !== "true") return new Response(null, { status: 404 });
   await connection();
   let body: { sourceId?: unknown; relatedId?: unknown };
   try {
