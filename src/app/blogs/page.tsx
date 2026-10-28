@@ -65,6 +65,10 @@ export default async function BlogsPage() {
         <Link href="/suggest">블로그 추가 제안</Link>
       </p>
 
+      <p className="blog-suggestion-note">
+        기업의 기술 글로 지원 준비하기: <Link href="/careers/toss-frontend">토스 프론트엔드 읽기 가이드 →</Link>
+      </p>
+
       <section aria-labelledby="blog-list">
         <Text as="h2" id="blog-list" textStyle="t6Bold" color="fg.neutral" style={{ marginBottom: 16 }}>
           활성 블로그 ({blogs.length})
