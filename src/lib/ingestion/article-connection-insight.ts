@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { createServiceClient } from "@/lib/supabase/service";
 
 const MODEL = "gpt-5.6-luna";
-const PROMPT_VERSION = "2026-10-28-evidence-checked-v6";
+const PROMPT_VERSION = "2026-10-28-evidence-checked-v7";
 const MAX_ARTICLES_PER_REQUEST = 12;
 const cache = new Map<string, { expiresAt: number; value: ArticleConnectionInsight | null }>();
 
@@ -62,10 +62,10 @@ function normalizedEvidence(value: string): string {
   return value.normalize("NFKC").replace(/\s+/gu, " ").trim();
 }
 
-function verifiedQuote(article: ConnectionSource, quote: unknown): string | null {
+function verifiedTextQuote(sourceText: string, quote: unknown): string | null {
   if (typeof quote !== "string" || !quote.trim()) return null;
   const normalizedQuote = normalizedEvidence(quote);
-  const source = normalizedEvidence(`${article.title} ${article.excerpt ?? ""}`);
+  const source = normalizedEvidence(sourceText);
   return normalizedQuote.length >= 8 && source.includes(normalizedQuote) ? normalizedQuote : null;
 }
 
@@ -172,13 +172,15 @@ export async function explainArticleConnections(
       const related = uncached.find((item) => item.id === raw.related_id);
       if (!related || typeof raw.explanation !== "string") continue;
       const quotes = typeof raw.explanation === "string" ? [...raw.explanation.matchAll(/[“"]([^”"]+)[”"]/gu)].map((match) => match[1]) : [];
-      const currentEvidence = verifiedQuote(current, raw.current_evidence) ?? quotes.map((quote) => verifiedQuote(current, quote)).find(Boolean) ?? (raw.relation === "insufficient_evidence" ? current.title : null);
-      const relatedEvidence = verifiedQuote(related, raw.related_evidence) ?? quotes.map((quote) => verifiedQuote(related, quote)).find(Boolean) ?? (raw.relation === "insufficient_evidence" ? related.title : null);
-      const hasEvidence = Boolean(currentEvidence && relatedEvidence);
-      const relation = hasEvidence && ["shared_problem", "shared_approach", "complementary", "contrast"].includes(String(raw.relation)) ? raw.relation as ArticleConnectionInsight["relation"] : "insufficient_evidence";
+      const currentSourceEvidence = verifiedTextQuote(current.excerpt ?? "", raw.current_evidence) ?? quotes.map((quote) => verifiedTextQuote(current.excerpt ?? "", quote)).find(Boolean) ?? null;
+      const relatedSourceEvidence = verifiedTextQuote(related.excerpt ?? "", raw.related_evidence) ?? quotes.map((quote) => verifiedTextQuote(related.excerpt ?? "", quote)).find(Boolean) ?? null;
+      const hasExcerptEvidence = Boolean(currentSourceEvidence && relatedSourceEvidence);
+      const currentEvidence = currentSourceEvidence ?? verifiedTextQuote(current.title, raw.current_evidence) ?? quotes.map((quote) => verifiedTextQuote(current.title, quote)).find(Boolean) ?? current.title.slice(0, 500);
+      const relatedEvidence = relatedSourceEvidence ?? verifiedTextQuote(related.title, raw.related_evidence) ?? quotes.map((quote) => verifiedTextQuote(related.title, quote)).find(Boolean) ?? related.title.slice(0, 500);
+      const relation = hasExcerptEvidence && ["shared_problem", "shared_approach", "complementary", "contrast"].includes(String(raw.relation)) ? raw.relation as ArticleConnectionInsight["relation"] : "insufficient_evidence";
       const value: ArticleConnectionInsight = {
         relation,
-        explanation: hasEvidence || relation === "insufficient_evidence"
+        explanation: hasExcerptEvidence || relation === "insufficient_evidence"
           ? raw.explanation.slice(0, 260)
           : "두 글의 발췌에서 연결 근거를 확인하지 못했습니다.",
         currentEvidence,
