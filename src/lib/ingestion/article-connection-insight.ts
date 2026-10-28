@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { createServiceClient } from "@/lib/supabase/service";
 
 const MODEL = "gpt-5.6-luna";
-const PROMPT_VERSION = "2026-10-28-evidence-checked-v5";
+const PROMPT_VERSION = "2026-10-28-evidence-checked-v6";
 const MAX_ARTICLES_PER_REQUEST = 12;
 const cache = new Map<string, { expiresAt: number; value: ArticleConnectionInsight | null }>();
 
@@ -172,8 +172,8 @@ export async function explainArticleConnections(
       const related = uncached.find((item) => item.id === raw.related_id);
       if (!related || typeof raw.explanation !== "string") continue;
       const quotes = typeof raw.explanation === "string" ? [...raw.explanation.matchAll(/[“"]([^”"]+)[”"]/gu)].map((match) => match[1]) : [];
-      const currentEvidence = verifiedQuote(current, raw.current_evidence) ?? quotes.map((quote) => verifiedQuote(current, quote)).find(Boolean) ?? null;
-      const relatedEvidence = verifiedQuote(related, raw.related_evidence) ?? quotes.map((quote) => verifiedQuote(related, quote)).find(Boolean) ?? null;
+      const currentEvidence = verifiedQuote(current, raw.current_evidence) ?? quotes.map((quote) => verifiedQuote(current, quote)).find(Boolean) ?? (raw.relation === "insufficient_evidence" ? current.title : null);
+      const relatedEvidence = verifiedQuote(related, raw.related_evidence) ?? quotes.map((quote) => verifiedQuote(related, quote)).find(Boolean) ?? (raw.relation === "insufficient_evidence" ? related.title : null);
       const hasEvidence = Boolean(currentEvidence && relatedEvidence);
       const relation = hasEvidence && ["shared_problem", "shared_approach", "complementary", "contrast"].includes(String(raw.relation)) ? raw.relation as ArticleConnectionInsight["relation"] : "insufficient_evidence";
       const value: ArticleConnectionInsight = {
