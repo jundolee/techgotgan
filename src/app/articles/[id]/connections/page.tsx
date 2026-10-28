@@ -59,13 +59,13 @@ export default async function ArticleConnectionsPage({ params, searchParams }: {
   const graphEdges: ArticleGraphEdge[] = current.related.map((item) => ({ from: current.id, to: item.id, kind: graphKind(item) === "semantic" ? "semantic" : graphKind(item) === "topic" ? "topic" : "related" }));
 
   return <main style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-    <PageHeader navHref={detailUrl(current.id)} navLabel="현재 글" />
+    <PageHeader navHref={detailUrl(current.id)} navLabel="글 상세 보기" />
     <header style={{ display: "grid", gap: 8 }}>
-      <p style={{ color: "var(--seed-color-fg-brand)", fontSize: 13, fontWeight: 700 }}>글을 따라 이어가는 엔지니어링 맥락</p>
-      <h1>글 연결 그래프</h1>
-      <p style={{ color: "var(--seed-color-fg-neutral-muted)" }}>노드를 클릭하면 그 글을 중심으로 관계가 다시 펼쳐집니다.</p>
+      <p style={{ color: "var(--seed-color-fg-brand)", fontSize: 13, fontWeight: 700 }}>글을 이어서 읽어보기</p>
+      <h1>이 글과 이어지는 글</h1>
+      <p style={{ color: "var(--seed-color-fg-neutral-muted)" }}>점 하나를 누르면 그 글과 이어지는 다른 글을 볼 수 있어요.</p>
     </header>
-    <p style={{ padding: 12, background: "var(--seed-color-bg-neutral-weak)", borderRadius: 10, fontSize: 13, lineHeight: 1.6, color: "var(--seed-color-fg-neutral-muted)" }}>연결은 자동 추천 결과입니다. 주제나 의미가 닿는 글을 보여주며, 같은 문제나 해결책이라는 뜻은 아닙니다.</p>
+    <p style={{ padding: 12, background: "var(--seed-color-bg-neutral-weak)", borderRadius: 10, fontSize: 13, lineHeight: 1.6, color: "var(--seed-color-fg-neutral-muted)" }}>선은 추천 글 사이의 관계를 보여줍니다. 점을 눌러 다른 글로 이어가고, 설명 버튼을 눌러 연결 이유를 확인해 보세요.</p>
     {path.length > 1 && <nav aria-label="탐색한 글" style={{ display: "flex", gap: 8, flexWrap: "wrap", fontSize: 12, color: "var(--seed-color-fg-neutral-muted)" }}>
       <span>탐색 경로</span>{path.slice(0, -1).map((item, index) => <Link key={item.id} href={pathUrl(item.id, path.slice(0, index).map((entry) => entry.id))}>{item.title}</Link>)}
       <span aria-current="page">{current.title}</span>
