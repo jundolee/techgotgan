@@ -1,0 +1,42 @@
+.articleList {
+  list-style: none;
+}
+
+.articleItem {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--seed-color-stroke-neutral-subtle);
+}
+
+.articleItem:first-child {
+  padding-top: 4px;
+}
+
+.articleLink {
+  display: block;
+  border-radius: 4px;
+}
+
+.articleLink:focus-visible {
+  outline: 2px solid var(--seed-color-fg-brand, #ef6b21);
+  outline-offset: 4px;
+}
+
+.articleTitle {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.articleExcerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.articleDate {
+  margin-top: 10px;
+}
