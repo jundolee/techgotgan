@@ -115,7 +115,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       </section>}
       <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", justifyContent: "center", marginTop: 18, padding: 16, borderRadius: 14, background: "var(--seed-color-bg-brand-solid, #eb641c)", color: "white", textDecoration: "none", fontWeight: 700 }}>원문 읽기 ↗</a>
       <div style={{ marginTop: 28 }}>
-        <RelatedArticleList items={related.map((item) => ({ ...item, href: `/articles/${encodeURIComponent(item.id)}` }))} />
+        <RelatedArticleList articleId={article.id} items={related.map((item) => ({ ...item, href: `/articles/${encodeURIComponent(item.id)}` }))} />
       </div>
     </main>
   );
