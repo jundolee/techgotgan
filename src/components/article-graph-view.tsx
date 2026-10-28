@@ -54,6 +54,13 @@ function relationLabel(relation: ArticleConnectionInsight["relation"]): string {
   return labels[relation];
 }
 
+function commonSpecificTitleTerms(left: string, right: string): string[] {
+  const broadTerms = new Set(["ai", "ml", "llm", "기술", "개발", "글", "방법", "사례"]);
+  const terms = (value: string) => new Set(value.normalize("NFKC").toLocaleLowerCase().match(/[\p{Script=Hangul}]{2,}|[a-z0-9]{2,}/gu) ?? []);
+  const leftTerms = terms(left);
+  return [...terms(right)].filter((term) => leftTerms.has(term) && !broadTerms.has(term));
+}
+
 export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, expandedIds: initialExpandedIds, explanationsAvailable }: { nodes: ArticleGraphNode[]; edges: ArticleGraphEdge[]; expandedIds: string[]; explanationsAvailable: boolean }) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 780, height: 540 });
@@ -69,6 +76,11 @@ export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, exp
   const selected = nodeById.get(selectedId) ?? nodes[0];
   const selectedInsightEdge = edges.find((edge) => edge.to === selectedId) ?? edges.find((edge) => edge.from === selectedId);
   const selectedInsight = selectedInsightEdge?.insight ?? null;
+  const insightSourceNode = selectedInsightEdge ? nodeById.get(selectedInsightEdge.from) : null;
+  const titleOverlap = selectedInsight?.relation === "insufficient_evidence" && selectedInsight.currentEvidenceSource === "title" && selectedInsight.relatedEvidenceSource === "title" && insightSourceNode
+    ? commonSpecificTitleTerms(insightSourceNode.title, selected.title)
+    : [];
+  const insightLabel = selectedInsight && titleOverlap.length >= 2 ? "제목 수준의 공통 과업" : selectedInsight && titleOverlap.length === 1 ? "넓은 주제의 겹침" : selectedInsight ? relationLabel(selectedInsight.relation) : null;
 
   async function explainSelectedConnection() {
     if (!selectedInsightEdge || insightLoading) return;
@@ -227,7 +239,7 @@ export function ArticleGraphView({ nodes: initialNodes, edges: initialEdges, exp
       <p className={styles.relationship}>{selected.kind === "current" ? "노드를 클릭하면 페이지를 이동하지 않고 그 글의 이웃을 그래프에 불러옵니다." : selected.kind === "semantic" ? "Pinecone 의미 검색 결과입니다. 점수는 글 표현의 유사도이며, 관계의 정확도나 확률은 아닙니다." : selected.kind === "topic" ? "Pinecone 후보가 부족해 같은 주제·태그에서 보충한 글입니다. 최신 글이 먼저 보일 수 있습니다." : selected.kind === "unscored" ? "의미 검색 목록에 있지만 표시 가능한 유사도 점수가 없습니다." : "추천 연결 정보가 제한되어 유사도 점수를 제공하지 않습니다."}</p>
       {selected.similarityScore !== null && selected.similarityScore !== undefined && <p className={styles.score}>Pinecone 점수 <strong>{selected.similarityScore.toFixed(2)}</strong><span> · 확률값이 아님</span></p>}
       {selectedInsight && <section className={styles.insight} aria-label="두 글의 연결 설명">
-        <span>{relationLabel(selectedInsight.relation)}</span>
+        <span>{insightLabel}</span>
         <p>{selectedInsight.explanation}</p>
         {selectedInsight.currentEvidence && <blockquote><b>{selectedInsight.currentEvidenceSource === "title" ? "현재 글 제목" : "현재 글 발췌"}</b><br />“{selectedInsight.currentEvidence}”</blockquote>}
         {selectedInsight.relatedEvidence && <blockquote><b>연결 글 {selectedInsight.relatedEvidenceSource === "title" ? "제목" : "발췌"}</b><br />“{selectedInsight.relatedEvidence}”</blockquote>}
