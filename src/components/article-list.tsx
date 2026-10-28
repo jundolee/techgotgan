@@ -394,15 +394,23 @@ export function ArticleList({
         ))}
       </ul>}
       {!queryTooShort && !isSearching && visibleArticles.length === 0 && (
-        <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">
-          {query.trim() && baseArticles.length === 0
-            ? "검색 결과가 없어요. 다른 단어나 표현으로 다시 검색해보세요."
-            : query.trim()
-              ? "현재 필터와 일치하는 글이 없습니다. 필터를 바꿔보세요."
-              : filter === "unread"
-                ? "완독했어요! 🎉 읽지 않은 글이 없어요. 새 글이 오면 여기서 만나요."
-              : "표시할 글이 없습니다."}
-        </Text>
+        filter === "unread" && !query.trim() ? (
+          <section className="article-empty-state article-empty-state--complete" role="status">
+            <span className="article-empty-state-icon" aria-hidden="true">✓</span>
+            <div className="article-empty-state-copy">
+              <h2>완독했어요!</h2>
+              <p>읽지 않은 글이 없어요. 새 글이 오면 여기서 만나요.</p>
+            </div>
+          </section>
+        ) : (
+          <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">
+            {query.trim() && baseArticles.length === 0
+              ? "검색 결과가 없어요. 다른 단어나 표현으로 다시 검색해보세요."
+              : query.trim()
+                ? "현재 필터와 일치하는 글이 없습니다. 필터를 바꿔보세요."
+                : "표시할 글이 없습니다."}
+          </Text>
+        )
       )}
       {!queryTooShort && totalPages > 1 && <PaginationControls page={safePage} totalPages={totalPages} onChange={goToPage} />}
       <ScrollToTopButton />
