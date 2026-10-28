@@ -33,6 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogIndexLastModified = latestDate(blogs.map((blog) => blog.lastModified));
 
   return [
+    { url: `${SITE_URL}/careers/toss-frontend`, changeFrequency: "monthly", priority: 0.7 },
     {
       url: SITE_URL,
       lastModified: latestContentDate(feed),

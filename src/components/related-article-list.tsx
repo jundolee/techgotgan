@@ -65,7 +65,7 @@ export function RelatedArticleList({
 
       {articleId && (process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_ARTICLE_CONNECTION_ENABLED === "true") && (
         <Link href={`/articles/${encodeURIComponent(articleId)}/connections`} style={{ display: "inline-block", marginBottom: 12, color: "var(--seed-color-fg-brand)", textDecoration: "underline" }}>
-          관련 글 더 찾아보기 →
+          글 연결 그래프 보기 →
         </Link>
       )}
 
@@ -80,7 +80,6 @@ export function RelatedArticleList({
             >
               <Link
                 href={item.href}
-                className="related-article-item-link"
                 onClick={
                   onSelectArticle
                     ? (e) => {
@@ -89,6 +88,7 @@ export function RelatedArticleList({
                       }
                     : undefined
                 }
+                style={{ display: "block", padding: "14px 0", color: "inherit", textDecoration: "none" }}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 6 }}>
                   <Text as="span" textStyle="t2Regular" color={MUTED}>
@@ -101,24 +101,17 @@ export function RelatedArticleList({
                     </Badge>
                   )}
                 </div>
-                <h3
-                  style={{
-                    display: "flex",
-                    alignItems: "baseline",
-                    justifyContent: "space-between",
-                    gap: 8,
-                    fontSize: 15,
-                    fontWeight: 600,
-                    lineHeight: 1.48,
-                    color: "var(--seed-color-fg-neutral)",
-                    margin: 0,
-                  }}
+                <Text
+                  as="h3"
+                  textStyle="t4Bold"
+                  color="fg.neutral"
+                  style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, lineHeight: 1.45 }}
                 >
                   <span>{item.title}</span>
                   <span aria-hidden="true" style={{ color: MUTED, flexShrink: 0, fontSize: 16 }}>
                     ↗
                   </span>
-                </h3>
+                </Text>
                 {publishedAt && (
                   <time dateTime={item.publishedAt ?? undefined} style={{ display: "block", marginTop: 6, color: MUTED, fontSize: 13, lineHeight: 1.4 }}>
                     {publishedAt}

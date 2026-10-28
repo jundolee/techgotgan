@@ -9,6 +9,7 @@ import { ArticleSummaryCopy } from "@/components/article-summary-copy";
 import { getArticlePreview, getRelatedArticles } from "@/lib/data/related-articles";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { SITE_NAME } from "@/app/seo";
+import { canViewArticleSummary } from "@/lib/article-summary-access";
 
 export const runtime = "nodejs";
 
@@ -26,9 +27,9 @@ function summaryBasisNotice(basis: "full_article" | "partial_article" | "excerpt
 
 type ArticlePageProps = { params: Promise<{ id: string }> };
 
-async function getArticle(id: string) {
+async function getArticle(id: string, options: { includeSummary?: boolean } = {}) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
-  return getArticlePreview(id);
+  return getArticlePreview(id, options);
 }
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
@@ -48,9 +49,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   await connection();
   const { id } = await params;
 
-  const articlePromise = getArticle(id);
+  const userPromise = getCurrentUser();
+  const articlePromise = userPromise.then((user) =>
+    getArticle(id, { includeSummary: canViewArticleSummary(user?.email) })
+  );
   const relatedPromise = getRelatedArticles(id);
-  const [article, initialRelated, user] = await Promise.all([articlePromise, relatedPromise, getCurrentUser()]);
+  const [article, initialRelated, user] = await Promise.all([articlePromise, relatedPromise, userPromise]);
   if (!article) notFound();
 
   if (user) {
@@ -73,7 +77,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {article.sourceTitle ?? "출처 미상"}{article.publishedAt ? ` · ${new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(article.publishedAt))}` : ""}
       </Text>
       <Text as="h1" textStyle="t8Bold" color="fg.neutral" style={{ marginTop: 12, lineHeight: 1.25 }}>{article.title}</Text>
-      <section aria-labelledby="ai-summary-heading" style={{ marginTop: 28, border: `1px solid ${article.summary ? "#fbd8bc" : "var(--seed-color-stroke-neutral-subtle)"}`, borderRadius: 20, padding: "24px 28px", background: article.summary ? "linear-gradient(180deg, #fffaf5 0%, #ffffff 100%)" : undefined }}>
+      {canViewArticleSummary(user?.email) && <section aria-labelledby="ai-summary-heading" style={{ marginTop: 28, border: `1px solid ${article.summary ? "#fbd8bc" : "var(--seed-color-stroke-neutral-subtle)"}`, borderRadius: 20, padding: "24px 28px", background: article.summary ? "linear-gradient(180deg, #fffaf5 0%, #ffffff 100%)" : undefined }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span aria-hidden="true" style={{ fontSize: 16 }}>✨</span>
@@ -108,7 +112,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               article.summaryStatus === "unavailable" ? "원문 본문을 추출할 수 없어 요약을 제공하지 않습니다. 원문에서 확인해 주세요." :
                   "등록된 AI 요약이 없습니다. 원문에서 확인해 주세요."}
         </Text>}
-      </section>
+      </section>}
       <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", justifyContent: "center", marginTop: 18, padding: 16, borderRadius: 14, background: "var(--seed-color-bg-brand-solid, #eb641c)", color: "white", textDecoration: "none", fontWeight: 700 }}>원문 읽기 ↗</a>
       <div style={{ marginTop: 28 }}>
         <RelatedArticleList articleId={article.id} items={related.map((item) => ({ ...item, href: `/articles/${encodeURIComponent(item.id)}` }))} />

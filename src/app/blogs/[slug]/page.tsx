@@ -7,6 +7,7 @@ import { ArticleLink } from "@/components/article-link";
 import { PageHeader } from "@/components/page-header";
 import { PUBLIC_CATEGORY_META, SITE_URL, getPublicBlogHub, type PublicHubArticle } from "@/lib/data/public-hubs";
 import { SITE_NAME } from "@/app/seo";
+import styles from "./page.module.css";
 
 // 공개 허브는 Supabase 읽기 모듈을 함께 번들링한다. Vercel Hobby의 Edge 함수 1MB 제한을
 // 넘지 않도록 기본 Node.js 런타임에서 렌더링한다.
@@ -30,19 +31,19 @@ function ArticleList({ articles }: { articles: PublicHubArticle[] }) {
   }
 
   return (
-    <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 16 }}>
+    <ul className={styles.articleList}>
       {articles.map((article) => (
-        <li key={article.id} style={{ borderBottom: "1px solid var(--seed-color-stroke-neutral-subtle)", paddingBottom: 16 }}>
-          <ArticleLink articleId={article.id} articleTitle={article.title} href={`/articles/${encodeURIComponent(article.id)}`} style={{ display: "block" }}>
-            <Text as="h3" textStyle="t5Bold" color="fg.neutral">{article.title}</Text>
+        <li key={article.id} className={styles.articleItem}>
+          <ArticleLink articleId={article.id} articleTitle={article.title} href={`/articles/${encodeURIComponent(article.id)}`} className={styles.articleLink}>
+            <Text as="h3" textStyle="t5Bold" color="fg.neutral" className={styles.articleTitle}>{article.title}</Text>
             {article.excerpt && (
-              <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)" style={{ marginTop: 6 }}>
+              <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)" className={styles.articleExcerpt}>
                 {article.excerpt}
               </Text>
             )}
           </ArticleLink>
           {formatDate(article.publishedAt) && (
-            <Text as="p" textStyle="t2Regular" color="var(--seed-color-fg-neutral-muted)" style={{ marginTop: 8 }}>
+            <Text as="p" textStyle="t2Regular" color="var(--seed-color-fg-neutral-muted)" className={styles.articleDate}>
               {formatDate(article.publishedAt)}
             </Text>
           )}
@@ -127,6 +128,17 @@ export default async function BlogPage({ params }: BlogPageProps) {
           <Text as="span" textStyle="t3Medium" color="var(--seed-color-fg-brand)">원문 블로그 방문하기 →</Text>
         </a>
       </header>
+
+      {hub.host === "toss.tech" && (
+        <aside aria-label="취업 준비 가이드" style={{ border: "1px solid var(--seed-color-stroke-neutral-subtle)", borderRadius: 12, padding: 16 }}>
+          <Text as="p" textStyle="t4Regular" color="fg.neutral">
+            토스 프론트엔드 지원을 준비하고 있나요? 공개 기술 글과 함께 읽어볼 질문을 모았습니다.
+          </Text>
+          <Link href="/careers/toss-frontend" style={{ display: "inline-block", marginTop: 8, textDecoration: "underline" }}>
+            지원 전 읽기 가이드 보기 →
+          </Link>
+        </aside>
+      )}
 
       <section aria-labelledby="latest-articles">
         <Text as="h2" id="latest-articles" textStyle="t6Bold" color="fg.neutral" style={{ marginBottom: 16 }}>

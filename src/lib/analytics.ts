@@ -50,11 +50,3 @@ export function trackArticleGraphInteraction(
   if (process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" || !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY) return;
   track("article_graph_interaction", { action, ...properties });
 }
-
-export function trackArticleReadingPathInteraction(
-  action: "related_article_opened" | "why_requested" | "insight_shown",
-  relatedArticleCount: number
-): void {
-  if (process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" || !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY) return;
-  track("article_reading_path_interaction", { action, related_article_count: relatedArticleCount });
-}
