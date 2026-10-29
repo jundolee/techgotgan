@@ -44,6 +44,21 @@
 
 ## 현재 적용·배포 상태
 
+### 2026-10-29 검색 노출 기준선 재확인
+
+- Search Console `sc-domain:techgotgan.co.kr`의 웹 검색결과 보고서(2026-10-20~26, 최종 업데이트 약 4시간 전)는 클릭 1회, 노출 66회, 평균 CTR 1.5%, 평균 게재순위 8.2를 표시했다. 표에 노출된 검색어는 `토스테크` 2회, `ly tech blog` 2회, `toss tech blog`·`컬리 기술블로그`·`myrealtrip` 각 1회였다. 검색어 표는 상위 5개만 보였으므로 이를 전체 검색어 목록으로 해석하지 않는다.
+- 2026-10-29 HTTP 점검에서 `https://techgotgan.vercel.app/`와 `https://www.techgotgan.co.kr/`이 모두 HTTP 200으로 같은 홈을 제공했다. 기존 308은 이전 `magisa.vercel.app`에 적용된 것이며, Vercel 기본 도메인은 별도 중복 호스트였다. PR #101은 별칭 호스트의 무쿠키 요청만 `www.techgotgan.co.kr`로 308 보내고, 쿠키가 있는 요청은 도메인 간 세션 분실을 막기 위해 기존 호스트에 둔다. 로컬 `NextRequest` 실행으로 무쿠키 리다이렉트의 경로·query 보존, Supabase 세션 및 OAuth code-verifier 쿠키 요청의 200 유지, canonical 호스트의 200을 확인했다. 빌드된 matcher가 `/api/`와 `/_next/` 요청을 Proxy에서 제외하는 것도 확인했다. Production 반영은 아직 미완료다.
+- 2026-10-29 공개 웹 검색 도구의 `site:` 질의에서는 홈페이지, `/topics/ai_ml`, `/topics/frontend`, 토스 블로그 허브와 요즘IT 허브가 결과로 반환됐다. 검색 제공자가 Google인지 Naver인지 구분되지 않는 결과이므로 Search Console 지표나 Naver 색인 상태와 같은 근거로 취급하지 않는다. 요즘IT 결과 제목은 아직 Production의 `요즘IT » 피드 최신 글`을 표시해 PR #101 배포 전 상태와 일치했다.
+- 2026-10-29 네이버 공개 검색에서 `site:techgotgan.co.kr`은 결과가 없었고, `테크곳간` 검색 결과에도 자사 도메인 페이지가 보이지 않았다. Yeti 사용자 에이전트로 프로덕션 홈·주제 허브·`robots.txt`·sitemap을 조회했을 때 모두 HTTP 200이고, robots 규칙은 사이트 전체를 허용하고 있었다. 따라서 확인한 범위에서는 크롤링 접근 차단 증거가 없다. 네이버 공식 가이드는 사이트 등록이 웹 검색 포함의 필수 조건은 아니라고 설명하지만, 소유확인을 완료해야 수집·색인·노출 리포트를 볼 수 있다. Search Advisor에는 로그인 후 이용약관 동의가 필요해 아직 소유확인이나 sitemap 제출을 하지 않았다.
+- 같은 기간 페이지별로는 `/blogs/요즘IT-피드-yozm-wishket-com`이 25회 노출·클릭 0회로 가장 많았다. 공개 원본 HTML을 확인하니 제목과 이름에 원시 피드 표기인 `요즘IT » 피드`가 노출되고 있었다. 실제 노출이 확인된 이 허브만 공개 이름을 `요즘IT`로 정리하고 제목을 `요즘IT 최신 글 모아보기`로, 설명을 최신 IT·개발 글 모음으로 명확히 했다. PR #101의 Vercel Preview에서 title, description, canonical, Open Graph title, H1, CollectionPage와 BreadcrumbList 구조화 데이터가 새 값으로 렌더링되는 것을 확인했다. Production 배포와 이후 Google 검색 결과 반영은 아직 미확인이다.
+- 같은 Search Console 개요에서 색인 페이지 21개, 미색인 페이지 1,047개를 확인했다. 세부 사유는 `noindex` 999개, 404 2개, 발견됐으나 미색인 40개, 크롤링됐으나 미색인 6개다. `noindex`는 개별 기사 상세 등 기존 의도와 맞는 페이지가 포함되므로 색인 실패로 합산해 개선하지 않는다. 발견 후 미색인 40개를 전부 확인한 결과 sitemap에 포함된 블로그 허브 24개, 주간 아카이브 8개, 주제 허브 8개였고 모두 최종 크롤링 기록이 없었다. 최초 감지일은 2026-10-24다. 나머지 크롤링 후 미색인 6개는 `/digest/2026-W41`, `/opengraph-image`, 폰트 파일 3개, `/feed.xml`이었다.
+- 제출 sitemap은 2026-10-27에 성공적으로 읽혔고 92개 URL을 발견했다. 프로덕션 `/robots.txt`와 `/sitemap.xml`은 2026-10-29 재확인에서 HTTP 200을 반환했으며, 실시간 sitemap에 최근 수집 시각이 반영된다.
+- 2026-10-29 최신 `/sitemap.xml`은 109개 URL을 반환했다. Googlebot User-Agent로 각 URL을 요청한 표본 없는 전체 점검에서 109개 모두 HTTP 200, title·description·canonical 존재, URL과 canonical 일치, sitemap 내 `noindex` 없음, title·description 중복 없음이 확인됐다. 이는 현재 서버 응답의 기술 점검이며 Googlebot 실제 수집이나 색인 증거는 아니다.
+- 2026-10-29 Search Console URL Inspection에서 `/topics/frontend`와 `/topics/ai_ml`의 라이브 테스트가 모두 색인 가능으로 통과했고 breadcrumb 구조화 데이터 항목도 각각 1개 유효했다. 두 URL에 색인 요청을 제출했고, 각각 우선 크롤링 대기열 접수 메시지를 확인했다. Google 색인·검색 결과 반영은 아직 확인되지 않았다.
+- GA4 보고서(2026-10-01~28)는 활성 사용자 162명, 신규 사용자 159명을 표시했다. 첫 사용자 기본 채널 기준 Google 자연 검색 사용자는 2명이고, 세션 소스/매체 `google / organic`은 23세션이었다. `accounts.google.com / referral`도 82세션으로 잡혀 있어 전체 유입을 순수 잠재고객 규모로 해석하지 않는다.
+- GA4 홈의 지난 7일(2026-10-22~28) 활성 사용자 97명은 기간 내 고유 사용자 수다. 별도 일별 활성 사용자 그래프의 선을 축에 맞춰 읽으면 일별 약 18, 19, 5, 5, 48, 22, 15명(평균 약 19명)으로 보인다. 값은 그래프 픽셀에서 반올림한 근삿값이며, 정확한 일별 표의 원자료는 아직 확보하지 못했다. 관측된 가장 높은 하루도 DAU 100 목표에 못 미친다.
+- 현재 다음 단계는 Google 자연 검색 사용자를 늘릴 랜딩 개선을 계속하고, GA4에서 일별 활성 사용자 정확한 값을 추출해 기준선으로 고정하는 것이다. 2026-10-24 최초 감지된 공개 허브 40개의 크롤링 상태는 최소 1주가 지난 2026-10-31 이후 다시 확인한다. 캠페인 관찰 기간에는 다른 랜딩을 임의 변경하지 않고, 2026-11-12 03:26 UTC 이후 쿼리·랜딩별 노출과 클릭을 검토해 검색 수요가 확인된 허브부터 보강한다.
+
 - 원격 Supabase의 `source_suggestions` 테이블은 존재하며, 예상 컬럼과 RLS 활성화 상태를 확인했다.
 - `0013_tokenized_article_search.sql`과 `0014_public_hub_queries.sql`을 2026-10-19에 대상
   `magisa-reader` 프로젝트의 SQL Editor에서 적용했다. 검색 RPC는 `react typescript` 조회에서 10건을
@@ -118,7 +133,7 @@ Amplitude는 전체 URL·검색어를 자동 수집하지 않는다. 프로덕�
 
 2026-10-19 최초 확인 기준 `techgotgan.com`, `.kr`, `.co.kr`은 각 등록기관 RDAP에서 등록 레코드를 찾지 못했다. Vercel 프로젝트 주소를 바꾼 직후에는 새 호스트의 `robots.txt`, sitemap, HTML canonical·Open Graph URL이 `magisa.vercel.app`을 가리켰고 이전 호스트는 `DEPLOYMENT_NOT_FOUND`였다. 이후 소스와 외부 설정을 갱신해 새 호스트를 배포하고 구 호스트를 308 리다이렉트로 연결했다.
 
-RDAP와 공개 HTTP 응답은 조회 시점의 상태일 뿐 구매 가능 여부, 상표권, 유사 상호까지 보장하지 않는다. canonical·Open Graph·robots·sitemap·RSS는 현재 새 호스트를 사용한다. OAuth와 Supabase Auth, Search Console, GA4 스트림도 `techgotgan.vercel.app`으로 정렬했다. 이전 Vercel 주소는 308으로 새 주소에 전달된다. 맞춤 도메인 구매나 상표권 확인은 별도 도메인 도입 결정 전까지 보류한다.
+RDAP와 공개 HTTP 응답은 조회 시점의 상태일 뿐 구매 가능 여부, 상표권, 유사 상호까지 보장하지 않는다. canonical·Open Graph·robots·sitemap·RSS는 현재 새 호스트를 사용한다. OAuth와 Supabase Auth, Search Console, GA4 스트림도 `techgotgan.vercel.app`에서 정렬을 시작했다. `magisa.vercel.app`은 새 호스트로 308 리다이렉트하지만, `techgotgan.vercel.app`은 2026-10-29 점검에서 별도 200 응답이 확인됐다. 무쿠키 검색 로봇 요청을 대표 호스트로 보내는 쿠키 보존 리다이렉트는 PR #101에 준비했으며 Production 미반영 상태다. 맞춤 도메인 구매나 상표권 확인은 별도 도메인 도입 결정 전까지 보류한다.
 
 ## 2026-10-19 최초 라이브 점검 (배포 전)
 
