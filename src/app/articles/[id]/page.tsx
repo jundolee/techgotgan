@@ -8,7 +8,7 @@ import { markArticleRead } from "@/lib/data/articles";
 import { ArticleSummaryCopy } from "@/components/article-summary-copy";
 import { getArticlePreview, getRelatedArticles } from "@/lib/data/related-articles";
 import { getCurrentUser } from "@/lib/supabase/current-user";
-import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/app/seo";
+import { SITE_NAME, SITE_URL } from "@/app/seo";
 import { canViewArticleSummary } from "@/lib/article-summary-access";
 
 export const runtime = "nodejs";
@@ -49,7 +49,6 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
       card: "summary_large_image",
       title: article.title,
       description,
-      images: [DEFAULT_OG_IMAGE],
     },
     robots: { index: false, follow: true },
   };
