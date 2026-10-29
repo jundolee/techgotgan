@@ -72,14 +72,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       </Text>
       <Text as="h1" textStyle="t8Bold" color="fg.neutral" style={{ marginTop: 12, lineHeight: 1.25 }}>{article.title}</Text>
       {canViewArticleSummary(user?.email) && <section aria-labelledby="ai-summary-heading" style={{ marginTop: 28, border: `1px solid ${article.summary ? "#fbd8bc" : "var(--seed-color-stroke-neutral-subtle)"}`, borderRadius: 20, padding: "24px 28px", background: article.summary ? "linear-gradient(180deg, #fffaf5 0%, #ffffff 100%)" : undefined }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span aria-hidden="true" style={{ fontSize: 16 }}>✨</span>
             <Text as="h2" id="ai-summary-heading" textStyle="t5Bold" color="fg.neutral">AI 엔지니어링 브리핑</Text>
           </div>
-          {article.summary && (
-            <Text as="span" textStyle="t1Regular" color="var(--seed-color-fg-neutral-muted)">AI가 생성한 요약</Text>
-          )}
         </div>
         {article.summary ? <>
           <div style={{ borderLeft: "3px solid var(--seed-color-bg-brand-solid, #eb641c)", paddingLeft: 14, marginBottom: 18 }}>
