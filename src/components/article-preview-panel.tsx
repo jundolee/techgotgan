@@ -649,16 +649,13 @@ export function ArticlePreviewPanel({
                     boxShadow: "0 2px 10px rgba(235, 100, 28, 0.04)",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span aria-hidden="true" style={{ fontSize: 16 }}>✨</span>
                       <Text as="h2" id="ai-summary-heading" textStyle="t5Bold" color="fg.neutral">
                         AI 엔지니어링 브리핑
                       </Text>
                     </div>
-                    <Text as="span" textStyle="t1Regular" color="var(--seed-color-fg-neutral-muted)">
-                      AI가 생성한 요약
-                    </Text>
                   </div>
 
                   {/* 리드 결론문 */}
