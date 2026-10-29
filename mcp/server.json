@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.jundolee/techgotgan-search",
+  "title": "Techgotgan Korean Engineering Blog Search",
+  "description": "Search recent Korean company engineering blog posts with original source links.",
+  "repository": {
+    "url": "https://github.com/jundolee/techgotgan",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "websiteUrl": "https://www.techgotgan.co.kr",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://www.techgotgan.co.kr/api/mcp"
+    }
+  ]
+}
