@@ -21,6 +21,13 @@ function blogUrl(slug: string): string {
   return `${SITE_URL}/blogs/${encodeURIComponent(slug)}`;
 }
 
+function blogDescription(host: string, displayName: string): string {
+  if (host === "yozm.wishket.com") {
+    return "요즘IT에 올라온 최신 IT·개발 글을 모아봅니다. 제목과 요약을 살펴보고 관심 있는 글은 요즘IT 원문으로 이어 읽어보세요.";
+  }
+  return `${displayName}(${host})의 최신 기술 글을 ${SITE_NAME}에서 모아 봅니다.`;
+}
+
 function formatDate(iso: string | null): string | null {
   return iso ? new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric" }).format(new Date(iso)) : null;
 }
@@ -59,9 +66,11 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
   const hub = await getPublicBlogHub(slug);
   if (!hub || hub.articles.length === 0) return { robots: { index: false, follow: false } };
 
-  const title = `${hub.displayName} 최신 글`;
+  const title = hub.host === "yozm.wishket.com"
+    ? "요즘IT 최신 글 모아보기"
+    : `${hub.displayName} 최신 글`;
   const socialTitle = `${title} | ${SITE_NAME}`;
-  const description = `${hub.displayName}(${hub.host})의 최신 기술 글을 ${SITE_NAME}에서 모아 봅니다.`;
+  const description = blogDescription(hub.host, hub.displayName);
   const canonical = blogUrl(hub.slug);
   return {
     title,
@@ -79,7 +88,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
   if (!hub) notFound();
 
   const canonical = blogUrl(hub.slug);
-  const description = `${hub.displayName}(${hub.host})의 최신 기술 글을 ${SITE_NAME}에서 모아 봅니다.`;
+  const description = blogDescription(hub.host, hub.displayName);
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -120,9 +129,13 @@ export default async function BlogPage({ params }: BlogPageProps) {
       </nav>
 
       <header style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <Text as="h1" textStyle="t8Bold" color="fg.neutral">{hub.displayName} 최신 글</Text>
+        <Text as="h1" textStyle="t8Bold" color="fg.neutral">
+          {hub.host === "yozm.wishket.com" ? "요즘IT 최신 글" : `${hub.displayName} 최신 글`}
+        </Text>
         <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">
-          {hub.host}에서 발행한 기술 글을 {SITE_NAME}이 수집해 최신순으로 보여드립니다.
+          {hub.host === "yozm.wishket.com"
+            ? "요즘IT에서 발행한 IT·개발 글을 최신순으로 모아 보여드립니다."
+            : `${hub.host}에서 발행한 기술 글을 ${SITE_NAME}이 수집해 최신순으로 보여드립니다.`}
         </Text>
         <a href={hub.source.site_url} target="_blank" rel="noopener noreferrer">
           <Text as="span" textStyle="t3Medium" color="var(--seed-color-fg-brand)">원문 블로그 방문하기 →</Text>

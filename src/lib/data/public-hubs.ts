@@ -118,6 +118,12 @@ function hostFromUrl(value: string): string {
   }
 }
 
+function publicSourceDisplayName(source: Pick<Source, "title" | "site_url">): string {
+  const host = hostFromUrl(source.site_url);
+  if (host === "yozm.wishket.com") return "요즘IT";
+  return source.title?.trim() || host;
+}
+
 function slugPart(value: string): string {
   const normalized = value
     .normalize("NFKC")
@@ -163,7 +169,9 @@ function toPublicArticle(
   sourceSlugs: Map<string, string>
 ): PublicHubArticle {
   const category = isPublicCategory(article.category) ? article.category : "general";
-  const sourceTitle = article.source?.title?.trim() || article.source?.site_url || null;
+  const sourceTitle = article.source
+    ? publicSourceDisplayName({ title: article.source.title, site_url: article.source.site_url })
+    : null;
 
   return {
     id: article.id,
@@ -225,7 +233,7 @@ export async function getPublicBlogIndex(): Promise<PublicBlogIndexItem[]> {
       const latestArticle = latestBySource.get(source.id);
       return {
         slug: getPublicSourceSlug(source),
-        displayName: source.title?.trim() || hostFromUrl(source.site_url),
+        displayName: publicSourceDisplayName(source),
         host: hostFromUrl(source.site_url),
         latestArticleTitle: latestArticle?.latest_article_title ?? null,
         hasArticles: latestArticle?.has_articles ?? false,
@@ -265,7 +273,10 @@ export async function getPublicCategoryHub(category: string): Promise<PublicCate
   );
   const articles = rows.map((article) => {
     const categoryId = isPublicCategory(article.category) ? article.category : "general";
-    const sourceTitle = article.source_title?.trim() || article.source_site_url;
+    const sourceTitle = publicSourceDisplayName({
+      title: article.source_title,
+      site_url: article.source_site_url,
+    });
     return {
       id: article.id,
       title: article.title,
@@ -312,7 +323,7 @@ export async function getPublicBlogHub(slug: string): Promise<PublicBlogHub | nu
     source,
     slug: getPublicSourceSlug(source),
     host: hostFromUrl(source.site_url),
-    displayName: source.title?.trim() || hostFromUrl(source.site_url),
+    displayName: publicSourceDisplayName(source),
     articles: sourceArticles.slice(0, MAX_HUB_ARTICLES).map((article) => toPublicArticle(article, sourceSlugs)),
     categories,
   };
