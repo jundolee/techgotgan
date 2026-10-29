@@ -24,11 +24,31 @@ export default async function OpenGraphImage() {
           width: "100%",
         }}
       >
-        <div style={{ color: "#315BDE", display: "flex", fontSize: 34, marginBottom: 28 }}>{SITE_NAME}</div>
+        <div style={{ alignItems: "center", display: "flex", marginBottom: 28 }}>
+          <div
+            style={{
+              alignItems: "center",
+              background: "#FF6600",
+              borderRadius: 18,
+              display: "flex",
+              height: 64,
+              justifyContent: "center",
+              marginRight: 18,
+              width: 64,
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 5, width: 38 }}>
+              <div style={{ background: "#FFFFFF", borderRadius: 8, height: 6 }} />
+              <div style={{ background: "#FFFFFF", borderRadius: 8, height: 6 }} />
+              <div style={{ background: "#FFFFFF", borderRadius: 8, height: 6 }} />
+            </div>
+          </div>
+          <div style={{ color: "#C94F00", display: "flex", fontSize: 38, fontWeight: 700 }}>테크곳간</div>
+        </div>
         <div style={{ display: "flex", fontSize: 78, letterSpacing: "-3px", lineHeight: 1.2 }}>
-          테크 블로그 새 글을
+          테크 글을 곳간에 모아
           <br />
-          한곳에서
+          한곳에서 읽어요
         </div>
         <div style={{ color: "#5C5C66", display: "flex", fontSize: 30, lineHeight: 1.5, marginTop: 32 }}>
           {SITE_DESCRIPTION}
