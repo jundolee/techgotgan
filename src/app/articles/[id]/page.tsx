@@ -19,12 +19,6 @@ const ENGINEERING_BOX_METAS = [
   { icon: "💡", label: "교훈 & 주의점", bg: "#fefce8", border: "#fef08a", tagColor: "#b45309" },
 ];
 
-function summaryBasisNotice(basis: "full_article" | "partial_article" | "excerpt" | null): string {
-  if (basis === "excerpt") return "기존 글에 저장되어 있던 제목과 발췌를 바탕으로 만든 요약입니다.";
-  if (basis === "partial_article") return "원문 페이지에서 추출한 일부 본문을 바탕으로 만든 요약입니다.";
-  return "원문 페이지에서 추출한 본문을 바탕으로 만든 요약입니다.";
-}
-
 type ArticlePageProps = { params: Promise<{ id: string }> };
 
 async function getArticle(id: string, options: { includeSummary?: boolean } = {}) {
@@ -84,7 +78,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             <Text as="h2" id="ai-summary-heading" textStyle="t5Bold" color="fg.neutral">AI 엔지니어링 브리핑</Text>
           </div>
           {article.summary && (
-            <Text as="span" textStyle="t1Regular" color="var(--seed-color-fg-neutral-muted)">{summaryBasisNotice(article.summaryBasis)}</Text>
+            <Text as="span" textStyle="t1Regular" color="var(--seed-color-fg-neutral-muted)">AI가 생성한 요약</Text>
           )}
         </div>
         {article.summary ? <>
@@ -106,10 +100,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             })}
           </div>
         </> : <Text as="p" textStyle="t2Regular" color="var(--seed-color-fg-neutral-muted)" style={{ marginTop: 6 }}>
-          {article.summaryStatus === "pending" ? "원문 본문을 가져와 요약할 예정입니다. 다음 요약 작업을 기다리고 있습니다." :
-            article.summaryStatus === "processing" ? "원문을 확인하고 요약을 만들고 있습니다." :
-              article.summaryStatus === "failed" ? "원문을 가져오거나 요약을 만드는 데 실패했습니다. 잠시 후 다시 시도합니다." :
-              article.summaryStatus === "unavailable" ? "원문 본문을 추출할 수 없어 요약을 제공하지 않습니다. 원문에서 확인해 주세요." :
+          {article.summaryStatus === "pending" ? "요약 작업을 기다리고 있습니다." :
+            article.summaryStatus === "processing" ? "AI 요약을 만들고 있습니다." :
+              article.summaryStatus === "failed" ? "AI 요약 생성에 실패했습니다. 잠시 후 다시 시도합니다." :
+              article.summaryStatus === "unavailable" ? "요약할 내용을 확보할 수 없어 제공하지 않습니다. 원문에서 확인해 주세요." :
                   "등록된 AI 요약이 없습니다. 원문에서 확인해 주세요."}
         </Text>}
       </section>}
