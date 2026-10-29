@@ -47,6 +47,7 @@
 ### 2026-10-29 검색 노출 기준선 재확인
 
 - Search Console `sc-domain:techgotgan.co.kr`의 웹 검색결과 보고서(2026-10-20~26, 최종 업데이트 약 4시간 전)는 클릭 1회, 노출 66회, 평균 CTR 1.5%, 평균 게재순위 8.2를 표시했다. 표에 노출된 검색어는 `토스테크` 2회, `ly tech blog` 2회, `toss tech blog`·`컬리 기술블로그`·`myrealtrip` 각 1회였다. 검색어 표는 상위 5개만 보였으므로 이를 전체 검색어 목록으로 해석하지 않는다.
+- 2026-10-29 HTTP 점검에서 `https://techgotgan.vercel.app/`와 `https://www.techgotgan.co.kr/`이 모두 HTTP 200으로 같은 홈을 제공했다. 기존 308은 이전 `magisa.vercel.app`에 적용된 것이며, Vercel 기본 도메인은 별도 중복 호스트였다. PR #101에 기본 도메인을 `www.techgotgan.co.kr`로 영구 리다이렉트하는 변경을 추가했다. 로컬 production server에서 `Host: techgotgan.vercel.app` 요청이 경로와 쿼리를 보존한 308을 반환하고, 대표 호스트의 정적 `/terms`는 200인 것을 확인했다. Production 반영은 아직 미완료다.
 - 2026-10-29 공개 웹 검색 도구의 `site:` 질의에서는 홈페이지, `/topics/ai_ml`, `/topics/frontend`, 토스 블로그 허브와 요즘IT 허브가 결과로 반환됐다. 검색 제공자가 Google인지 Naver인지 구분되지 않는 결과이므로 Search Console 지표나 Naver 색인 상태와 같은 근거로 취급하지 않는다. 요즘IT 결과 제목은 아직 Production의 `요즘IT » 피드 최신 글`을 표시해 PR #101 배포 전 상태와 일치했다.
 - 2026-10-29 네이버 공개 검색에서 `site:techgotgan.co.kr`은 결과가 없었고, `테크곳간` 검색 결과에도 자사 도메인 페이지가 보이지 않았다. Yeti 사용자 에이전트로 프로덕션 홈·주제 허브·`robots.txt`·sitemap을 조회했을 때 모두 HTTP 200이고, robots 규칙은 사이트 전체를 허용하고 있었다. 따라서 확인한 범위에서는 크롤링 접근 차단 증거가 없다. 네이버 공식 가이드는 사이트 등록이 웹 검색 포함의 필수 조건은 아니라고 설명하지만, 소유확인을 완료해야 수집·색인·노출 리포트를 볼 수 있다. Search Advisor에는 로그인 후 이용약관 동의가 필요해 아직 소유확인이나 sitemap 제출을 하지 않았다.
 - 같은 기간 페이지별로는 `/blogs/요즘IT-피드-yozm-wishket-com`이 25회 노출·클릭 0회로 가장 많았다. 공개 원본 HTML을 확인하니 제목과 이름에 원시 피드 표기인 `요즘IT » 피드`가 노출되고 있었다. 실제 노출이 확인된 이 허브만 공개 이름을 `요즘IT`로 정리하고 제목을 `요즘IT 최신 글 모아보기`로, 설명을 최신 IT·개발 글 모음으로 명확히 했다. PR #101의 Vercel Preview에서 title, description, canonical, Open Graph title, H1, CollectionPage와 BreadcrumbList 구조화 데이터가 새 값으로 렌더링되는 것을 확인했다. Production 배포와 이후 Google 검색 결과 반영은 아직 미확인이다.
@@ -131,7 +132,7 @@ Amplitude는 전체 URL·검색어를 자동 수집하지 않는다. 프로덕�
 
 2026-10-19 최초 확인 기준 `techgotgan.com`, `.kr`, `.co.kr`은 각 등록기관 RDAP에서 등록 레코드를 찾지 못했다. Vercel 프로젝트 주소를 바꾼 직후에는 새 호스트의 `robots.txt`, sitemap, HTML canonical·Open Graph URL이 `magisa.vercel.app`을 가리켰고 이전 호스트는 `DEPLOYMENT_NOT_FOUND`였다. 이후 소스와 외부 설정을 갱신해 새 호스트를 배포하고 구 호스트를 308 리다이렉트로 연결했다.
 
-RDAP와 공개 HTTP 응답은 조회 시점의 상태일 뿐 구매 가능 여부, 상표권, 유사 상호까지 보장하지 않는다. canonical·Open Graph·robots·sitemap·RSS는 현재 새 호스트를 사용한다. OAuth와 Supabase Auth, Search Console, GA4 스트림도 `techgotgan.vercel.app`으로 정렬했다. 이전 Vercel 주소는 308으로 새 주소에 전달된다. 맞춤 도메인 구매나 상표권 확인은 별도 도메인 도입 결정 전까지 보류한다.
+RDAP와 공개 HTTP 응답은 조회 시점의 상태일 뿐 구매 가능 여부, 상표권, 유사 상호까지 보장하지 않는다. canonical·Open Graph·robots·sitemap·RSS는 현재 새 호스트를 사용한다. OAuth와 Supabase Auth, Search Console, GA4 스트림도 `techgotgan.vercel.app`에서 정렬을 시작했다. `magisa.vercel.app`은 새 호스트로 308 리다이렉트하지만, `techgotgan.vercel.app`은 2026-10-29 점검에서 별도 200 응답이 확인됐다. 이를 `www.techgotgan.co.kr`로 통합하는 리다이렉트는 PR #101에 준비했으며 Production 미반영 상태다. 맞춤 도메인 구매나 상표권 확인은 별도 도메인 도입 결정 전까지 보류한다.
 
 ## 2026-10-19 최초 라이브 점검 (배포 전)
 
