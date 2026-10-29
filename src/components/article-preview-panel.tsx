@@ -51,17 +51,11 @@ function formatDate(value: string | null): string | null {
 }
 
 function summaryNotice(status: ArticlePreview["summaryStatus"]): string {
-  if (status === "pending") return "원문 본문을 가져와 요약할 예정입니다. 다음 요약 작업을 기다리고 있습니다.";
-  if (status === "processing") return "원문을 확인하고 요약을 만들고 있습니다.";
-  if (status === "failed") return "원문을 가져오거나 요약을 만드는 데 실패했습니다. 잠시 후 다시 시도합니다.";
-  if (status === "unavailable") return "원문 본문을 추출할 수 없어 요약을 제공하지 않습니다. 원문에서 확인해 주세요.";
+  if (status === "pending") return "요약 작업을 기다리고 있습니다.";
+  if (status === "processing") return "AI 요약을 만들고 있습니다.";
+  if (status === "failed") return "AI 요약 생성에 실패했습니다. 잠시 후 다시 시도합니다.";
+  if (status === "unavailable") return "요약할 내용을 확보할 수 없어 제공하지 않습니다. 원문에서 확인해 주세요.";
   return "등록된 AI 요약이 없습니다. 원문에서 확인해 주세요.";
-}
-
-function summaryBasisNotice(basis: ArticlePreview["summaryBasis"]): string {
-  if (basis === "excerpt") return "발췌 기반 요약";
-  if (basis === "partial_article") return "일부 본문 기반 요약";
-  return "원문 전문 기반 요약";
 }
 
 export function ArticlePreviewPanel({
@@ -663,7 +657,7 @@ export function ArticlePreviewPanel({
                       </Text>
                     </div>
                     <Text as="span" textStyle="t1Regular" color="var(--seed-color-fg-neutral-muted)">
-                      {summaryBasisNotice(currentArticle.summaryBasis)}
+                      AI가 생성한 요약
                     </Text>
                   </div>
 

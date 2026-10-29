@@ -64,8 +64,8 @@ function hasSeenOnboarding(): boolean {
   return false;
 }
 
-export function OnboardingModal({ isSummaryAdmin }: { isSummaryAdmin: boolean }) {
-  const steps = isSummaryAdmin ? STEPS : STEPS.filter((_, index) => index !== 1);
+export function OnboardingModal({ showSummaryStep }: { showSummaryStep: boolean }) {
+  const steps = showSummaryStep ? STEPS : STEPS.filter((_, index) => index !== 1);
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
