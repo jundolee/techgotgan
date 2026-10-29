@@ -68,10 +68,28 @@ async function guardSourcesAdmin(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function proxy(request: NextRequest) {
-  return guardSourcesAdmin(request);
+  const requestHost = request.nextUrl.hostname.toLowerCase();
+  const hasBrowserState = request.cookies.getAll().length > 0;
+
+  // The Vercel project alias and the custom domain have separate cookie scopes.
+  // Keep requests carrying existing state on their current host so auth/visitor
+  // cookies are not stranded; anonymous users and crawlers consolidate to www.
+  if (requestHost === "techgotgan.vercel.app" && !hasBrowserState) {
+    const canonicalUrl = request.nextUrl.clone();
+    canonicalUrl.protocol = "https:";
+    canonicalUrl.hostname = "www.techgotgan.co.kr";
+    canonicalUrl.port = "";
+    return NextResponse.redirect(canonicalUrl, 308);
+  }
+
+  if (request.nextUrl.pathname === "/sources" || request.nextUrl.pathname.startsWith("/sources/")) {
+    return guardSourcesAdmin(request);
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/sources", "/sources/:path*"],
+  matcher: ["/((?!api/|_next/).*)"],
 };
 
