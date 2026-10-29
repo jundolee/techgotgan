@@ -45,10 +45,10 @@ export default async function OpenGraphImage() {
           </div>
           <div style={{ color: "#C94F00", display: "flex", fontSize: 38, fontWeight: 700 }}>테크곳간</div>
         </div>
-        <div style={{ display: "flex", fontSize: 78, letterSpacing: "-3px", lineHeight: 1.2 }}>
-          테크 글을 곳간에 모아
+        <div style={{ display: "flex", fontSize: 72, letterSpacing: "-3px", lineHeight: 1.2 }}>
+          테크 글을 곳간에
           <br />
-          한곳에서 읽어요
+          모아 읽어요
         </div>
         <div style={{ color: "#5C5C66", display: "flex", fontSize: 30, lineHeight: 1.5, marginTop: 32 }}>
           {SITE_DESCRIPTION}
