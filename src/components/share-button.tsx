@@ -21,7 +21,7 @@ export function ShareButton({
   variant?: "ghost" | "neutralWeak" | "neutralOutline" | "neutralSolid" | "brandOutline";
   style?: React.CSSProperties;
   compact?: boolean;
-  shareSurface?: "article" | "weekly_digest";
+  shareSurface?: "article" | "weekly_digest" | "career_guide";
   shareCampaign?: string;
 }) {
   const [copied, setCopied] = useState(false);

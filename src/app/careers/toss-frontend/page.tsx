@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
+import { ShareButton } from "@/components/share-button";
 import { CareerFeedback, CareerLink } from "@/components/career-experiment";
 
 const url = "https://www.techgotgan.co.kr/careers/toss-frontend";
@@ -26,6 +27,7 @@ export default function TossFrontendGuide() {
       <h1 style={{ fontSize: "clamp(28px, 6vw, 38px)", lineHeight: 1.25 }}>토스 프론트엔드 지원 전 읽어볼 글</h1>
       <p>어떤 문제를 다루고 어떻게 협업했는지, 토스가 공개한 세 편의 글과 영상으로 살펴보세요. 각 자료를 읽은 뒤 자신의 경험과 연결해볼 질문도 함께 담았습니다.</p>
       <p style={{ color: "#666", fontSize: 14 }}>테크곳간이 독립적으로 고른 자료입니다. 공식 채용 안내나 예상 면접 문항이 아니며, 글의 발행 시점과 현재 공고를 함께 확인하세요.</p>
+      <div><ShareButton title="토스 프론트엔드 지원 전 읽어볼 글" url={url} size="small" variant="neutralWeak" shareSurface="career_guide" shareCampaign="career_guide_toss_frontend_2026q4" /></div>
     </header>
     <section aria-labelledby="reading"><h2 id="reading" style={{ fontSize: 23, marginBottom: 16 }}>이 순서로 살펴보세요</h2>
       <ol style={{ display: "grid", gap: 16, listStyle: "none" }}>{items.map((item, index) => <li key={item.id} style={{ border: "1px solid #e4e4e4", borderRadius: 14, padding: 20, display: "grid", gap: 10 }}>
