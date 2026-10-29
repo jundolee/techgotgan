@@ -16,6 +16,7 @@ export const viewport: Viewport = {
 
 const GTM_CONTAINER_ID = "GTM-P2HHB9CG";
 const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+const NAVER_SITE_VERIFICATION = "e9c96b3b65c94140f2c0ddeddf0d3ca3dee8a5b5";
 const ANALYTICS_ENABLED = process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === "true";
 
 const freesentation = localFont({
@@ -76,7 +77,10 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
-  ...(GOOGLE_SITE_VERIFICATION ? { verification: { google: GOOGLE_SITE_VERIFICATION } } : {}),
+  verification: {
+    ...(GOOGLE_SITE_VERIFICATION ? { google: GOOGLE_SITE_VERIFICATION } : {}),
+    other: { "naver-site-verification": NAVER_SITE_VERIFICATION },
+  },
 };
 
 const websiteJsonLd = {
