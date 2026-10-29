@@ -8,7 +8,7 @@ import { markArticleRead } from "@/lib/data/articles";
 import { ArticleSummaryCopy } from "@/components/article-summary-copy";
 import { getArticlePreview, getRelatedArticles } from "@/lib/data/related-articles";
 import { getCurrentUser } from "@/lib/supabase/current-user";
-import { SITE_NAME } from "@/app/seo";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/app/seo";
 import { canViewArticleSummary } from "@/lib/article-summary-access";
 
 export const runtime = "nodejs";
@@ -31,10 +31,27 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   const { id } = await params;
   const article = await getArticle(id);
   if (!article) return { robots: { index: false, follow: false } };
+  const description = article.excerpt?.slice(0, 160) ?? `원문 발행처에서 확인할 수 있는 글입니다. ${SITE_NAME}`;
+  const url = `${SITE_URL}/articles/${encodeURIComponent(article.id)}`;
   return {
     title: article.title,
-    description: article.excerpt?.slice(0, 160) ?? `원문 발행처에서 확인할 수 있는 글입니다. ${SITE_NAME}`,
-    alternates: { canonical: `/articles/${encodeURIComponent(article.id)}` },
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: article.title,
+      description,
+      url,
+      siteName: SITE_NAME,
+      locale: "ko_KR",
+      type: "article",
+      images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: SITE_NAME }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description,
+      images: [DEFAULT_OG_IMAGE],
+    },
     robots: { index: false, follow: true },
   };
 }
