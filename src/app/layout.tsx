@@ -64,6 +64,18 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     images: [{ url: DEFAULT_OG_IMAGE, alt: SITE_NAME }],
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      noimageindex: false,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   ...(GOOGLE_SITE_VERIFICATION ? { verification: { google: GOOGLE_SITE_VERIFICATION } } : {}),
 };
 
@@ -77,13 +89,29 @@ const websiteJsonLd = {
       url: SITE_URL,
       description: SITE_DESCRIPTION,
       inLanguage: "ko-KR",
+      mainEntity: { "@id": `${SITE_URL}/#webpage` },
+    },
+    {
+      "@type": "WebPage",
+      "@id": `${SITE_URL}/#webpage`,
+      url: SITE_URL,
+      name: SITE_TITLE,
+      isPartOf: { "@id": `${SITE_URL}/#website` },
+      primaryImageOfPage: {
+        "@type": "ImageObject",
+        url: DEFAULT_OG_IMAGE,
+        contentUrl: DEFAULT_OG_IMAGE,
+        width: 1200,
+        height: 630,
+        caption: "테크곳간 대표 이미지",
+      },
     },
     {
       "@type": "Organization",
       "@id": `${SITE_URL}/#organization`,
       name: SITE_NAME,
       url: SITE_URL,
-      logo: DEFAULT_OG_IMAGE,
+      logo: `${SITE_URL}/brand/techgotgan-icon.svg`,
     },
   ],
 };
