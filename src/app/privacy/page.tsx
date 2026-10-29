@@ -4,7 +4,7 @@ import { Text } from "@seed-design/react";
 import { PageHeader } from "@/components/page-header";
 import { SITE_NAME } from "@/app/seo";
 
-const EFFECTIVE_DATE = "2026년 10월 22일";
+const EFFECTIVE_DATE = "2026년 10월 26일";
 
 export const metadata: Metadata = {
   title: "개인정보처리방침",
@@ -59,6 +59,7 @@ export default function PrivacyPolicyPage() {
             <li>계정별 읽음 표시와 즐겨찾기 보관</li>
             <li>서비스 이용 패턴 분석, 서비스 개선 및 신규 기능 개발</li>
             <li>AI 요약 기능 제공(2026년 10월 21일 이후 새로 등록되는 글의 본문 추출 요약)</li>
+            <li>게시글 삭제·수정 요청 확인 및 회신</li>
             <li>이용자 문의 및 피드백 응대</li>
           </ul>
         </Section>
@@ -80,6 +81,10 @@ export default function PrivacyPolicyPage() {
             <li><strong>Google LLC</strong>: Google OAuth 로그인 인증 및 Google Analytics 4 통계 분석</li>
             <li><strong>Amplitude, Inc.</strong>: 서비스 이용 패턴 분석</li>
             <li><strong>OpenAI, LLC</strong>: 신규 등록 기사 요약 시 글 제목과 원문에서 추출한 본문 텍스트 API 전달</li>
+            <li>
+              <strong>Resend, Inc. (미국, privacy@resend.com)</strong>: 게시글 삭제·수정 요청을 운영자에게 이메일로 전달합니다. 게시글 URL, 요청 사유, 입력한 경우 회신 이메일이 제출 즉시 HTTPS API를 통해 미국으로 전송됩니다. 이메일 내용과 전송 로그는 Resend의 비-Enterprise 요금제 기준 최대 30일 보관될 수 있습니다. 자세한 내용은{" "}
+              <a href="https://resend.com/security/gdpr" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline" }}>Resend 보안·보유 정책</a>을 참고해 주세요.
+            </li>
           </ul>
         </Section>
 
@@ -128,6 +133,10 @@ export default function PrivacyPolicyPage() {
             문의 채널:{" "}
             <Link href="/suggest" style={{ textDecoration: "underline", color: "var(--seed-color-fg-brand, #eb641c)" }}>
               블로그 추천 및 서비스 의견 남기기
+            </Link>
+            {" "}·{" "}
+            <Link href="/content-removal" style={{ textDecoration: "underline", color: "var(--seed-color-fg-brand, #eb641c)" }}>
+              게시글 삭제 요청
             </Link>
           </p>
         </Section>
