@@ -6,6 +6,7 @@ import { Text } from "@seed-design/react";
 import { RelatedArticleList } from "@/components/related-article-list";
 import { markArticleRead } from "@/lib/data/articles";
 import { ArticleSummaryCopy } from "@/components/article-summary-copy";
+import { ShareButton } from "@/components/share-button";
 import { getArticlePreview, getRelatedArticles } from "@/lib/data/related-articles";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
@@ -86,6 +87,14 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {article.sourceTitle ?? "출처 미상"}{article.publishedAt ? ` · ${new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(article.publishedAt))}` : ""}
       </Text>
       <Text as="h1" textStyle="t8Bold" color="fg.neutral" style={{ marginTop: 12, lineHeight: 1.25 }}>{article.title}</Text>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+        <ShareButton
+          title={article.title}
+          url={`/articles/${encodeURIComponent(article.id)}`}
+          size="small"
+          variant="neutralWeak"
+        />
+      </div>
       {canViewArticleSummary(user?.email) && <section aria-labelledby="ai-summary-heading" style={{ marginTop: 28, border: `1px solid ${article.summary ? "#fbd8bc" : "var(--seed-color-stroke-neutral-subtle)"}`, borderRadius: 20, padding: "24px 28px", background: article.summary ? "linear-gradient(180deg, #fffaf5 0%, #ffffff 100%)" : undefined }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
