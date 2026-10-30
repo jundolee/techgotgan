@@ -1,6 +1,7 @@
 import "server-only";
 import { createServiceClient } from "@/lib/supabase/service";
 import { fetchCachedFromSupabase } from "@/lib/supabase/cached-rest";
+import { HOME_MAX_ARTICLE_FEED_SIZE } from "@/lib/article-feed-constants";
 
 export interface ArticleListItem {
   id: string;
@@ -32,7 +33,8 @@ export type ArticleFilter = "all" | "unread" | "read" | "favorite";
  * supabase-js 대신 PostgREST에 직접 fetch()하는 이유는 `fetchCachedFromSupabase` 주석 참고
  * (2026-08-19 결정 — edge 런타임에서 unstable_cache가 인스턴스별로 따로 캐시되던 문제).
  */
-export async function getCachedArticleFeed(): Promise<Omit<ArticleListItem, "is_read" | "is_favorite">[]> {
+export async function getCachedArticleFeed(limit = HOME_MAX_ARTICLE_FEED_SIZE): Promise<Omit<ArticleListItem, "is_read" | "is_favorite">[]> {
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), HOME_MAX_ARTICLE_FEED_SIZE);
   return fetchCachedFromSupabase<Omit<ArticleListItem, "is_read" | "is_favorite">[]>(
     "articles",
     {
@@ -40,7 +42,7 @@ export async function getCachedArticleFeed(): Promise<Omit<ArticleListItem, "is_
       // 카드에 보이는 날짜(published_at) 기준 내림차순 — 화면에 표시되는 값과 정렬 순서가 어긋나지 않도록 한다.
       // published_at이 없는 경우만 맨 뒤로 보낸다.
       order: "published_at.desc.nullslast",
-      limit: "200",
+      limit: String(safeLimit),
     },
     { revalidate: 60, tags: ["articles"] }
   );

@@ -12,6 +12,7 @@ import { HeaderAuthSlot } from "@/components/header-auth-slot";
 import { OnboardingModalSlot } from "@/components/onboarding-modal-slot";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { CATEGORY_MAP, type CategoryId } from "@/lib/categories";
+import { HOME_INITIAL_ARTICLE_FEED_SIZE } from "@/lib/article-feed-constants";
 
 // dynamic="force-dynamic"을 쓰면 모든 fetch()가 cache: "no-store"로 강제되어 PostgREST 캐시가 무력화된다.
 // fetchCache = "default-cache"를 지정해 searchParams로 인한 동적 렌더링을 유지하면서도
@@ -45,6 +46,7 @@ async function ArticleListSection({
   initialView,
   initialQuery,
   deferFirstThumbnail,
+  deferFullFeed,
 }: {
   initialFilter: ArticleFilter;
   initialSourceId: string;
@@ -52,12 +54,16 @@ async function ArticleListSection({
   initialView: "list" | "card";
   initialQuery: string;
   deferFirstThumbnail: boolean;
+  deferFullFeed: boolean;
 }) {
   const shouldSearchInitially = Array.from(initialQuery.trim()).length >= 2;
+  const shouldDeferFullFeed = deferFullFeed && !shouldSearchInitially;
   // 세션 확인, 글 목록 캐시 조회, 소스 목록 조회를 모두 병렬로 시작해 첫 응답 지연을 최소화한다.
   const [user, rawArticles, sources] = await Promise.all([
     getCurrentUser(),
-    shouldSearchInitially ? null : getCachedArticleFeed(),
+    shouldSearchInitially
+      ? null
+      : getCachedArticleFeed(shouldDeferFullFeed ? HOME_INITIAL_ARTICLE_FEED_SIZE : undefined),
     listSources(),
   ]);
   const userId = user?.id ?? null;
@@ -82,6 +88,7 @@ async function ArticleListSection({
       initialView={initialView}
       initialQuery={initialQuery}
       deferFirstThumbnail={deferFirstThumbnail}
+      deferFullFeed={shouldDeferFullFeed}
     />
   );
 }
@@ -151,6 +158,7 @@ export default async function Home({
           initialView={initialView}
           initialQuery={initialQuery}
           deferFirstThumbnail={deferFirstThumbnail}
+          deferFullFeed={deferFirstThumbnail}
         />
       </Suspense>
     </main>
