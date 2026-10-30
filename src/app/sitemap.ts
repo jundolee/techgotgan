@@ -5,8 +5,11 @@ import { getPublicBlogIndex, getPublicCategoryIndex } from "@/lib/data/public-hu
 import { listRecentDigestWeeks } from "@/lib/data/weekly-digests";
 import { SITE_URL } from "./seo";
 
-// Production publication time of the static Toss frontend reading guide (PR #94).
-const CAREER_GUIDE_LAST_MODIFIED = "2026-10-29T01:52:39.000Z";
+// Latest Production page revisions for static content changes not represented by article data.
+const CAREER_GUIDE_LAST_MODIFIED = "2026-10-30T01:43:53.000Z";
+const STATIC_TOPIC_LAST_MODIFIED: Record<string, string> = {
+  frontend: "2026-10-30T01:37:00.000Z",
+};
 
 function latestContentDate<T extends { discovered_at?: string | null; published_at?: string | null }>(
   items: T[]
@@ -57,7 +60,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     ...topics.map((topic) => ({
       url: `${SITE_URL}/topics/${topic.category}`,
-      lastModified: topic.lastModified ?? undefined,
+      lastModified: latestDate([topic.lastModified, STATIC_TOPIC_LAST_MODIFIED[topic.category] ?? null]),
       changeFrequency: "daily" as const,
       priority: 0.8,
     })),
