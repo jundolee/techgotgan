@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import Script from "next/script";
 import { AmplitudeAnalytics } from "@/components/amplitude-analytics";
+import { DeferredGoogleTagManager } from "@/components/deferred-google-tag-manager";
 import { PageFooter } from "@/components/page-footer";
 import { DEFAULT_OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "./seo";
 import "@seed-design/css/all.css";
@@ -181,13 +182,7 @@ export default function RootLayout({
             />
           </noscript>
         )}
-        {ANALYTICS_ENABLED && (
-          <Script
-            id="gtm"
-            src={`https://www.googletagmanager.com/gtm.js?id=${GTM_CONTAINER_ID}`}
-            strategy="lazyOnload"
-          />
-        )}
+        {ANALYTICS_ENABLED && <DeferredGoogleTagManager gtmId={GTM_CONTAINER_ID} />}
         <div className="app-shell">
           {children}
           <PageFooter />
