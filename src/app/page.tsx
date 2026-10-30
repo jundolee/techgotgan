@@ -155,9 +155,7 @@ export default async function Home({
       </Text>
 
 
-      <Suspense fallback={null}>
-        <OnboardingModalSlot forcePreview={Boolean(onboarding || previewOnboarding)} />
-      </Suspense>
+      <OnboardingModalSlot initialOpen={deferFirstThumbnail} />
 
       <Suspense fallback={<ArticleListSkeleton />}>
         <ArticleListSection
