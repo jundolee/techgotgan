@@ -419,7 +419,7 @@ export function ArticleList({
             priority={index === 0 && !deferFirstThumbnail}
             thumbnailSizes={view === "list"
               ? "(max-width: 640px) 88px, 120px"
-              : "(max-width: 420px) 100vw, (max-width: 768px) 50vw, 33vw"}
+              : "(max-width: 420px) calc(100vw - 58px), (max-width: 640px) calc((100vw - 96px) / 2), calc((min(100vw, 720px) - 174px) / 3)"}
           />
         ))}
       </ul>}
