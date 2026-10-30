@@ -1042,6 +1042,32 @@ h3 {
   .article-card-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* localStorage 기반 보기 설정을 hydration 전에 반영해 card→list 전환으로 인한 CLS를 막는다. */
+html[data-article-view="list"] .article-card-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+html[data-article-view="list"] .article-row-item {
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--seed-color-stroke-neutral-subtle, #e1e5dc);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+html[data-article-view="list"] .article-row-item:hover { border-color: var(--seed-color-stroke-neutral-subtle, #e1e5dc); box-shadow: none; }
+html[data-article-view="list"] .article-row-main { display: grid; grid-template-columns: minmax(0, 1fr); }
+html[data-article-view="list"] .article-row-main.has-thumbnail { grid-template-columns: minmax(0, 1fr) 120px; }
+html[data-article-view="list"] .article-row-thumb { grid-column: 2; grid-row: 1; }
+html[data-article-view="list"] .article-row-thumb-aspect { width: 120px; }
+
+@media (max-width: 640px) {
+  html[data-article-view="list"] .article-row-item { padding: 8px 0; }
+  html[data-article-view="list"] .article-row-main { gap: 8px; }
+  html[data-article-view="list"] .article-row-main.has-thumbnail { grid-template-columns: minmax(0, 1fr) 88px; }
+  html[data-article-view="list"] .article-row-thumb-aspect { width: 88px !important; }
+}
+
 @keyframes skeleton-pulse {
   0%,
   100% {
