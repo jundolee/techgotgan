@@ -15,6 +15,7 @@ import {
   type ArticleListItem,
 } from "@/lib/data/articles";
 import { getArticlePreview, getRelatedArticles, type ArticlePreview, type RelatedArticle } from "@/lib/data/related-articles";
+import { listSources } from "@/lib/data/sources";
 import { getCurrentUser, getVerifiedUserId } from "@/lib/supabase/current-user";
 import { canViewArticleSummary } from "@/lib/article-summary-access";
 
@@ -178,4 +179,20 @@ export async function loadArticlesAction(query: string): Promise<ArticleListItem
   const userId = await getCurrentUserId();
   const trimmed = query.trim();
   return trimmed ? searchArticles(trimmed, userId) : listArticles(userId);
+}
+
+/** Load the homepage feed and source options for the first-visit deferred list. */
+export async function loadArticleFeedAction() {
+  const userId = await getCurrentUserId();
+  const [articles, sources] = await Promise.all([listArticles(userId), listSources()]);
+  return {
+    articles,
+    sources: sources
+      .map((source) => ({
+        id: source.id,
+        label: source.title ?? source.site_url,
+        faviconUrl: source.favicon_url,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, "ko")),
+  };
 }
