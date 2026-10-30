@@ -8,7 +8,12 @@ import { getCategoryMeta, type CategoryId } from "@/lib/categories";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
+  return new Date(iso).toLocaleDateString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
 }
 
 export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, onSelectCategory, priority = false, thumbnailSizes }: {
