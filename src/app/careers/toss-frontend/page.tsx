@@ -1,16 +1,34 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SITE_NAME } from "@/app/seo";
 import { PageHeader } from "@/components/page-header";
 import { ShareButton } from "@/components/share-button";
 import { CareerFeedback, CareerLink } from "@/components/career-experiment";
 
 const url = "https://www.techgotgan.co.kr/careers/toss-frontend";
+const title = "토스 프론트엔드 지원 전 읽어볼 글";
+const socialTitle = `${title} | ${SITE_NAME}`;
 const description = "토스 프론트엔드 지원 전 살펴볼 기술 블로그 글과 면접 준비에 도움이 될 질문을 모았습니다.";
+const shareImage = `${url}/opengraph-image`;
 export const metadata: Metadata = {
-  title: "토스 프론트엔드 지원 전 읽어볼 글",
+  title,
   description,
   alternates: { canonical: url },
-  openGraph: { title: "토스 프론트엔드 지원 전 읽어볼 글 | 테크곳간", description, url, type: "website" },
+  openGraph: {
+    title: socialTitle,
+    description,
+    url,
+    siteName: SITE_NAME,
+    locale: "ko_KR",
+    type: "website",
+    images: [{ url: shareImage, width: 1200, height: 630, alt: socialTitle }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: socialTitle,
+    description,
+    images: [{ url: shareImage, alt: socialTitle }],
+  },
 };
 
 const items = [
