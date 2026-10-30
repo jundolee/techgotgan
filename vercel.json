@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/indexnow",
+      "schedule": "30 0 * * *"
+    },
+    {
       "path": "/api/cron/summaries",
       "schedule": "30 23 * * *"
     },
