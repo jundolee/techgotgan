@@ -75,6 +75,7 @@
 - 2026-10-30 Yeti 사용자 에이전트로 Production sitemap의 108개 URL을 확인했다. 모두 HTTP 200, 최종 URL과 요청 URL 일치, canonical 존재 및 일치, robots meta와 `X-Robots-Tag`에 `noindex` 없음으로 확인됐다. 현재 sitemap URL의 직접 접근 차단 증거는 없지만, 이 점검만으로 실제 수집·색인을 입증하지는 않는다.
 - 2026-10-30 Search Console 보고서(2026-10-20~27, 최종 업데이트 약 6시간 전)는 클릭 2회, 노출 91회, CTR 2.2%, 평균 게재순위 7.8을 표시했다. 페이지별로 요즘IT 25회·클릭 0, `/blogs` 24회·클릭 0, 토스 허브 9회·클릭 0이었다. 토스 허브 필터에서 보인 `토스테크`와 `toss tech blog`는 각 2회 노출·클릭 0회였다. 이 데이터는 10월 29일 Velog 캠페인 시작 전이며 최근 metadata 변경 전의 구간이다.
 - 위 질의 신호에 맞춰 토스 허브 제목·H1·CollectionPage 이름에 `Toss Tech`를 명시하고, 설명에도 발행처 브랜드와 `toss.tech`를 함께 적었다. PR #121 Production 배포는 2026-10-30 02:03:59 UTC에 완료됐다. URL은 IndexNow에 HTTP 200으로 접수했고, sitemap `lastmod`도 이 배포 시각을 반영하도록 보강한다. 변경 후 Search Console 효과는 아직 관측하지 않았다.
+- Search Console `/blogs` 페이지 보고서(2026-10-20~27)는 노출 24회, 클릭 0회, 평균 게재순위 8.5였다. 표에 노출된 검색어는 `라인페이`, `네이버페이`, `myrealtrip`으로 각 1회였다. 페이지가 기업 기술 블로그를 찾는 의도와 직접 맞도록 제목을 `기업 기술 블로그 모음 | 최신 IT·개발 글`로 바꾸고 H1·CollectionPage 이름에 함께 적용한다. 색인 상태에서 확인된 토스 허브와 프론트엔드 가이드는 이미 Google에 등록되어 있어 색인 요청을 반복하지 않는다. 변경의 검색 효과는 재수집 이후 다시 측정한다.
 
 - 원격 Supabase의 `source_suggestions` 테이블은 존재하며, 예상 컬럼과 RLS 활성화 상태를 확인했다.
 - `0013_tokenized_article_search.sql`과 `0014_public_hub_queries.sql`을 2026-10-19에 대상

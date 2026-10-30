@@ -13,6 +13,7 @@ const STATIC_TOPIC_LAST_MODIFIED: Record<string, string> = {
 const STATIC_BLOG_LAST_MODIFIED: Record<string, string> = {
   "토스-기술-블로그-토스-테크-toss-tech": "2026-10-30T02:03:59.000Z",
 };
+const BLOG_INDEX_LAST_MODIFIED = "2026-10-30T02:15:00.000Z";
 
 function latestContentDate<T extends { discovered_at?: string | null; published_at?: string | null }>(
   items: T[]
@@ -69,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     {
       url: `${SITE_URL}/blogs`,
-      lastModified: blogIndexLastModified,
+      lastModified: latestDate([blogIndexLastModified ?? null, BLOG_INDEX_LAST_MODIFIED]) ?? BLOG_INDEX_LAST_MODIFIED,
       changeFrequency: "weekly",
       priority: 0.7,
     },

@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 export const fetchCache = "default-cache";
 
 const CANONICAL_URL = `${SITE_URL}/blogs`;
-const TITLE = "기업·개발자 기술 블로그 모아보기";
+const TITLE = "기업 기술 블로그 모음 | 최신 IT·개발 글";
 const DESCRIPTION = "토스·당근 등 기업과 개발자가 운영하는 국내외 기술 블로그를 발행처별로 모았습니다. 최신 글의 제목과 요약을 살펴보고, 관심 있는 글은 원문으로 이어 읽어보세요.";
 
 export const metadata: Metadata = {
