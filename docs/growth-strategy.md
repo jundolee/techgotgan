@@ -41,6 +41,7 @@
 | 공개 블로그 목록과 블로그별 최신 글 허브 | 완료 | `src/app/blogs/*`, `src/lib/data/public-hubs.ts` |
 | 주간 테크 큐레이션 아카이브 | 완료 | `src/app/digest/*`, `src/lib/data/weekly-digests.ts` |
 | 주제·블로그·주간 아카이브를 포함하는 동적 sitemap | 완료 | `src/app/sitemap.ts` |
+| sitemap의 최근 변경 페이지를 IndexNow로 알림 | 완료(초기 제출 접수, 색인 미확인) | `src/app/api/cron/indexnow/route.ts`, `public/fd1d51764a2688b02f4bba3f877b76ad.txt`, `vercel.json` |
 
 ## 현재 적용·배포 상태
 
@@ -60,6 +61,13 @@
 - GA4 보고서(2026-10-01~28)는 활성 사용자 162명, 신규 사용자 159명을 표시했다. 첫 사용자 기본 채널 기준 Google 자연 검색 사용자는 2명이고, 세션 소스/매체 `google / organic`은 23세션이었다. `accounts.google.com / referral`도 82세션으로 잡혀 있어 전체 유입을 순수 잠재고객 규모로 해석하지 않는다.
 - GA4 홈의 지난 7일(2026-10-22~28) 활성 사용자 97명은 기간 내 고유 사용자 수다. 별도 일별 활성 사용자 그래프의 선을 축에 맞춰 읽으면 일별 약 18, 19, 5, 5, 48, 22, 15명(평균 약 19명)으로 보인다. 값은 그래프 픽셀에서 반올림한 근삿값이며, 정확한 일별 표의 원자료는 아직 확보하지 못했다. 관측된 가장 높은 하루도 DAU 100 목표에 못 미친다.
 - 현재 다음 단계는 Google 자연 검색 사용자를 늘릴 랜딩 개선을 계속하고, GA4에서 일별 활성 사용자 정확한 값을 추출해 기준선으로 고정하는 것이다. 2026-10-24 최초 감지된 공개 허브 40개의 크롤링 상태는 최소 1주가 지난 2026-10-31 이후 다시 확인한다. 캠페인 관찰 기간에는 다른 랜딩을 임의 변경하지 않고, 2026-11-12 03:26 UTC 이후 쿼리·랜딩별 노출과 클릭을 검토해 검색 수요가 확인된 허브부터 보강한다.
+
+### 2026-10-30 IndexNow 배포 및 초기 제출
+
+- 공개 웹 검색 도구에서 홈, `/topics`, 여러 주제 허브, `/digest`, 토스 기술 블로그 허브 등이 검색 결과로 확인됐다. 검색 제공자는 특정되지 않으므로 이를 Google Search Console 또는 네이버 색인 리포트로 간주하지 않는다.
+- Production sitemap은 108개 URL을 반환했고, 그중 31개가 조회 시점 기준 최근 24시간 이내 `lastmod`가 갱신돼 있었다. `/robots.txt`는 크롤링을 허용하고 sitemap 경로를 알린다.
+- PR #110 (`1fbb4db`)에서 IndexNow 공개 key 파일과 `CRON_SECRET`으로 보호되는 일일 cron을 배포했다. 매일 00:30 UTC에 sitemap을 읽고 같은 호스트의 최근 24시간 변경 URL만 IndexNow 글로벌 endpoint에 보낸다. sitemap은 전체 URL 목록으로 유지하고 IndexNow는 갱신 알림에만 쓴다. Vercel 공개 Production에서 key 파일은 HTTP 200, 인증 없는 cron 호출은 401을 반환했다.
+- 2026-10-30 01:06 UTC에 최근 변경 URL 31개를 한 번 제출해 HTTP 202를 받았다. 이는 IndexNow가 요청을 받았고 key 검증이 대기 중이라는 뜻이다. 실제 크롤링·색인·검색 노출은 확인되지 않았다. [IndexNow FAQ](https://www.indexnow.org/faq)는 제출이 색인을 보장하지 않는다고 설명하며, [네이버 Search Advisor](https://searchadvisor.naver.com/guide/indexnow-about)도 신규·수정·삭제 페이지 알림 용도로 IndexNow를 지원한다.
 
 - 원격 Supabase의 `source_suggestions` 테이블은 존재하며, 예상 컬럼과 RLS 활성화 상태를 확인했다.
 - `0013_tokenized_article_search.sql`과 `0014_public_hub_queries.sql`을 2026-10-19에 대상
