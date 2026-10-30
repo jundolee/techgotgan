@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { loadArticleFeedAction } from "@/app/articles/actions";
 import type { ArticleFilter } from "@/lib/data/articles";
 import type { CategoryId } from "@/lib/categories";
@@ -12,6 +12,8 @@ type DeferredArticleListProps = {
   initialCategory: CategoryId;
   initialView: "list" | "card";
   initialQuery: string;
+  deferFirstThumbnail: boolean;
+  children?: ReactNode;
 };
 
 const InteractiveArticleList = dynamic(
@@ -46,7 +48,7 @@ function ArticleListPlaceholder() {
   );
 }
 
-export function DeferredArticleList(props: DeferredArticleListProps) {
+export function DeferredArticleList({ deferFirstThumbnail, children, ...props }: DeferredArticleListProps) {
   const [feed, setFeed] = useState<Awaited<ReturnType<typeof loadArticleFeedAction>> | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const loadStartedRef = useRef(false);
@@ -135,7 +137,7 @@ export function DeferredArticleList(props: DeferredArticleListProps) {
         articles={feed.articles}
         sources={feed.sources}
         {...props}
-        deferFirstThumbnail
+        deferFirstThumbnail={deferFirstThumbnail}
       />
     );
   }
@@ -147,7 +149,7 @@ export function DeferredArticleList(props: DeferredArticleListProps) {
           글 목록을 불러오지 못했어요. <button type="button" onClick={loadFeed}>다시 시도</button>
         </p>
       )}
-      <ArticleListPlaceholder />
+      {children ?? <ArticleListPlaceholder />}
     </>
   );
 }
