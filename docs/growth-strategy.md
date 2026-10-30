@@ -67,8 +67,9 @@
 - 공개 웹 검색 도구에서 홈, `/topics`, 여러 주제 허브, `/digest`, 토스 기술 블로그 허브 등이 검색 결과로 확인됐다. 검색 제공자는 특정되지 않으므로 이를 Google Search Console 또는 네이버 색인 리포트로 간주하지 않는다.
 - Production sitemap은 108개 URL을 반환했고, 그중 31개가 조회 시점 기준 최근 24시간 이내 `lastmod`가 갱신돼 있었다. `/robots.txt`는 크롤링을 허용하고 sitemap 경로를 알린다.
 - PR #110 (`1fbb4db`)에서 IndexNow 공개 key 파일과 `CRON_SECRET`으로 보호되는 일일 cron을 배포했다. 매일 00:30 UTC에 sitemap을 읽고 같은 호스트의 최근 24시간 변경 URL만 IndexNow 글로벌 endpoint에 보낸다. sitemap은 전체 URL 목록으로 유지하고 IndexNow는 갱신 알림에만 쓴다. Vercel 공개 Production에서 key 파일은 HTTP 200, 인증 없는 cron 호출은 401을 반환했다.
-- 2026-10-30 01:06 UTC에 최근 변경 URL 31개를 한 번 제출해 HTTP 202를 받았다. 이는 IndexNow가 요청을 받았고 key 검증이 대기 중이라는 뜻이다. 실제 크롤링·색인·검색 노출은 확인되지 않았다. [IndexNow FAQ](https://www.indexnow.org/faq)는 제출이 색인을 보장하지 않는다고 설명하며, [네이버 Search Advisor](https://searchadvisor.naver.com/guide/indexnow-about)도 신규·수정·삭제 페이지 알림 용도로 IndexNow를 지원한다.
-- 2026-10-30 추가 검토에서 `/topics` 목록이 카테고리별 글 수와 최신 글을 보여주지만 sitemap에 `lastmod`가 없어 IndexNow 자동 제출 대상에서 빠지는 점을 확인했다. `/topics`의 `lastmod`를 가장 최근 공개 카테고리 갱신 시각으로 계산하도록 보강해, 콘텐츠가 바뀐 날에는 목록 페이지도 IndexNow 대상에 포함한다.
+- 2026-10-30 01:06 UTC에 최근 변경 URL 31개를 한 번 제출해 HTTP 202를 받았다. 이는 요청 접수 후 key 검증을 기다리는 응답이었다. [IndexNow FAQ](https://www.indexnow.org/faq)는 제출이 색인을 보장하지 않는다고 설명하며, [네이버 Search Advisor](https://searchadvisor.naver.com/guide/indexnow-about)도 신규·수정·삭제 페이지 알림 용도로 IndexNow를 지원한다.
+- 추가 검토에서 `/topics` 목록은 카테고리별 글 수와 최신 글이 바뀌는데 sitemap에 `lastmod`가 없어 자동 제출 대상에서 빠지는 점을 확인했다. PR #112 (`a932577`)에서 가장 최근 공개 카테고리의 갱신 시각을 `/topics`의 `lastmod`로 반영했다. Production sitemap에서 `/topics`의 `lastmod`는 `2026-10-29T22:54:08Z`로 표시됐다.
+- 2026-10-30 01:12 UTC에 이전 31개 목록에는 포함되지 않았던 `/topics`만 별도로 제출해 HTTP 200을 받았다. 이 응답은 key 검증을 통과하고 URL 제출 요청을 받았다는 뜻이다. 크롤링·색인은 별도 확인이 필요하며, 같은 시각대 네이버 `site:www.techgotgan.co.kr` 및 `테크곳간` 직접 검색에는 자사 도메인 결과가 없었다. 캠페인 48시간 점검은 2026-10-31 03:26 UTC 예정이다.
 
 - 원격 Supabase의 `source_suggestions` 테이블은 존재하며, 예상 컬럼과 RLS 활성화 상태를 확인했다.
 - `0013_tokenized_article_search.sql`과 `0014_public_hub_queries.sql`을 2026-10-19에 대상
