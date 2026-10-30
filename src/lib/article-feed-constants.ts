@@ -1,2 +1,0 @@
-export const HOME_INITIAL_ARTICLE_FEED_SIZE = 50;
-export const HOME_MAX_ARTICLE_FEED_SIZE = 200;

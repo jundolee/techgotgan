@@ -11,7 +11,6 @@ import { ScrollToTopButton } from "./scroll-to-top-button";
 import { PaginationControls } from "./pagination-controls";
 import { CategoryFilterChips } from "./category-filter-chips";
 import { trackArticleSearchCompleted } from "@/lib/analytics";
-import { HOME_INITIAL_ARTICLE_FEED_SIZE } from "@/lib/article-feed-constants";
 import { loadArticlesAction } from "@/app/articles/actions";
 import type { ArticleFilter, ArticleListItem } from "@/lib/data/articles";
 import type { CategoryId } from "@/lib/categories";
@@ -52,7 +51,7 @@ function getArticleViewSnapshot(fallback: ArticleView): ArticleView {
  * 읽음/즐겨찾기 변경은 서버 액션으로 저장하고 목록은 로컬 오버라이드로 즉시 반영한다.
  */
 export function ArticleList({
-  articles: initialArticles,
+  articles,
   sources,
   initialFilter,
   initialSourceId,
@@ -60,7 +59,6 @@ export function ArticleList({
   initialView,
   initialQuery,
   deferFirstThumbnail = false,
-  deferFullFeed = false,
 }: {
   articles: ArticleListItem[];
   sources: SourceOption[];
@@ -70,14 +68,7 @@ export function ArticleList({
   initialView: ArticleView;
   initialQuery: string;
   deferFirstThumbnail?: boolean;
-  deferFullFeed?: boolean;
 }) {
-  const [fullFeedState, setFullFeedState] = useState<{
-    source: ArticleListItem[];
-    articles: ArticleListItem[];
-  } | null>(null);
-  const articles = fullFeedState?.source === initialArticles ? fullFeedState.articles : initialArticles;
-  const fullFeedLoadStartedRef = useRef(new WeakSet<ArticleListItem[]>());
   const [filter, setFilter] = useState<ArticleFilter>(initialFilter);
   const [sourceId, setSourceId] = useState(initialSourceId);
   const [category, setCategory] = useState<CategoryId>(initialCategory);
@@ -123,113 +114,6 @@ export function ArticleList({
     articles,
     values: new Map(),
   }));
-
-  useEffect(() => {
-    if (!deferFullFeed || initialArticles.length < HOME_INITIAL_ARTICLE_FEED_SIZE) return;
-
-    // First-time onboarding already gives the initial view a clear LCP candidate. Keep the
-    // remaining cached feed out of the initial RSC payload, then restore client-side filters
-    // once the browser has painted the LCP element and reached an idle period.
-    let cancelled = false;
-    let idleTimer: number | undefined;
-    let fallbackTimer: number | undefined;
-    let lcpStabilityTimer: number | undefined;
-    let idleCallbackId: number | undefined;
-    let observer: PerformanceObserver | undefined;
-
-    const loadFullFeed = () => {
-      if (cancelled || fullFeedLoadStartedRef.current.has(initialArticles)) return;
-      fullFeedLoadStartedRef.current.add(initialArticles);
-      observer?.disconnect();
-      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
-      if (lcpStabilityTimer !== undefined) window.clearTimeout(lcpStabilityTimer);
-
-      void loadArticlesAction("")
-        .then((result) => {
-          if (cancelled) return;
-
-          setFullFeedState({ source: initialArticles, articles: result });
-          setReadOverrides((previous) => {
-            const keepLocalChanges = previous.articles === initialArticles;
-            return {
-              articles: result,
-              readIds: keepLocalChanges ? previous.readIds : new Set(),
-              unreadIds: keepLocalChanges ? previous.unreadIds : new Set(),
-            };
-          });
-          setFavoriteOverrides((previous) => ({
-            articles: result,
-            values: previous.articles === initialArticles ? previous.values : new Map(),
-          }));
-        })
-        .catch(() => {
-          fullFeedLoadStartedRef.current.delete(initialArticles);
-        });
-    };
-
-    const scheduleFullFeedLoad = () => {
-      if (cancelled || fullFeedLoadStartedRef.current.has(initialArticles)) return;
-      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
-
-      const browserWindow = window as Window & {
-        requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-      };
-      if (browserWindow.requestIdleCallback) {
-        idleCallbackId = browserWindow.requestIdleCallback(loadFullFeed, { timeout: 2_000 });
-      } else {
-        idleTimer = window.setTimeout(loadFullFeed, 500);
-      }
-    };
-
-    const scheduleAfterStableLcp = () => {
-      if (lcpStabilityTimer !== undefined) window.clearTimeout(lcpStabilityTimer);
-      lcpStabilityTimer = window.setTimeout(() => {
-        lcpStabilityTimer = undefined;
-        observer?.disconnect();
-        scheduleFullFeedLoad();
-      }, 1_500);
-    };
-
-    if (
-      typeof PerformanceObserver !== "undefined" &&
-      PerformanceObserver.supportedEntryTypes.includes("largest-contentful-paint")
-    ) {
-      if (performance.getEntriesByType("largest-contentful-paint").length > 0) {
-        scheduleAfterStableLcp();
-      } else {
-        observer = new PerformanceObserver((entries) => {
-          if (entries.getEntries().length === 0) return;
-          scheduleAfterStableLcp();
-        });
-        observer.observe({ type: "largest-contentful-paint", buffered: true });
-      }
-      fallbackTimer = window.setTimeout(() => {
-        if (lcpStabilityTimer === undefined) scheduleFullFeedLoad();
-      }, 15_000);
-    } else {
-      idleTimer = window.setTimeout(loadFullFeed, 5_000);
-    }
-
-    // If the reader acts before the LCP observer fires, load the rest immediately after that input.
-    document.addEventListener("pointerdown", loadFullFeed, { once: true, passive: true });
-    document.addEventListener("keydown", loadFullFeed, { once: true });
-    document.addEventListener("click", loadFullFeed, { once: true, capture: true });
-
-    return () => {
-      cancelled = true;
-      observer?.disconnect();
-      if (lcpStabilityTimer !== undefined) window.clearTimeout(lcpStabilityTimer);
-      document.removeEventListener("pointerdown", loadFullFeed);
-      document.removeEventListener("keydown", loadFullFeed);
-      document.removeEventListener("click", loadFullFeed, true);
-      if (idleTimer !== undefined) window.clearTimeout(idleTimer);
-      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
-      if (idleCallbackId !== undefined) {
-        const browserWindow = window as Window & { cancelIdleCallback?: (handle: number) => void };
-        browserWindow.cancelIdleCallback?.(idleCallbackId);
-      }
-    };
-  }, [deferFullFeed, initialArticles]);
 
   const locallyFavoriteOverrides = favoriteOverrides.articles === articles
     ? favoriteOverrides.values
