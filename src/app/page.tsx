@@ -10,8 +10,10 @@ import { PageHeader } from "@/components/page-header";
 import { HeaderAuthSlot } from "@/components/header-auth-slot";
 import { OnboardingModalSlot } from "@/components/onboarding-modal-slot";
 import { DeferredArticleList } from "@/components/deferred-article-list";
+import { ArticleListStaticPreview } from "@/components/article-list-static-preview";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { CATEGORY_MAP, type CategoryId } from "@/lib/categories";
+import { HOME_STATIC_PREVIEW_LIMIT } from "@/lib/article-feed-constants";
 
 // dynamic="force-dynamic"을 쓰면 모든 fetch()가 cache: "no-store"로 강제되어 PostgREST 캐시가 무력화된다.
 // fetchCache = "default-cache"를 지정해 searchParams로 인한 동적 렌더링을 유지하면서도
@@ -58,6 +60,12 @@ async function ArticleListSection({
   const shouldSearchInitially = Array.from(initialQuery.trim()).length >= 2;
   const shouldDeferInteractiveList = deferInteractiveList && !shouldSearchInitially;
   if (shouldDeferInteractiveList) {
+    const [user, rawArticles] = await Promise.all([
+      getCurrentUser(),
+      getCachedArticleFeed(HOME_STATIC_PREVIEW_LIMIT),
+    ]);
+    const articles = await attachUserState(rawArticles, user?.id ?? null);
+
     return (
       <DeferredArticleList
         initialFilter={initialFilter}
@@ -65,7 +73,17 @@ async function ArticleListSection({
         initialCategory={initialCategory}
         initialView={initialView}
         initialQuery={initialQuery}
-      />
+        deferFirstThumbnail={deferFirstThumbnail}
+      >
+        <ArticleListStaticPreview
+          articles={articles}
+          initialFilter={initialFilter}
+          initialSourceId={initialSourceId}
+          initialCategory={initialCategory}
+          initialView={initialView}
+          deferFirstThumbnail={deferFirstThumbnail}
+        />
+      </DeferredArticleList>
     );
   }
 
@@ -129,6 +147,7 @@ export default async function Home({
   const initialQuery = (q ?? "").trim();
   const initialFilter = parseFilter(rawFilter, initialQuery.length > 0);
   const initialCategory = parseCategory(rawCategory);
+  const deferInteractiveList = !initialQuery && !rawFilter && !sourceId && !rawCategory;
 
   return (
     <main>
@@ -159,7 +178,7 @@ export default async function Home({
           initialView={initialView}
           initialQuery={initialQuery}
           deferFirstThumbnail={deferFirstThumbnail}
-          deferInteractiveList={deferFirstThumbnail}
+          deferInteractiveList={deferInteractiveList}
         />
       </Suspense>
     </main>

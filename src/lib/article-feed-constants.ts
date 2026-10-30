@@ -1,0 +1,1 @@
+export const HOME_STATIC_PREVIEW_LIMIT = 30;
