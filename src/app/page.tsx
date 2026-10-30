@@ -142,8 +142,9 @@ export default async function Home({
   } = await searchParams;
   const cookieStore = await cookies();
   const initialView = cookieStore.get(ARTICLE_VIEW_COOKIE)?.value === "list" ? "list" : "card";
-  const deferFirstThumbnail = Boolean(onboarding || previewOnboarding) ||
-    cookieStore.get(ONBOARDING_DISMISSED_COOKIE)?.value !== "true";
+  const forceOnboardingPreview = Boolean(onboarding || previewOnboarding);
+  const hasDismissedOnboarding = cookieStore.get(ONBOARDING_DISMISSED_COOKIE)?.value === "true";
+  const deferFirstThumbnail = forceOnboardingPreview;
   const initialQuery = (q ?? "").trim();
   const initialFilter = parseFilter(rawFilter, initialQuery.length > 0);
   const initialCategory = parseCategory(rawCategory);
@@ -168,7 +169,10 @@ export default async function Home({
       </Text>
 
 
-      <OnboardingModalSlot initialOpen={deferFirstThumbnail} />
+      <OnboardingModalSlot
+        initialOpen={forceOnboardingPreview}
+        showTrigger={!hasDismissedOnboarding && !forceOnboardingPreview}
+      />
 
       <Suspense fallback={<ArticleListSkeleton />}>
         <ArticleListSection
