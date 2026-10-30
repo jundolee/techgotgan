@@ -47,42 +47,22 @@ const STEPS: StepData[] = [
 function markOnboardingSeen() {
   try {
     localStorage.setItem(ONBOARDING_DISMISSED_KEY, "true");
-    // 쿠키에도 1년간 보관하여 재방문 시 최초 1회만 표시되도록 보장
+  } catch {
+    // Cookie below remains the server-side source of truth when localStorage is unavailable.
+  }
+
+  try {
+    // 서버가 다음 방문부터 모달을 HTML에 포함하지 않도록 쿠키에도 1년간 보관
     document.cookie = `${ONBOARDING_DISMISSED_KEY}=true; max-age=31536000; path=/; SameSite=Lax`;
   } catch {
     // Storage access fallback
   }
 }
 
-function hasSeenOnboarding(): boolean {
-  try {
-    if (localStorage.getItem(ONBOARDING_DISMISSED_KEY) === "true") return true;
-    if (document.cookie.includes(`${ONBOARDING_DISMISSED_KEY}=true`)) return true;
-  } catch {
-    // Fallback
-  }
-  return false;
-}
-
-export function OnboardingModal({ showSummaryStep }: { showSummaryStep: boolean }) {
+export function OnboardingModal({ showSummaryStep, initialOpen }: { showSummaryStep: boolean; initialOpen: boolean }) {
   const steps = showSummaryStep ? STEPS : STEPS.filter((_, index) => index !== 1);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialOpen);
   const [currentStep, setCurrentStep] = useState(0);
-
-  useEffect(() => {
-    // 최초 1회 방문 고객 또는 테스트/QA용 ?onboarding=1 파라미터가 있을 때 노출
-    const isForcePreview =
-      typeof window !== "undefined" &&
-      (new URLSearchParams(window.location.search).has("onboarding") ||
-        new URLSearchParams(window.location.search).has("preview_onboarding"));
-
-    if (isForcePreview || !hasSeenOnboarding()) {
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, []);
 
   const handleClose = useCallback(() => {
     // 어떤 방식으로 닫든 최초 1회 표시 후 영구 기록하여 다시 뜨지 않도록 처리
@@ -182,7 +162,8 @@ export function OnboardingModal({ showSummaryStep }: { showSummaryStep: boolean 
               alt={step.imageAlt}
               width={700}
               height={380}
-              priority
+              sizes="(max-width: 640px) calc(100vw - 32px), 522px"
+              preload
               unoptimized={step.imageSrc.startsWith("/api/")}
               className="onboarding-clean-image"
             />
