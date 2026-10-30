@@ -70,6 +70,7 @@
 - 2026-10-30 01:06 UTC에 최근 변경 URL 31개를 한 번 제출해 HTTP 202를 받았다. 이는 요청 접수 후 key 검증을 기다리는 응답이었다. [IndexNow FAQ](https://www.indexnow.org/faq)는 제출이 색인을 보장하지 않는다고 설명하며, [네이버 Search Advisor](https://searchadvisor.naver.com/guide/indexnow-about)도 신규·수정·삭제 페이지 알림 용도로 IndexNow를 지원한다.
 - 추가 검토에서 `/topics` 목록은 카테고리별 글 수와 최신 글이 바뀌는데 sitemap에 `lastmod`가 없어 자동 제출 대상에서 빠지는 점을 확인했다. PR #112 (`a932577`)에서 가장 최근 공개 카테고리의 갱신 시각을 `/topics`의 `lastmod`로 반영했다. Production sitemap에서 `/topics`의 `lastmod`는 `2026-10-29T22:54:08Z`로 표시됐다.
 - 2026-10-30 01:12 UTC에 이전 31개 목록에는 포함되지 않았던 `/topics`만 별도로 제출해 HTTP 200을 받았다. 이 응답은 key 검증을 통과하고 URL 제출 요청을 받았다는 뜻이다. 크롤링·색인은 별도 확인이 필요하며, 같은 시각대 네이버 `site:www.techgotgan.co.kr` 및 `테크곳간` 직접 검색에는 자사 도메인 결과가 없었다. 캠페인 48시간 점검은 2026-10-31 03:26 UTC 예정이다.
+- `/careers/toss-frontend`도 sitemap에서 `lastmod`가 빠져 있었다. Production에서 HTTP 200, canonical 일치, `index,follow`를 확인했고 PR #94의 Production 배포가 2026-10-29 01:52:39 UTC에 완료된 기록을 확인했다. 2026-10-30에 이 URL만 IndexNow에 제출해 HTTP 200을 받았고, sitemap `lastmod`를 실제 최초 Production 배포 시각으로 맞췄다. 이 알림은 검색 색인 완료를 뜻하지 않는다.
 
 - 원격 Supabase의 `source_suggestions` 테이블은 존재하며, 예상 컬럼과 RLS 활성화 상태를 확인했다.
 - `0013_tokenized_article_search.sql`과 `0014_public_hub_queries.sql`을 2026-10-19에 대상

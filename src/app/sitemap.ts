@@ -5,6 +5,9 @@ import { getPublicBlogIndex, getPublicCategoryIndex } from "@/lib/data/public-hu
 import { listRecentDigestWeeks } from "@/lib/data/weekly-digests";
 import { SITE_URL } from "./seo";
 
+// Production publication time of the static Toss frontend reading guide (PR #94).
+const CAREER_GUIDE_LAST_MODIFIED = "2026-10-29T01:52:39.000Z";
+
 function latestContentDate<T extends { discovered_at?: string | null; published_at?: string | null }>(
   items: T[]
 ): string | undefined {
@@ -34,7 +37,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const topicsIndexLastModified = latestDate(topics.map((topic) => topic.lastModified));
 
   return [
-    { url: `${SITE_URL}/careers/toss-frontend`, changeFrequency: "monthly", priority: 0.7 },
+    {
+      url: `${SITE_URL}/careers/toss-frontend`,
+      lastModified: CAREER_GUIDE_LAST_MODIFIED,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
     {
       url: SITE_URL,
       lastModified: latestContentDate(feed),
