@@ -13,6 +13,7 @@ export function DeferredGoogleTagManager({ gtmId }: { gtmId: string }) {
     };
     let activated = false;
     let fallbackTimer: number | undefined;
+    let lcpStabilityTimer: number | undefined;
     let idleTimer: number | undefined;
     let idleCallbackId: number | undefined;
     let observer: PerformanceObserver | undefined;
@@ -20,6 +21,7 @@ export function DeferredGoogleTagManager({ gtmId }: { gtmId: string }) {
     const loadWhenIdle = () => {
       if (activated) return;
       activated = true;
+      observer?.disconnect();
       if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
 
       if (browserWindow.requestIdleCallback) {
@@ -29,21 +31,27 @@ export function DeferredGoogleTagManager({ gtmId }: { gtmId: string }) {
       }
     };
 
+    const loadAfterStableLcp = () => {
+      if (lcpStabilityTimer !== undefined) window.clearTimeout(lcpStabilityTimer);
+      lcpStabilityTimer = window.setTimeout(loadWhenIdle, 1_500);
+    };
+
     if (
       typeof PerformanceObserver !== "undefined" &&
       PerformanceObserver.supportedEntryTypes.includes("largest-contentful-paint")
     ) {
       if (performance.getEntriesByType("largest-contentful-paint").length > 0) {
-        loadWhenIdle();
+        loadAfterStableLcp();
       } else {
         observer = new PerformanceObserver((entries) => {
           if (entries.getEntries().length === 0) return;
-          observer?.disconnect();
-          loadWhenIdle();
+          loadAfterStableLcp();
         });
         observer.observe({ type: "largest-contentful-paint", buffered: true });
       }
-      fallbackTimer = window.setTimeout(loadWhenIdle, 15_000);
+      fallbackTimer = window.setTimeout(() => {
+        if (lcpStabilityTimer === undefined) loadWhenIdle();
+      }, 15_000);
     } else {
       idleTimer = window.setTimeout(() => setShouldLoad(true), 5_000);
     }
@@ -51,6 +59,7 @@ export function DeferredGoogleTagManager({ gtmId }: { gtmId: string }) {
     return () => {
       observer?.disconnect();
       if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
+      if (lcpStabilityTimer !== undefined) window.clearTimeout(lcpStabilityTimer);
       if (idleTimer !== undefined) window.clearTimeout(idleTimer);
       if (idleCallbackId !== undefined && browserWindow.cancelIdleCallback) {
         browserWindow.cancelIdleCallback(idleCallbackId);
