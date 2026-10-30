@@ -1,4 +1,5 @@
 import { AspectRatio, Badge } from "@seed-design/react";
+import Image from "next/image";
 import { ArticleLink } from "./article-link";
 import { UnreadToggleForm } from "./unread-toggle-form";
 import { FavoriteToggleForm } from "./favorite-toggle-form";
@@ -10,13 +11,14 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
-export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, onSelectCategory, priority = false }: {
+export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, onSelectCategory, priority = false, thumbnailSizes }: {
   article: ArticleListItem;
   onRead?: (articleId: string) => void;
   onReadChange?: (articleId: string, isRead: boolean) => void;
   onFavoriteChange?: (articleId: string, isFavorite: boolean) => void;
   onSelectCategory?: (categoryId: CategoryId) => void;
   priority?: boolean;
+  thumbnailSizes: string;
 }) {
   const category = article.category && article.category !== "general" ? getCategoryMeta(article.category) : null;
   const href = `/articles/${encodeURIComponent(article.id)}`;
@@ -64,10 +66,22 @@ export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, on
               className="article-row-thumb" onRead={onRead} onReadChange={onReadChange}>
               <AspectRatio ratio={4 / 3} className="article-row-thumb-aspect" width="144px"
                 style={{ borderRadius: 8, overflow: "hidden", background: "var(--seed-color-bg-neutral-weak)" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- 외부 블로그 썸네일 */}
-                <img src={article.thumbnail_url} alt="" loading={priority ? "eager" : "lazy"}
-                  fetchPriority={priority ? "high" : "auto"} decoding="async"
-                  style={{ width: "100%", height: "100%", objectFit: "contain", opacity: article.is_read ? 0.85 : 1 }} />
+                {isOptimizableThumbnail(article.thumbnail_url) ? (
+                  <Image
+                    src={article.thumbnail_url}
+                    alt=""
+                    fill
+                    sizes={thumbnailSizes}
+                    quality={75}
+                    loading={priority ? "eager" : "lazy"}
+                    fetchPriority={priority ? "high" : "auto"}
+                    style={{ objectFit: "contain", opacity: article.is_read ? 0.85 : 1 }}
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element -- 원본 외부 도메인 썸네일은 원격 최적화 허용 대상이 아님
+                  <img src={article.thumbnail_url} alt="" loading="lazy" decoding="async"
+                    style={{ width: "100%", height: "100%", objectFit: "contain", opacity: article.is_read ? 0.85 : 1 }} />
+                )}
               </AspectRatio>
             </ArticleLink>
           )}
@@ -75,4 +89,18 @@ export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, on
       </div>
     </li>
   );
+}
+
+function isOptimizableThumbnail(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") return false;
+    const isSupabaseThumbnail = parsed.hostname.endsWith(".supabase.co") &&
+      parsed.pathname.startsWith("/storage/v1/object/public/thumbnails/");
+    const isMediumThumbnail = parsed.hostname === "cdn-images-1.medium.com" &&
+      parsed.pathname.startsWith("/max/");
+    return isSupabaseThumbnail || isMediumThumbnail;
+  } catch {
+    return false;
+  }
 }

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { Text } from "@seed-design/react";
 import { attachUserState, getCachedArticleFeed, searchArticles, type ArticleFilter } from "@/lib/data/articles";
@@ -17,6 +18,7 @@ import { CATEGORY_MAP, type CategoryId } from "@/lib/categories";
 export const fetchCache = "default-cache";
 // 전역 SEO 메타데이터가 포함된 홈은 Edge 함수 크기 제한을 피하기 위해 Node.js에서 렌더링한다.
 export const runtime = "nodejs";
+const ARTICLE_VIEW_COOKIE = "techgotgan-article-view";
 
 // 필터 탭을 명시적으로 고르지 않았을 때의 기본값 — 검색 중이 아니면 "안읽음"이 자연스럽지만,
 // 검색은 이미 읽은 글을 다시 찾으려는 경우가 흔해서 검색어가 있을 땐 기본을 "전체"로 바꾼다.
@@ -38,11 +40,13 @@ async function ArticleListSection({
   initialFilter,
   initialSourceId,
   initialCategory,
+  initialView,
   initialQuery,
 }: {
   initialFilter: ArticleFilter;
   initialSourceId: string;
   initialCategory: CategoryId;
+  initialView: "list" | "card";
   initialQuery: string;
 }) {
   const shouldSearchInitially = Array.from(initialQuery.trim()).length >= 2;
@@ -71,6 +75,7 @@ async function ArticleListSection({
       initialFilter={initialFilter}
       initialSourceId={initialSourceId}
       initialCategory={initialCategory}
+      initialView={initialView}
       initialQuery={initialQuery}
     />
   );
@@ -79,10 +84,26 @@ async function ArticleListSection({
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; source?: string; category?: string; q?: string }>;
+  searchParams: Promise<{
+    filter?: string;
+    source?: string;
+    category?: string;
+    q?: string;
+    onboarding?: string;
+    preview_onboarding?: string;
+  }>;
 }) {
   await connection();
-  const { filter: rawFilter, source: sourceId, category: rawCategory, q } = await searchParams;
+  const {
+    filter: rawFilter,
+    source: sourceId,
+    category: rawCategory,
+    q,
+    onboarding,
+    preview_onboarding: previewOnboarding,
+  } = await searchParams;
+  const cookieStore = await cookies();
+  const initialView = cookieStore.get(ARTICLE_VIEW_COOKIE)?.value === "list" ? "list" : "card";
   const initialQuery = (q ?? "").trim();
   const initialFilter = parseFilter(rawFilter, initialQuery.length > 0);
   const initialCategory = parseCategory(rawCategory);
@@ -107,7 +128,7 @@ export default async function Home({
 
 
       <Suspense fallback={null}>
-        <OnboardingModalSlot />
+        <OnboardingModalSlot forcePreview={Boolean(onboarding || previewOnboarding)} />
       </Suspense>
 
       <Suspense fallback={<ArticleListSkeleton />}>
@@ -115,6 +136,7 @@ export default async function Home({
           initialFilter={initialFilter}
           initialSourceId={sourceId ?? "all"}
           initialCategory={initialCategory}
+          initialView={initialView}
           initialQuery={initialQuery}
         />
       </Suspense>
