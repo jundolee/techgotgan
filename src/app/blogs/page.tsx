@@ -12,8 +12,8 @@ export const runtime = "nodejs";
 export const fetchCache = "default-cache";
 
 const CANONICAL_URL = `${SITE_URL}/blogs`;
-const TITLE = "구독 테크 블로그";
-const DESCRIPTION = "테크곳간이 새 글을 모으는 테크 블로그를 둘러보고, 발행처별 최신 글을 찾아보세요.";
+const TITLE = "기업·개발자 기술 블로그 모아보기";
+const DESCRIPTION = "토스·당근 등 기업과 개발자가 운영하는 국내외 기술 블로그를 발행처별로 모았습니다. 최신 글의 제목과 요약을 살펴보고, 관심 있는 글은 원문으로 이어 읽어보세요.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -54,9 +54,9 @@ export default async function BlogsPage() {
       <PageHeader navHref="/" navLabel="전체 글" />
 
       <header style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <Text as="h1" textStyle="t8Bold" color="fg.neutral">구독 테크 블로그</Text>
+        <Text as="h1" textStyle="t8Bold" color="fg.neutral">{TITLE}</Text>
         <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">
-          테크곳간이 새 글을 모으는 블로그와 발행처별 최신 글을 확인하세요.
+          {DESCRIPTION}
         </Text>
       </header>
 
