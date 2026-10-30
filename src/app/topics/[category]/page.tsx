@@ -147,6 +147,20 @@ export default async function TopicPage({ params }: TopicPageProps) {
         <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">{hub.meta.description}</Text>
       </header>
 
+      {hub.category === "frontend" && (
+        <aside
+          aria-label="프론트엔드 지원 준비 자료"
+          style={{ display: "grid", gap: 8, padding: 18, border: "1px solid #fed7aa", borderRadius: 12, background: "#fffaf5" }}
+        >
+          <Text as="p" textStyle="t3Regular" color="fg.neutral">
+            토스 프론트엔드 지원을 준비한다면, 공개 기술 글 세 편과 생각해볼 질문을 모은 읽기 가이드를 살펴보세요.
+          </Text>
+          <Link href="/careers/toss-frontend" style={{ color: "#9a3412", fontWeight: 700, textDecoration: "underline" }}>
+            토스 프론트엔드 지원 전 읽을 글 보기 →
+          </Link>
+        </aside>
+      )}
+
       <section aria-labelledby="latest-articles">
         <Text as="h2" id="latest-articles" textStyle="t6Bold" color="fg.neutral" style={{ marginBottom: 16 }}>
           최신 글
