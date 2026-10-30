@@ -1101,6 +1101,27 @@ html[data-article-view="list"] .article-row-thumb-aspect { width: 120px; }
   -webkit-backdrop-filter: blur(6px);
 }
 
+.onboarding-open-trigger {
+  display: inline-flex;
+  align-items: center;
+  margin: -8px 0 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--seed-color-fg-brand, #d95000);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.onboarding-open-trigger:focus-visible {
+  outline: 2px solid var(--seed-color-fg-brand, #d95000);
+  outline-offset: 3px;
+}
+
 .onboarding-backdrop-enter {
   animation: modal-backdrop-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
