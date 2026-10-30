@@ -7,6 +7,7 @@ import { SITE_URL } from "./seo";
 
 // Latest Production page revisions for static content changes not represented by article data.
 const CAREER_GUIDE_LAST_MODIFIED = "2026-10-30T01:43:53.000Z";
+const HOME_LAST_MODIFIED = "2026-10-30T02:50:15.000Z";
 const STATIC_TOPIC_LAST_MODIFIED: Record<string, string> = {
   frontend: "2026-10-30T01:37:00.000Z",
 };
@@ -52,7 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: SITE_URL,
-      lastModified: latestContentDate(feed),
+      lastModified: latestDate([latestContentDate(feed) ?? null, HOME_LAST_MODIFIED]) ?? HOME_LAST_MODIFIED,
       changeFrequency: "daily",
       priority: 1,
     },
