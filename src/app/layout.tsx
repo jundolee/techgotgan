@@ -5,7 +5,15 @@ import { AmplitudeAnalytics } from "@/components/amplitude-analytics";
 import { DeferredGoogleTagManager } from "@/components/deferred-google-tag-manager";
 import { PageFooter } from "@/components/page-footer";
 import { DEFAULT_OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "./seo";
-import "@seed-design/css/all.css";
+import "@seed-design/css/base.css";
+import "@seed-design/css/recipes/text.css";
+import "@seed-design/css/recipes/badge.css";
+import "@seed-design/css/recipes/aspect-ratio.css";
+import "@seed-design/css/recipes/tabs.css";
+import "@seed-design/css/recipes/action-button.css";
+import "@seed-design/css/recipes/text-input.css";
+import "@seed-design/css/recipes/field-label.css";
+import "@seed-design/css/recipes/progress-circle.css";
 import "./globals.css";
 
 export const viewport: Viewport = {
