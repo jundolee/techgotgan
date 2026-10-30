@@ -19,6 +19,7 @@ export const fetchCache = "default-cache";
 // 전역 SEO 메타데이터가 포함된 홈은 Edge 함수 크기 제한을 피하기 위해 Node.js에서 렌더링한다.
 export const runtime = "nodejs";
 const ARTICLE_VIEW_COOKIE = "techgotgan-article-view";
+const ONBOARDING_DISMISSED_COOKIE = "techgotgan_onboarding_dismissed";
 
 // 필터 탭을 명시적으로 고르지 않았을 때의 기본값 — 검색 중이 아니면 "안읽음"이 자연스럽지만,
 // 검색은 이미 읽은 글을 다시 찾으려는 경우가 흔해서 검색어가 있을 땐 기본을 "전체"로 바꾼다.
@@ -42,12 +43,14 @@ async function ArticleListSection({
   initialCategory,
   initialView,
   initialQuery,
+  deferFirstThumbnail,
 }: {
   initialFilter: ArticleFilter;
   initialSourceId: string;
   initialCategory: CategoryId;
   initialView: "list" | "card";
   initialQuery: string;
+  deferFirstThumbnail: boolean;
 }) {
   const shouldSearchInitially = Array.from(initialQuery.trim()).length >= 2;
   // 세션 확인, 글 목록 캐시 조회, 소스 목록 조회를 모두 병렬로 시작해 첫 응답 지연을 최소화한다.
@@ -77,6 +80,7 @@ async function ArticleListSection({
       initialCategory={initialCategory}
       initialView={initialView}
       initialQuery={initialQuery}
+      deferFirstThumbnail={deferFirstThumbnail}
     />
   );
 }
@@ -104,6 +108,8 @@ export default async function Home({
   } = await searchParams;
   const cookieStore = await cookies();
   const initialView = cookieStore.get(ARTICLE_VIEW_COOKIE)?.value === "list" ? "list" : "card";
+  const deferFirstThumbnail = Boolean(onboarding || previewOnboarding) ||
+    cookieStore.get(ONBOARDING_DISMISSED_COOKIE)?.value !== "true";
   const initialQuery = (q ?? "").trim();
   const initialFilter = parseFilter(rawFilter, initialQuery.length > 0);
   const initialCategory = parseCategory(rawCategory);
@@ -138,6 +144,7 @@ export default async function Home({
           initialCategory={initialCategory}
           initialView={initialView}
           initialQuery={initialQuery}
+          deferFirstThumbnail={deferFirstThumbnail}
         />
       </Suspense>
     </main>
