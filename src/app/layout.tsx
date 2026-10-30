@@ -100,6 +100,23 @@ export default function RootLayout({
       {ANALYTICS_ENABLED && <GoogleTagManager gtmId={GTM_CONTAINER_ID} />}
       {ANALYTICS_ENABLED && <AmplitudeAnalytics />}
       <body>
+        <Script id="article-view-preference" strategy="beforeInteractive">
+          {`try {
+            const key = "techgotgan-article-view";
+            const match = document.cookie.match(new RegExp("(?:^|; )" + key + "=(list|card)(?:;|$)"));
+            let storedView = null;
+            try { storedView = localStorage.getItem(key); } catch {}
+            const view = storedView === "list" || storedView === "card" ? storedView : match?.[1];
+            if (view === "list" || view === "card") {
+              document.documentElement.dataset.articleView = view;
+              try { localStorage.setItem(key, view); } catch {}
+              if (match?.[1] !== view) {
+                document.cookie = key + "=" + view + "; max-age=31536000; path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : "");
+              }
+            }
+          } catch {}
+          `}
+        </Script>
         <Script id="article-navigation-bridge" strategy="beforeInteractive">
           {`(() => {
             document.addEventListener("click", (event) => {

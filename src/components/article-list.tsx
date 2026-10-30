@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { Text } from "@seed-design/react";
 import { ArticleRow } from "./article-row";
 import { ArticleFilterTabs } from "./article-filter-tabs";
@@ -22,10 +22,28 @@ const MIN_AUTO_SEARCH_LENGTH = 2;
 
 const PAGE_SIZE_OPTIONS = [10, 30, 50] as const;
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
-type ArticleView = "list" | "card";
+export type ArticleView = "list" | "card";
 const ARTICLE_VIEW_STORAGE_KEY = "techgotgan-article-view";
 const EMPTY_READ_IDS = new Set<string>();
 const EMPTY_FAVORITE_OVERRIDES = new Map<string, boolean>();
+const articleViewListeners = new Set<() => void>();
+
+function subscribeToArticleView(listener: () => void) {
+  articleViewListeners.add(listener);
+  return () => articleViewListeners.delete(listener);
+}
+
+function getArticleViewSnapshot(fallback: ArticleView): ArticleView {
+  let storedView: string | null = null;
+  try {
+    storedView = window.localStorage.getItem(ARTICLE_VIEW_STORAGE_KEY);
+  } catch {
+    // The cookie remains the server-side preference when localStorage is unavailable.
+  }
+  if (storedView === "list" || storedView === "card") return storedView;
+  const cookieView = document.cookie.split("; ").find((value) => value.startsWith(`${ARTICLE_VIEW_STORAGE_KEY}=`))?.split("=", 2)[1];
+  return cookieView === "list" || cookieView === "card" ? cookieView : fallback;
+}
 
 /**
  * 탭/소스/카테고리 필터를 바꿀 때마다 서버에 새로 요청하면 Supabase 왕복 시간이 매번 그대로 드는 게 느려서,
@@ -38,6 +56,7 @@ export function ArticleList({
   initialFilter,
   initialSourceId,
   initialCategory = "all",
+  initialView,
   initialQuery,
 }: {
   articles: ArticleListItem[];
@@ -45,6 +64,7 @@ export function ArticleList({
   initialFilter: ArticleFilter;
   initialSourceId: string;
   initialCategory?: CategoryId;
+  initialView: ArticleView;
   initialQuery: string;
 }) {
   const [filter, setFilter] = useState<ArticleFilter>(initialFilter);
@@ -54,16 +74,21 @@ export function ArticleList({
   const [shortQuerySubmitted, setShortQuerySubmitted] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<PageSize>(30);
-  const [view, setView] = useState<ArticleView>("card");
-
-  useEffect(() => {
-    const storedView = window.localStorage.getItem(ARTICLE_VIEW_STORAGE_KEY);
-    if (storedView === "list" || storedView === "card") setView(storedView);
-  }, []);
+  const view = useSyncExternalStore(
+    subscribeToArticleView,
+    () => getArticleViewSnapshot(initialView),
+    () => initialView
+  );
 
   function changeView(nextView: ArticleView) {
-    setView(nextView);
-    window.localStorage.setItem(ARTICLE_VIEW_STORAGE_KEY, nextView);
+    document.documentElement.dataset.articleView = nextView;
+    try {
+      window.localStorage.setItem(ARTICLE_VIEW_STORAGE_KEY, nextView);
+    } catch {
+      // The cookie remains the server-side preference when localStorage is unavailable.
+    }
+    document.cookie = `${ARTICLE_VIEW_STORAGE_KEY}=${nextView}; max-age=31536000; path=/; SameSite=Lax${window.location.protocol === "https:" ? "; Secure" : ""}`;
+    for (const listener of articleViewListeners) listener();
   }
 
   // 검색 결과로 목록을 갈아끼우는 상태 — null이면 "검색 중이 아님"을 뜻하고, 이때는 아래에서 매 렌더마다
@@ -381,7 +406,7 @@ export function ArticleList({
 
       {!queryTooShort && <ul className={`article-card-grid${view === "list" ? " is-list-view" : ""}`}>
         {pagedArticles.map((article, index) => (
-          // 페이지 첫 3개는 스크롤 전에 바로 보이는 썸네일이라 lazy 대신 우선 로드 (ArticleRow 참고).
+          // 첫 썸네일 하나만 우선 로드해 LCP 후보 이미지를 먼저 받고 나머지는 브라우저가 지연 로드한다.
           <ArticleRow
             key={article.id}
             article={article}
@@ -389,7 +414,10 @@ export function ArticleList({
             onReadChange={handleReadChange}
             onFavoriteChange={handleFavoriteChange}
             onSelectCategory={handleCategoryChange}
-            priority={index < 3}
+            priority={index === 0}
+            thumbnailSizes={view === "list"
+              ? "(max-width: 640px) 88px, 120px"
+              : "(max-width: 420px) 100vw, (max-width: 768px) 50vw, 33vw"}
           />
         ))}
       </ul>}
