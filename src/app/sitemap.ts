@@ -31,6 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPublicCategoryIndex(),
   ]);
   const blogIndexLastModified = latestDate(blogs.map((blog) => blog.lastModified));
+  const topicsIndexLastModified = latestDate(topics.map((topic) => topic.lastModified));
 
   return [
     { url: `${SITE_URL}/careers/toss-frontend`, changeFrequency: "monthly", priority: 0.7 },
@@ -42,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${SITE_URL}/topics`,
+      lastModified: topicsIndexLastModified ?? undefined,
       changeFrequency: "weekly",
       priority: 0.8,
     },
