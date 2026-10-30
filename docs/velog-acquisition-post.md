@@ -8,6 +8,7 @@
 - 이 유입은 기존 [토스 프론트엔드 지원 전 읽어볼 기술 글 3편](https://velog.io/@xukitsuki/%ED%86%A0%EC%8A%A4-%ED%94%84%EB%A1%A0%ED%8A%B8%EC%97%94%EB%93%9C-%EC%A7%80%EC%9B%90-%EC%A0%84-%EC%9D%BD%EC%96%B4%EB%B3%BC-%EA%B8%B0%EC%88%A0-%EA%B8%80-3%ED%8E%B8)에서 온 것으로 확인됐다. 기존 글이 이미 원문 3편을 요약하므로, 이번 초안은 같은 요약을 반복하지 않고 답변 정리 도구에 초점을 둔다.
 - 새 링크는 기존 캠페인과 분리하기 위해 `utm_source=velog&utm_medium=article&utm_campaign=career_guide_toss_frontend_velog_2026q4`를 사용한다.
 - 게시 후 공개 URL이 HTTP 200으로 열리는 것을 확인했다. GA4 성과는 48시간 확인 주기에 맞춰 추후 확인한다.
+- 2026-10-30 03:14 UTC 기준 Google의 정확한 제목 검색에는 새 글이 보이지 않았다. Googlebot User-Agent로 공개 URL을 가져오면 HTTP 200, self-canonical을 반환하고 `X-Robots-Tag`나 meta robots의 `noindex`는 없었다. 검색결과에 없다는 사실만으로 미색인을 단정하지 않는다. GA4 세션 캠페인 표(2026-10-23~29)에는 목표 UTM `career_guide_toss_frontend_velog_2026q4` 행이 없었다. 게시 후 48시간이 아직 지나지 않아 최종 평가는 2026-10-31 03:26 UTC 점검에서 한다.
 
 ## 게시용 제목
 
