@@ -74,7 +74,7 @@
 - 이후 PR #116으로 `/topics/frontend`에 캠페인 가이드 내부 링크를 추가하고, PR #118로 가이드의 공유 메타데이터와 전용 이미지를 수정했다. 이에 맞춰 sitemap `lastmod`를 `/topics/frontend`는 `2026-10-30T01:37:00Z`, 가이드는 `2026-10-30T01:43:53Z`로 갱신하도록 보강했다. 현재 일일 IndexNow 작업이 2026-10-31 00:30 UTC에 정상 실행되면 두 URL이 최근 24시간 변경 목록에 포함될 예정이다. 크롤링·색인은 별도 확인한다.
 - 2026-10-30 Yeti 사용자 에이전트로 Production sitemap의 108개 URL을 확인했다. 모두 HTTP 200, 최종 URL과 요청 URL 일치, canonical 존재 및 일치, robots meta와 `X-Robots-Tag`에 `noindex` 없음으로 확인됐다. 현재 sitemap URL의 직접 접근 차단 증거는 없지만, 이 점검만으로 실제 수집·색인을 입증하지는 않는다.
 - 2026-10-30 Search Console 보고서(2026-10-20~27, 최종 업데이트 약 6시간 전)는 클릭 2회, 노출 91회, CTR 2.2%, 평균 게재순위 7.8을 표시했다. 페이지별로 요즘IT 25회·클릭 0, `/blogs` 24회·클릭 0, 토스 허브 9회·클릭 0이었다. 토스 허브 필터에서 보인 `토스테크`와 `toss tech blog`는 각 2회 노출·클릭 0회였다. 이 데이터는 10월 29일 Velog 캠페인 시작 전이며 최근 metadata 변경 전의 구간이다.
-- 위 질의 신호에 맞춰 토스 허브 제목·H1·CollectionPage 이름에 `Toss Tech`를 명시하고, 설명에도 발행처 브랜드와 `toss.tech`를 함께 적었다. 변경 후 Search Console 효과는 아직 관측하지 않았다.
+- 위 질의 신호에 맞춰 토스 허브 제목·H1·CollectionPage 이름에 `Toss Tech`를 명시하고, 설명에도 발행처 브랜드와 `toss.tech`를 함께 적었다. PR #121 Production 배포는 2026-10-30 02:03:59 UTC에 완료됐다. URL은 IndexNow에 HTTP 200으로 접수했고, sitemap `lastmod`도 이 배포 시각을 반영하도록 보강한다. 변경 후 Search Console 효과는 아직 관측하지 않았다.
 
 - 원격 Supabase의 `source_suggestions` 테이블은 존재하며, 예상 컬럼과 RLS 활성화 상태를 확인했다.
 - `0013_tokenized_article_search.sql`과 `0014_public_hub_queries.sql`을 2026-10-19에 대상
