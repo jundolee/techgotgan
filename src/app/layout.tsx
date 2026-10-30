@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import Script from "next/script";
-import { GoogleTagManager } from "@next/third-parties/google";
 import { AmplitudeAnalytics } from "@/components/amplitude-analytics";
 import { PageFooter } from "@/components/page-footer";
 import { DEFAULT_OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "./seo";
@@ -97,7 +96,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" data-seed-color-mode="light" className={freesentation.variable}>
-      {ANALYTICS_ENABLED && <GoogleTagManager gtmId={GTM_CONTAINER_ID} />}
+      {ANALYTICS_ENABLED && (
+        <Script id="gtm-init" strategy="beforeInteractive">
+          {`(function(w,l){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});})(window,'dataLayer');`}
+        </Script>
+      )}
       {ANALYTICS_ENABLED && <AmplitudeAnalytics />}
       <body>
         <Script id="article-view-preference" strategy="beforeInteractive">
@@ -145,6 +148,13 @@ export default function RootLayout({
               style={{ display: "none", visibility: "hidden" }}
             />
           </noscript>
+        )}
+        {ANALYTICS_ENABLED && (
+          <Script
+            id="gtm"
+            src={`https://www.googletagmanager.com/gtm.js?id=${GTM_CONTAINER_ID}`}
+            strategy="lazyOnload"
+          />
         )}
         <div className="app-shell">
           {children}
