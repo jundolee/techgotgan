@@ -59,15 +59,17 @@ function markOnboardingSeen() {
   }
 }
 
-export function OnboardingModal({ showSummaryStep, initialOpen }: { showSummaryStep: boolean; initialOpen: boolean }) {
+export function OnboardingModal({ showSummaryStep, initialOpen, showTrigger }: { showSummaryStep: boolean; initialOpen: boolean; showTrigger: boolean }) {
   const steps = showSummaryStep ? STEPS : STEPS.filter((_, index) => index !== 1);
   const [isOpen, setIsOpen] = useState(initialOpen);
+  const [isTriggerVisible, setIsTriggerVisible] = useState(showTrigger);
   const [currentStep, setCurrentStep] = useState(0);
 
   const handleClose = useCallback(() => {
     // 어떤 방식으로 닫든 최초 1회 표시 후 영구 기록하여 다시 뜨지 않도록 처리
     markOnboardingSeen();
     setIsOpen(false);
+    setIsTriggerVisible(false);
   }, []);
 
   const handleNext = () => {
@@ -101,7 +103,18 @@ export function OnboardingModal({ showSummaryStep, initialOpen }: { showSummaryS
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, currentStep, handleClose, steps.length]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    if (!isTriggerVisible) return null;
+    return (
+      <button
+        type="button"
+        className="onboarding-open-trigger"
+        onClick={() => setIsOpen(true)}
+      >
+        서비스 둘러보기
+      </button>
+    );
+  }
 
   const step = steps[currentStep];
   const isLast = currentStep === steps.length - 1;
