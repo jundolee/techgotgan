@@ -162,7 +162,7 @@ export function OnboardingModal({ showSummaryStep, initialOpen }: { showSummaryS
               alt={step.imageAlt}
               width={700}
               height={380}
-              sizes="(max-width: 640px) calc(100vw - 32px), 522px"
+              sizes="(max-width: 352px) calc(100vw - 32px), (max-width: 640px) 320px, 522px"
               loading="eager"
               fetchPriority="high"
               unoptimized={step.imageSrc.startsWith("/api/")}
