@@ -1393,6 +1393,8 @@ html[data-article-view="list"] .article-row-thumb-aspect { width: 120px; }
     padding: 0;
     align-items: flex-end; /* 화면 하단 밀착 바텀시트 */
     background: rgba(15, 18, 22, 0.72);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .onboarding-sheet-handle {
