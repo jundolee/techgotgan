@@ -133,12 +133,16 @@ export function ArticleList({
     let cancelled = false;
     let idleTimer: number | undefined;
     let fallbackTimer: number | undefined;
+    let lcpStabilityTimer: number | undefined;
     let idleCallbackId: number | undefined;
     let observer: PerformanceObserver | undefined;
 
     const loadFullFeed = () => {
       if (cancelled || fullFeedLoadStartedRef.current.has(initialArticles)) return;
       fullFeedLoadStartedRef.current.add(initialArticles);
+      observer?.disconnect();
+      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
+      if (lcpStabilityTimer !== undefined) window.clearTimeout(lcpStabilityTimer);
 
       void loadArticlesAction("")
         .then((result) => {
@@ -177,21 +181,31 @@ export function ArticleList({
       }
     };
 
+    const scheduleAfterStableLcp = () => {
+      if (lcpStabilityTimer !== undefined) window.clearTimeout(lcpStabilityTimer);
+      lcpStabilityTimer = window.setTimeout(() => {
+        lcpStabilityTimer = undefined;
+        observer?.disconnect();
+        scheduleFullFeedLoad();
+      }, 1_500);
+    };
+
     if (
       typeof PerformanceObserver !== "undefined" &&
       PerformanceObserver.supportedEntryTypes.includes("largest-contentful-paint")
     ) {
       if (performance.getEntriesByType("largest-contentful-paint").length > 0) {
-        scheduleFullFeedLoad();
+        scheduleAfterStableLcp();
       } else {
         observer = new PerformanceObserver((entries) => {
           if (entries.getEntries().length === 0) return;
-          observer?.disconnect();
-          scheduleFullFeedLoad();
+          scheduleAfterStableLcp();
         });
         observer.observe({ type: "largest-contentful-paint", buffered: true });
       }
-      fallbackTimer = window.setTimeout(scheduleFullFeedLoad, 15_000);
+      fallbackTimer = window.setTimeout(() => {
+        if (lcpStabilityTimer === undefined) scheduleFullFeedLoad();
+      }, 15_000);
     } else {
       idleTimer = window.setTimeout(loadFullFeed, 5_000);
     }
@@ -204,6 +218,7 @@ export function ArticleList({
     return () => {
       cancelled = true;
       observer?.disconnect();
+      if (lcpStabilityTimer !== undefined) window.clearTimeout(lcpStabilityTimer);
       document.removeEventListener("pointerdown", loadFullFeed);
       document.removeEventListener("keydown", loadFullFeed);
       document.removeEventListener("click", loadFullFeed, true);
