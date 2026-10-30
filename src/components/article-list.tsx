@@ -58,6 +58,7 @@ export function ArticleList({
   initialCategory = "all",
   initialView,
   initialQuery,
+  deferFirstThumbnail = false,
 }: {
   articles: ArticleListItem[];
   sources: SourceOption[];
@@ -66,6 +67,7 @@ export function ArticleList({
   initialCategory?: CategoryId;
   initialView: ArticleView;
   initialQuery: string;
+  deferFirstThumbnail?: boolean;
 }) {
   const [filter, setFilter] = useState<ArticleFilter>(initialFilter);
   const [sourceId, setSourceId] = useState(initialSourceId);
@@ -414,7 +416,7 @@ export function ArticleList({
             onReadChange={handleReadChange}
             onFavoriteChange={handleFavoriteChange}
             onSelectCategory={handleCategoryChange}
-            priority={index === 0}
+            priority={index === 0 && !deferFirstThumbnail}
             thumbnailSizes={view === "list"
               ? "(max-width: 640px) 88px, 120px"
               : "(max-width: 420px) 100vw, (max-width: 768px) 50vw, 33vw"}
