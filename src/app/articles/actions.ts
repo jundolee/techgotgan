@@ -105,25 +105,22 @@ export async function markArticleReadFallbackAction(articleId: string): Promise<
   }
 }
 
-export async function getArticlePreviewAction(articleId: string): Promise<{
-  article: ArticlePreview;
-  related: RelatedArticle[];
-} | null> {
+export async function getArticlePreviewAction(articleId: string): Promise<ArticlePreview | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(articleId)) {
+    return null;
+  }
+  return getArticlePreview(articleId);
+}
+
+export async function getArticleSummaryAction(articleId: string): Promise<Pick<ArticlePreview, "summary" | "summaryBasis" | "summaryStatus"> | null> {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(articleId)) {
     return null;
   }
   const user = await getCurrentUser();
-  const articlePromise = getArticlePreview(articleId, { includeSummary: canViewArticleSummary(user?.email) });
-  const relatedPromise = getRelatedArticles(articleId);
-
-  const [article, initialRelated] = await Promise.all([articlePromise, relatedPromise]);
+  if (!canViewArticleSummary(user?.email)) return null;
+  const article = await getArticlePreview(articleId, { includeSummary: true });
   if (!article) return null;
-
-  const related = initialRelated.length > 0
-    ? initialRelated
-    : await getRelatedArticles(article.id, article.category, article.tags);
-
-  return { article, related };
+  return { summary: article.summary, summaryBasis: article.summaryBasis, summaryStatus: article.summaryStatus };
 }
 
 export async function getRelatedArticlesAction(articleId: string): Promise<RelatedArticle[]> {
