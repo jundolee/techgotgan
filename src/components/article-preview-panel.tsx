@@ -8,6 +8,7 @@ import { ArticleSummaryCopy } from "@/components/article-summary-copy";
 import { ShareButton } from "@/components/share-button";
 import {
   getArticlePreviewAction,
+  getArticleSummaryAction,
   getRelatedArticlesAction,
   markArticleReadAction,
   markArticleReadFallbackAction,
@@ -89,6 +90,45 @@ export function ArticlePreviewPanel({
   const currentArticle = overrideArticle ?? initialArticle;
   const currentRelated = overrideRelated ?? initialRelated;
   const [isLoadingRelated, setIsLoadingRelated] = useState(false);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const previewRequestIdRef = useRef(0);
+
+  const loadArticle = useCallback(async (articleId: string) => {
+    const requestId = ++previewRequestIdRef.current;
+    setIsLoadingRelated(true);
+    setIsLoadingSummary(canViewSummary);
+    setOverrideRelated([]);
+
+    try {
+      const article = await getArticlePreviewAction(articleId);
+      if (!article || requestId !== previewRequestIdRef.current) return;
+      setOverrideArticle(article);
+      setIsLoadingRelated(false);
+
+      if (canViewSummary) {
+        void getArticleSummaryAction(articleId).then((summary) => {
+          if (requestId !== previewRequestIdRef.current || !summary) return;
+          setOverrideArticle((current) => current?.id === articleId ? { ...current, ...summary } : current);
+        }).catch((error) => console.error("Failed to load article summary:", error))
+          .finally(() => {
+            if (requestId === previewRequestIdRef.current) setIsLoadingSummary(false);
+          });
+      }
+
+      void getRelatedArticlesAction(articleId).then((related) => {
+        if (requestId === previewRequestIdRef.current) setOverrideRelated(related);
+      }).catch((error) => console.error("Failed to load related article previews:", error))
+        .finally(() => {
+          if (requestId === previewRequestIdRef.current) setIsLoadingRelated(false);
+        });
+    } catch (error) {
+      if (requestId === previewRequestIdRef.current) {
+        setIsLoadingRelated(false);
+        setIsLoadingSummary(false);
+      }
+      console.error("Failed to load article preview:", error);
+    }
+  }, [canViewSummary]);
 
   useEffect(() => {
     if (persistedReadForRef.current === currentArticle.id) return;
@@ -156,7 +196,6 @@ export function ArticlePreviewPanel({
   const handleSelectRelated = useCallback(
     async (articleId: string) => {
       if (articleId === currentArticle.id || isLoadingRelated) return;
-      setIsLoadingRelated(true);
       window.history.pushState({ articleId }, "", `/articles/${encodeURIComponent(articleId)}`);
       bodyRef.current?.scrollTo({ top: 0, behavior: "instant" });
       startTransition(async () => {
@@ -178,19 +217,9 @@ export function ArticlePreviewPanel({
         }
       });
 
-      try {
-        const data = await getArticlePreviewAction(articleId);
-        if (data) {
-          setOverrideArticle(data.article);
-          setOverrideRelated(data.related);
-        }
-      } catch (err) {
-        console.error("Failed to load related article preview:", err);
-      } finally {
-        setIsLoadingRelated(false);
-      }
+      await loadArticle(articleId);
     },
-    [currentArticle.id, isLoadingRelated, startTransition]
+    [currentArticle.id, isLoadingRelated, loadArticle, startTransition]
   );
 
   useEffect(() => {
@@ -203,25 +232,14 @@ export function ArticlePreviewPanel({
       }
       const targetId = match[1];
       if (targetId && targetId !== currentArticle.id) {
-        setIsLoadingRelated(true);
         bodyRef.current?.scrollTo({ top: 0, behavior: "instant" });
-        try {
-          const data = await getArticlePreviewAction(targetId);
-          if (data) {
-            setOverrideArticle(data.article);
-            setOverrideRelated(data.related);
-          }
-        } catch {
-          // fallback
-        } finally {
-          setIsLoadingRelated(false);
-        }
+        await loadArticle(targetId);
       }
     }
 
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [beginCloseAnimation, currentArticle.id]);
+  }, [beginCloseAnimation, currentArticle.id, loadArticle]);
 
   // 관련 기사 클릭 등으로 article.id가 변경될 때 내부 스크롤을 맨 위로 초기화
   useEffect(() => {
@@ -535,79 +553,7 @@ export function ArticlePreviewPanel({
           onTouchEnd={handleBodyTouchEnd}
           onTouchCancel={handleBodyTouchCancel}
         >
-          {isLoadingRelated ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <div>
-                <div
-                  style={{
-                    width: 140,
-                    height: 24,
-                    borderRadius: 12,
-                    background: "var(--seed-color-bg-neutral-weak)",
-                    marginBottom: 12,
-                    animation: "skeleton-pulse 1.4s ease-in-out infinite",
-                  }}
-                />
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div
-                    style={{
-                      width: "92%",
-                      height: 28,
-                      borderRadius: 8,
-                      background: "var(--seed-color-bg-neutral-weak)",
-                      animation: "skeleton-pulse 1.4s ease-in-out infinite",
-                    }}
-                  />
-                  <div
-                    style={{
-                      width: "60%",
-                      height: 28,
-                      borderRadius: 8,
-                      background: "var(--seed-color-bg-neutral-weak)",
-                      animation: "skeleton-pulse 1.4s ease-in-out infinite",
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div
-                style={{
-                  borderRadius: 20,
-                  padding: "24px 20px",
-                  background: "linear-gradient(180deg, #fffaf5 0%, #ffffff 100%)",
-                  border: "1px solid #fbd8bc",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 16,
-                }}
-              >
-                <div
-                  style={{
-                    width: 160,
-                    height: 20,
-                    borderRadius: 6,
-                    background: "#fed7aa",
-                    animation: "skeleton-pulse 1.4s ease-in-out infinite",
-                  }}
-                />
-                <div
-                  style={{
-                    width: "100%",
-                    height: 52,
-                    borderRadius: 8,
-                    background: "#ffedd5",
-                    animation: "skeleton-pulse 1.4s ease-in-out infinite",
-                  }}
-                />
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div style={{ height: 68, borderRadius: 14, background: "#fff8f8", border: "1px solid #fed7d7", animation: "skeleton-pulse 1.4s ease-in-out infinite" }} />
-                  <div style={{ height: 68, borderRadius: 14, background: "#f0f9ff", border: "1px solid #bae6fd", animation: "skeleton-pulse 1.4s ease-in-out infinite" }} />
-                  <div style={{ height: 68, borderRadius: 14, background: "#fefce8", border: "1px solid #fef08a", animation: "skeleton-pulse 1.4s ease-in-out infinite" }} />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
+          <>
               {/* 1. 메타 정보 (출처, 날짜, 카테고리) & 제목 */}
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
@@ -638,7 +584,20 @@ export function ArticlePreviewPanel({
               </div>
 
               {/* 2. [최상위 계층] ✨ AI 엔지니어링 3-Box 브리핑 카드 */}
-              {canViewSummary && (currentArticle.summary ? (
+              {canViewSummary && (isLoadingSummary ? (
+                <section aria-labelledby="ai-summary-heading" aria-busy="true" style={{ borderRadius: 20, padding: "18px clamp(16px, 3vw, 22px)", background: "linear-gradient(180deg, #fffaf5 0%, #ffffff 100%)", border: "1px solid #fbd8bc" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                    <span aria-hidden="true" style={{ fontSize: 16 }}>✨</span>
+                    <Text as="h2" id="ai-summary-heading" textStyle="t5Bold" color="fg.neutral">AI 엔지니어링 브리핑</Text>
+                  </div>
+                  <div aria-hidden="true" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ width: "88%", height: 22, borderRadius: 6, background: "#ffedd5", animation: "skeleton-pulse 1.4s ease-in-out infinite" }} />
+                    <div style={{ height: 68, borderRadius: 14, background: "#fff8f8", border: "1px solid #fed7d7", animation: "skeleton-pulse 1.4s ease-in-out infinite" }} />
+                    <div style={{ height: 68, borderRadius: 14, background: "#f0f9ff", border: "1px solid #bae6fd", animation: "skeleton-pulse 1.4s ease-in-out infinite" }} />
+                    <div style={{ height: 68, borderRadius: 14, background: "#fefce8", border: "1px solid #fef08a", animation: "skeleton-pulse 1.4s ease-in-out infinite" }} />
+                  </div>
+                </section>
+              ) : currentArticle.summary ? (
                 <section
                   aria-labelledby="ai-summary-heading"
                   style={{
@@ -754,7 +713,6 @@ export function ArticlePreviewPanel({
                 원문과 발행처를 확인한 뒤 읽어 주세요.
               </Text>
             </>
-          )}
         </div>
 
         {/* 모바일 하단 고정 CTA 바: 언제든 손쉽게 전체 원문으로 이동 */}
