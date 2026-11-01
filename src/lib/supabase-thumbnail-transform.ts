@@ -1,6 +1,8 @@
 const PUBLIC_THUMBNAIL_PREFIX = "/storage/v1/object/public/thumbnails/";
 const TRANSFORMED_THUMBNAIL_PREFIX = "/storage/v1/render/image/public/thumbnails/";
-const RESPONSIVE_THUMBNAIL_WIDTHS = [32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920, 2048, 3840];
+// The first card is at most 332 CSS pixels on mobile; 640px covers a 2x display without
+// triggering the much slower 1080px Supabase transform on high-DPR phones.
+const RESPONSIVE_THUMBNAIL_WIDTHS = [32, 48, 64, 96, 128, 256, 384, 640];
 
 export function getSupabaseThumbnailTransformUrl(
   sourceUrl: string,
