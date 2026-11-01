@@ -66,6 +66,9 @@ function StaticArticleRow({ article, priority, thumbnailSizes }: {
   const category = article.category && article.category !== "general" ? getCategoryMeta(article.category) : null;
   const href = `/articles/${encodeURIComponent(article.id)}`;
   const sourceBadgeClass = "seed-badge__root seed-badge__root--size_medium seed-badge__root--variant_weak seed-badge__root--tone_neutral-variant_weak";
+  const thumbnailLoadingProps = priority
+    ? { preload: true as const }
+    : { loading: "lazy" as const, fetchPriority: "auto" as const };
 
   return (
     <li className={`article-row-item${article.is_read ? " is-read" : ""}`}>
@@ -116,8 +119,7 @@ function StaticArticleRow({ article, priority, thumbnailSizes }: {
                     fill
                     sizes={thumbnailSizes}
                     quality={75}
-                    loading={priority ? "eager" : "lazy"}
-                    fetchPriority={priority ? "high" : "auto"}
+                    {...thumbnailLoadingProps}
                     style={{ objectFit: "contain", opacity: article.is_read ? 0.85 : 1 }}
                   />
                 ) : (
