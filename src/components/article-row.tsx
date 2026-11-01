@@ -1,10 +1,12 @@
 import { AspectRatio, Badge } from "@seed-design/react";
 import Image from "next/image";
+import { preload } from "react-dom";
 import { ArticleLink } from "./article-link";
 import { UnreadToggleForm } from "./unread-toggle-form";
 import { FavoriteToggleForm } from "./favorite-toggle-form";
 import type { ArticleListItem } from "@/lib/data/articles";
 import { getCategoryMeta, type CategoryId } from "@/lib/categories";
+import { getSupabaseThumbnailTransformSrcSet, getSupabaseThumbnailTransformUrl } from "@/lib/supabase-thumbnail-transform";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "";
@@ -30,6 +32,21 @@ export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, on
   const thumbnailLoadingProps = priority
     ? { preload: true as const }
     : { loading: "lazy" as const, fetchPriority: "auto" as const };
+  const transformedThumbnailSrc = priority && article.thumbnail_url
+    ? getSupabaseThumbnailTransformUrl(article.thumbnail_url, 384)
+    : null;
+  const transformedThumbnailSrcSet = priority && article.thumbnail_url
+    ? getSupabaseThumbnailTransformSrcSet(article.thumbnail_url)
+    : null;
+
+  if (transformedThumbnailSrc && transformedThumbnailSrcSet) {
+    preload(transformedThumbnailSrc, {
+      as: "image",
+      imageSrcSet: transformedThumbnailSrcSet,
+      imageSizes: thumbnailSizes,
+      fetchPriority: "high",
+    });
+  }
 
   return (
     <li className={`article-row-item${article.is_read ? " is-read" : ""}`}>
@@ -74,14 +91,25 @@ export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, on
               className="article-row-thumb" onRead={onRead} onReadChange={onReadChange}>
               <AspectRatio ratio={4 / 3} className="article-row-thumb-aspect" width="144px"
                 style={{ borderRadius: 8, overflow: "hidden", background: "var(--seed-color-bg-neutral-weak)" }}>
-                {isOptimizableThumbnail(article.thumbnail_url) ? (
+                {transformedThumbnailSrc && transformedThumbnailSrcSet ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- use Supabase's cached transform for the LCP thumbnail
+                  <img
+                    src={transformedThumbnailSrc}
+                    srcSet={transformedThumbnailSrcSet}
+                    sizes={thumbnailSizes}
+                    alt=""
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", opacity: article.is_read ? 0.85 : 1 }}
+                  />
+                ) : isOptimizableThumbnail(article.thumbnail_url) ? (
                   <Image
                     src={article.thumbnail_url}
                     alt=""
                     fill
                     sizes={thumbnailSizes}
                     quality={75}
-                    unoptimized={priority}
                     {...thumbnailLoadingProps}
                     style={{ objectFit: "contain", opacity: article.is_read ? 0.85 : 1 }}
                   />
