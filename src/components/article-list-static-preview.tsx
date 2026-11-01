@@ -1,9 +1,7 @@
 import Image from "next/image";
-import { preload } from "react-dom";
 import type { ArticleFilter, ArticleListItem } from "@/lib/data/articles";
 import { getCategoryMeta, type CategoryId } from "@/lib/categories";
 import { HOME_STATIC_PREVIEW_LIMIT } from "@/lib/article-feed-constants";
-import { getSupabaseThumbnailTransformSrcSet, getSupabaseThumbnailTransformUrl } from "@/lib/supabase-thumbnail-transform";
 
 export function ArticleListStaticPreview({
   articles,
@@ -28,25 +26,6 @@ export function ArticleListStaticPreview({
     if (initialCategory !== "all" && article.category !== initialCategory) return false;
     return true;
   }).slice(0, HOME_STATIC_PREVIEW_LIMIT);
-  const firstThumbnailUrl = !deferFirstThumbnail ? visibleArticles[0]?.thumbnail_url : null;
-  const firstThumbnailSrc = firstThumbnailUrl
-    ? getSupabaseThumbnailTransformUrl(firstThumbnailUrl, 384)
-    : null;
-  const firstThumbnailSrcSet = firstThumbnailUrl
-    ? getSupabaseThumbnailTransformSrcSet(firstThumbnailUrl)
-    : null;
-  const lcpImageSizes = initialView === "list"
-    ? "(max-width: 640px) 88px, 120px"
-    : "(max-width: 420px) calc(100vw - 58px), (max-width: 640px) calc((100vw - 96px) / 2), calc((min(100vw, 720px) - 174px) / 3)";
-
-  if (firstThumbnailSrc && firstThumbnailSrcSet) {
-    preload(firstThumbnailSrc, {
-      as: "image",
-      imageSrcSet: firstThumbnailSrcSet,
-      imageSizes: lcpImageSizes,
-      fetchPriority: "high",
-    });
-  }
 
   return (
     <div aria-busy="true" aria-label="목록 기능을 불러오는 중">
@@ -66,7 +45,9 @@ export function ArticleListStaticPreview({
               key={article.id}
               article={article}
               priority={index === 0 && !deferFirstThumbnail}
-              thumbnailSizes={lcpImageSizes}
+              thumbnailSizes={initialView === "list"
+                ? "(max-width: 640px) 88px, 120px"
+                : "(max-width: 420px) calc(100vw - 58px), (max-width: 640px) calc((100vw - 96px) / 2), calc((min(100vw, 720px) - 174px) / 3)"}
             />
           ))}
         </ul>
@@ -85,15 +66,6 @@ function StaticArticleRow({ article, priority, thumbnailSizes }: {
   const category = article.category && article.category !== "general" ? getCategoryMeta(article.category) : null;
   const href = `/articles/${encodeURIComponent(article.id)}`;
   const sourceBadgeClass = "seed-badge__root seed-badge__root--size_medium seed-badge__root--variant_weak seed-badge__root--tone_neutral-variant_weak";
-  const thumbnailLoadingProps = priority
-    ? { preload: true as const }
-    : { loading: "lazy" as const, fetchPriority: "auto" as const };
-  const transformedThumbnailSrc = priority && article.thumbnail_url
-    ? getSupabaseThumbnailTransformUrl(article.thumbnail_url, 384)
-    : null;
-  const transformedThumbnailSrcSet = priority && article.thumbnail_url
-    ? getSupabaseThumbnailTransformSrcSet(article.thumbnail_url)
-    : null;
 
   return (
     <li className={`article-row-item${article.is_read ? " is-read" : ""}`}>
@@ -137,26 +109,15 @@ function StaticArticleRow({ article, priority, thumbnailSizes }: {
           {article.thumbnail_url && (
             <a href={href} data-article-link="true" className="article-row-thumb">
               <div className="seed-aspect-ratio article-row-thumb-aspect" style={{ position: "relative", borderRadius: 8, overflow: "hidden", background: "var(--seed-color-bg-neutral-weak)" }}>
-                {transformedThumbnailSrc && transformedThumbnailSrcSet ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- use Supabase's cached transform for the LCP thumbnail
-                  <img
-                    src={transformedThumbnailSrc}
-                    srcSet={transformedThumbnailSrcSet}
-                    sizes={thumbnailSizes}
-                    alt=""
-                    loading="eager"
-                    fetchPriority="high"
-                    decoding="async"
-                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", opacity: article.is_read ? 0.85 : 1 }}
-                  />
-                ) : isOptimizableThumbnail(article.thumbnail_url) ? (
+                {isOptimizableThumbnail(article.thumbnail_url) ? (
                   <Image
                     src={article.thumbnail_url}
                     alt=""
                     fill
                     sizes={thumbnailSizes}
                     quality={75}
-                    {...thumbnailLoadingProps}
+                    loading={priority ? "eager" : "lazy"}
+                    fetchPriority={priority ? "high" : "auto"}
                     style={{ objectFit: "contain", opacity: article.is_read ? 0.85 : 1 }}
                   />
                 ) : (
