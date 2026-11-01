@@ -27,6 +27,9 @@ export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, on
 }) {
   const category = article.category && article.category !== "general" ? getCategoryMeta(article.category) : null;
   const href = `/articles/${encodeURIComponent(article.id)}`;
+  const thumbnailLoadingProps = priority
+    ? { preload: true as const }
+    : { loading: "lazy" as const, fetchPriority: "auto" as const };
 
   return (
     <li className={`article-row-item${article.is_read ? " is-read" : ""}`}>
@@ -78,8 +81,7 @@ export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, on
                     fill
                     sizes={thumbnailSizes}
                     quality={75}
-                    loading={priority ? "eager" : "lazy"}
-                    fetchPriority={priority ? "high" : "auto"}
+                    {...thumbnailLoadingProps}
                     style={{ objectFit: "contain", opacity: article.is_read ? 0.85 : 1 }}
                   />
                 ) : (
