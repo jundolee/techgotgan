@@ -81,6 +81,7 @@ export function ArticleRow({ article, onRead, onReadChange, onFavoriteChange, on
                     fill
                     sizes={thumbnailSizes}
                     quality={75}
+                    unoptimized={priority}
                     {...thumbnailLoadingProps}
                     style={{ objectFit: "contain", opacity: article.is_read ? 0.85 : 1 }}
                   />
