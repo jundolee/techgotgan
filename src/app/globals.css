@@ -1036,6 +1036,14 @@ h3 {
   .article-card-grid.is-list-view .article-row-main { display: grid; gap: 8px; }
   .article-card-grid.is-list-view .article-row-main.has-thumbnail { grid-template-columns: minmax(0, 1fr) 88px; }
   .article-card-grid.is-list-view .article-row-thumb-aspect { width: 88px !important; }
+  /* Keep mobile cards compact so the first article text paints before its thumbnail. */
+  .article-card-grid:not(.is-list-view) .article-row-main.has-thumbnail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 88px;
+    align-items: start;
+  }
+  .article-card-grid:not(.is-list-view) .article-row-thumb { grid-column: 2; grid-row: 1; }
+  .article-card-grid:not(.is-list-view) .article-row-thumb-aspect { width: 88px !important; }
 }
 
 @media (max-width: 420px) {
