@@ -6,9 +6,11 @@ const ROW_COUNT = 6;
 export function ArticleListControlsSkeleton({
   filterControl,
   categoryControl,
+  bulkControl,
 }: {
   filterControl?: ReactNode;
   categoryControl?: ReactNode;
+  bulkControl?: ReactNode;
 } = {}) {
   return (
     <>
@@ -32,14 +34,16 @@ export function ArticleListControlsSkeleton({
         </div>
       </div>
 
-      <div className="article-bulk-actions" aria-hidden="true">
-        <div className="article-list-preferences article-list-skeleton-preferences">
-          <span className="skeleton" style={{ width: 106, height: 36, borderRadius: 8 }} />
-          <span className="skeleton article-list-skeleton-source" style={{ width: 142, height: 36, borderRadius: 8 }} />
-          <span className="skeleton" style={{ width: 68, height: 36, borderRadius: 8 }} />
+      {bulkControl ?? (
+        <div className="article-bulk-actions article-list-skeleton-bulk-actions" aria-hidden="true">
+          <div className="article-list-preferences article-list-skeleton-preferences">
+            <span className="skeleton" style={{ width: 106, height: 44, borderRadius: 8 }} />
+            <span className="skeleton article-list-skeleton-source" style={{ width: 142, height: 44, borderRadius: 8 }} />
+            <span className="skeleton" style={{ width: 68, height: 44, borderRadius: 8 }} />
+          </div>
+          <span className="skeleton article-list-skeleton-read-all" style={{ width: 80, height: 44, borderRadius: 8 }} />
         </div>
-        <span className="skeleton article-list-skeleton-read-all" style={{ width: 80, height: 36, borderRadius: 8 }} />
-      </div>
+      )}
     </>
   );
 }

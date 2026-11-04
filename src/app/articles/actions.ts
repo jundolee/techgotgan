@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
@@ -18,6 +18,7 @@ import { getArticlePreview, getRelatedArticles, type ArticlePreview, type Relate
 import { listSources } from "@/lib/data/sources";
 import { getCurrentUser, getVerifiedUserId } from "@/lib/supabase/current-user";
 import { canViewArticleSummary } from "@/lib/article-summary-access";
+import { ARTICLE_PAGE_SIZE_OPTIONS, ARTICLE_VIEW_COOKIE } from "@/lib/article-feed-constants";
 
 async function getCurrentUserId(): Promise<string | null> {
   const user = await getCurrentUser();
@@ -157,6 +158,36 @@ export async function markAllArticlesReadAction(): Promise<"ok" | "unauthenticat
   if (!userId) return "unauthenticated";
   await markAllArticlesRead(userId);
   return "ok";
+}
+
+function pageSizeFromForm(formData: FormData): number {
+  const value = Number(formData.get("pageSize"));
+  return ARTICLE_PAGE_SIZE_OPTIONS.includes(value as typeof ARTICLE_PAGE_SIZE_OPTIONS[number]) ? value : 30;
+}
+
+export async function setArticleViewPreferenceAction(formData: FormData): Promise<never> {
+  const view = String(formData.get("view") ?? "");
+  if (view !== "list" && view !== "card") redirect("/");
+
+  const cookieStore = await cookies();
+  cookieStore.set(ARTICLE_VIEW_COOKIE, view, {
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+
+  const pageSize = pageSizeFromForm(formData);
+  redirect(pageSize === 30 ? "/" : `/?pageSize=${pageSize}`);
+}
+
+export async function markAllArticlesReadFormAction(formData: FormData): Promise<never> {
+  const userId = await getArticleReadUserId();
+  if (!userId) return redirectToLogin();
+  await markAllArticlesRead(userId);
+
+  const pageSize = pageSizeFromForm(formData);
+  redirect(`/?filter=unread${pageSize === 30 ? "" : `&pageSize=${pageSize}`}`);
 }
 
 export async function markAllArticlesUnreadAction() {
