@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import { Text } from "@seed-design/react";
 import { ArticleLink } from "@/components/article-link";
 import { PageHeader } from "@/components/page-header";
+import { ShareButton } from "@/components/share-button";
 import { PUBLIC_CATEGORY_META, SITE_URL, getPublicBlogHub, type PublicHubArticle } from "@/lib/data/public-hubs";
 import { SITE_NAME } from "@/app/seo";
 import styles from "./page.module.css";
@@ -149,9 +150,21 @@ export default async function BlogPage({ params }: BlogPageProps) {
             ? "요즘IT에서 발행한 IT·개발 글을 최신순으로 모아 보여드립니다."
             : `${hub.host}에서 발행한 기술 글을 ${SITE_NAME}이 수집해 최신순으로 보여드립니다.`}
         </Text>
-        <a href={hub.source.site_url} target="_blank" rel="noopener noreferrer">
-          <Text as="span" textStyle="t3Medium" color="var(--seed-color-fg-brand)">원문 블로그 방문하기 →</Text>
-        </a>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <a href={hub.source.site_url} target="_blank" rel="noopener noreferrer">
+            <Text as="span" textStyle="t3Medium" color="var(--seed-color-fg-brand)">원문 블로그 방문하기 →</Text>
+          </a>
+          {hub.articles.length > 0 && (
+            <ShareButton
+              title={blogTitle(hub.host, hub.displayName)}
+              url={`/blogs/${encodeURIComponent(hub.slug)}`}
+              size="small"
+              variant="neutralWeak"
+              shareSurface="blog_hub"
+              shareCampaign="blog_hub_share_2026q4"
+            />
+          )}
+        </div>
       </header>
 
       {hub.host === "toss.tech" && (

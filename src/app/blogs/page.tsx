@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Text } from "@seed-design/react";
 import { PageHeader } from "@/components/page-header";
+import { ShareButton } from "@/components/share-button";
 import { SITE_URL, getPublicBlogIndex } from "@/lib/data/public-hubs";
 import { SITE_NAME } from "@/app/seo";
 
@@ -54,7 +55,12 @@ export default async function BlogsPage() {
       <PageHeader navHref="/" navLabel="전체 글" />
 
       <header style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <Text as="h1" textStyle="t8Bold" color="fg.neutral">{TITLE}</Text>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+          <Text as="h1" textStyle="t8Bold" color="fg.neutral">{TITLE}</Text>
+          {blogs.some((blog) => blog.hasArticles) && (
+            <ShareButton title="기업 기술 블로그 모음" url="/blogs" size="small" variant="neutralWeak" shareSurface="blog_directory" shareCampaign="blog_directory_share_2026q4" />
+          )}
+        </div>
         <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">
           {DESCRIPTION}
         </Text>

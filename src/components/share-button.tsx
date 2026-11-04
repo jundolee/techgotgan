@@ -21,7 +21,14 @@ export function ShareButton({
   variant?: "ghost" | "neutralWeak" | "neutralOutline" | "neutralSolid" | "brandOutline";
   style?: React.CSSProperties;
   compact?: boolean;
-  shareSurface?: "article" | "weekly_digest" | "career_guide";
+  shareSurface?:
+    | "article"
+    | "weekly_digest"
+    | "career_guide"
+    | "topic_directory"
+    | "topic_hub"
+    | "blog_directory"
+    | "blog_hub";
   shareCampaign?: string;
 }) {
   const [copied, setCopied] = useState(false);
