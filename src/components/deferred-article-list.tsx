@@ -24,11 +24,36 @@ type LoadedFeed = {
   ArticleList: ArticleListComponent;
 };
 
+type PendingArticleOpen = { title: string };
+
+declare global {
+  interface Window {
+    __techgotganPendingArticlePath?: string;
+    __techgotganPendingArticleSourceUrl?: string;
+  }
+}
+
+function getPendingArticleLink(pathname: string): HTMLAnchorElement | null {
+  return [...document.querySelectorAll<HTMLAnchorElement>('a[data-article-link="true"]')]
+    .find((anchor) => {
+      try {
+        return new URL(anchor.href, window.location.href).pathname === pathname;
+      } catch {
+        return false;
+      }
+    }) ?? null;
+}
+
+function getPendingArticleTitle(anchor: HTMLAnchorElement): string {
+  return anchor.querySelector("h3")?.textContent?.trim() || anchor.textContent?.trim() || "기사";
+}
+
 export function DeferredArticleList({ deferFirstThumbnail, children, ...props }: DeferredArticleListProps) {
   const [loaded, setLoaded] = useState<LoadedFeed | null>(null);
   const feed = loaded?.feed ?? null;
   const [loadFailed, setLoadFailed] = useState(false);
   const [hasOpenControlMenu, setHasOpenControlMenu] = useState(false);
+  const [pendingArticleOpen, setPendingArticleOpen] = useState<PendingArticleOpen | null>(null);
   const loadStartedRef = useRef(false);
 
   const loadFeed = useCallback(() => {
@@ -45,6 +70,9 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
       })
       .catch(() => {
         loadStartedRef.current = false;
+        window.__techgotganPendingArticlePath = undefined;
+        window.__techgotganPendingArticleSourceUrl = undefined;
+        setPendingArticleOpen(null);
         setLoadFailed(true);
       });
   }, [feed]);
@@ -61,6 +89,17 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
 
   useEffect(() => {
     if (feed) return;
+
+    let pendingIndicatorTimer: number | undefined;
+    // The document-level bridge can capture an article click before this component hydrates.
+    // Start the deferred feed immediately instead of waiting for the idle callback below.
+    const capturedPath = window.__techgotganPendingArticlePath;
+    const capturedLink = capturedPath ? getPendingArticleLink(capturedPath) : null;
+    if (capturedPath && capturedLink) {
+      const title = getPendingArticleTitle(capturedLink);
+      pendingIndicatorTimer = window.setTimeout(() => setPendingArticleOpen({ title }), 0);
+      loadFeed();
+    }
 
     let cancelled = false;
     let stableTimer: number | undefined;
@@ -106,6 +145,15 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
 
     const loadForInPageInteraction = (event: Event) => {
       const target = event.target;
+      if (event.type === "click" && target instanceof Element) {
+        const articleLink = target.closest<HTMLAnchorElement>('a[data-article-link="true"]');
+        if (articleLink) {
+          setPendingArticleOpen({ title: getPendingArticleTitle(articleLink) });
+          loadFeed();
+          return;
+        }
+      }
+
       if (target instanceof Element && target.closest("a[href], details[data-deferred-feed-control], form[data-deferred-feed-navigation]")) return;
       loadFeed();
     };
@@ -123,6 +171,7 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
       if (stableTimer !== undefined) window.clearTimeout(stableTimer);
       if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
       if (idleTimer !== undefined) window.clearTimeout(idleTimer);
+      if (pendingIndicatorTimer !== undefined) window.clearTimeout(pendingIndicatorTimer);
       if (idleCallbackId !== undefined) {
         const browserWindow = window as Window & { cancelIdleCallback?: (handle: number) => void };
         browserWindow.cancelIdleCallback?.(idleCallbackId);
@@ -148,6 +197,15 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
         <p role="status">
           글 목록을 불러오지 못했어요. <button type="button" onClick={loadFeed}>다시 시도</button>
         </p>
+      )}
+      {pendingArticleOpen && !feed && (
+        <div className="article-open-pending" role="status" aria-live="polite">
+          <span className="article-open-pending-spinner" aria-hidden="true" />
+          <span className="article-open-pending-copy">
+            <strong>{pendingArticleOpen.title}</strong>
+            <span>기사를 여는 중이에요</span>
+          </span>
+        </div>
       )}
       {children ?? <ArticleListSkeleton />}
     </>
