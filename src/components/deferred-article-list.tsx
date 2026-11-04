@@ -32,8 +32,11 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
     loadStartedRef.current = true;
     setLoadFailed(false);
 
-    void loadArticleFeedAction()
-      .then(setFeed)
+    void Promise.all([
+      loadArticleFeedAction(),
+      import("@/components/article-list"),
+    ])
+      .then(([loadedFeed]) => setFeed(loadedFeed))
       .catch(() => {
         loadStartedRef.current = false;
         setLoadFailed(true);
@@ -85,16 +88,22 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
       idleTimer = window.setTimeout(loadFeed, 5_000);
     }
 
-    document.addEventListener("pointerdown", loadFeed, { once: true, passive: true });
-    document.addEventListener("keydown", loadFeed, { once: true });
-    document.addEventListener("click", loadFeed, { once: true, capture: true });
+    const loadForInPageInteraction = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest("a[href]")) return;
+      loadFeed();
+    };
+
+    document.addEventListener("pointerdown", loadForInPageInteraction, { passive: true });
+    document.addEventListener("keydown", loadForInPageInteraction);
+    document.addEventListener("click", loadForInPageInteraction, true);
 
     return () => {
       cancelled = true;
       observer?.disconnect();
-      document.removeEventListener("pointerdown", loadFeed);
-      document.removeEventListener("keydown", loadFeed);
-      document.removeEventListener("click", loadFeed, true);
+      document.removeEventListener("pointerdown", loadForInPageInteraction);
+      document.removeEventListener("keydown", loadForInPageInteraction);
+      document.removeEventListener("click", loadForInPageInteraction, true);
       if (stableTimer !== undefined) window.clearTimeout(stableTimer);
       if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
       if (idleTimer !== undefined) window.clearTimeout(idleTimer);
