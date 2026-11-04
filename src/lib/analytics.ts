@@ -1,6 +1,7 @@
 "use client";
 
 import { track } from "@amplitude/analytics-browser";
+import { getAcquisitionContext } from "@/lib/acquisition-context";
 
 /** Send search quality metrics without collecting the text a reader searched for. */
 export function trackArticleSearchCompleted(
@@ -23,6 +24,7 @@ export function trackArticleSearchCompleted(
     result_count: resultCount,
     category: category === "all" ? null : category,
     has_source_filter: hasSourceFilter,
+    ...getAcquisitionContext(),
   });
 }
 
@@ -39,6 +41,7 @@ export function trackShareActionCompleted(
   track("share_action_completed", {
     share_method: method,
     share_surface: surface,
+    ...getAcquisitionContext(),
   });
 }
 
@@ -48,5 +51,5 @@ export function trackArticleGraphInteraction(
   properties: { node_kind?: string; graph_size?: number; added_nodes?: number; added_edges?: number }
 ): void {
   if (process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" || !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY) return;
-  track("article_graph_interaction", { action, ...properties });
+  track("article_graph_interaction", { action, ...properties, ...getAcquisitionContext() });
 }

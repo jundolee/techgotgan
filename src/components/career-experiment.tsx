@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import { track } from "@amplitude/analytics-browser";
+import { getAcquisitionContext } from "@/lib/acquisition-context";
+import { trackSourceArticleClick } from "@/lib/source-article-analytics";
 
 function record(action: string, detail: string) {
   if (process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" || !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY) return;
-  track("career_guide_interaction", { guide: "toss_frontend", action, detail });
+  track("career_guide_interaction", { guide: "toss_frontend", action, detail, ...getAcquisitionContext() });
 }
 
 export function CareerLink({ href, id, children }: { href: string; id: string; children: React.ReactNode }) {
-  return <a href={href} target="_blank" rel="noopener noreferrer" onClick={() => record("source_click", id)} style={{ color: "#b44d11", fontWeight: 700 }}>{children} ↗</a>;
+  return <a href={href} target="_blank" rel="noopener noreferrer" onClick={() => { record("source_click", id); trackSourceArticleClick(href, "career_guide"); }} style={{ color: "#b44d11", fontWeight: 700 }}>{children} ↗</a>;
 }
 
 export function CareerFeedback() {

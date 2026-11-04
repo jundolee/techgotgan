@@ -7,6 +7,7 @@ import { RelatedArticleList } from "@/components/related-article-list";
 import { markArticleRead } from "@/lib/data/articles";
 import { ArticleSummaryCopy } from "@/components/article-summary-copy";
 import { ShareButton } from "@/components/share-button";
+import { SourceArticleLink } from "@/components/source-article-link";
 import { getArticlePreview, getRelatedArticles } from "@/lib/data/related-articles";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
@@ -128,7 +129,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   "등록된 AI 요약이 없습니다. 원문에서 확인해 주세요."}
         </Text>}
       </section>}
-      <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", justifyContent: "center", marginTop: 18, padding: 16, borderRadius: 14, background: "var(--seed-color-bg-brand-solid, #eb641c)", color: "white", textDecoration: "none", fontWeight: 700 }}>원문 읽기 ↗</a>
+      <SourceArticleLink href={article.url} surface="article_detail" style={{ display: "flex", justifyContent: "center", marginTop: 18, padding: 16, borderRadius: 14, background: "var(--seed-color-bg-brand-solid, #eb641c)", color: "white", textDecoration: "none", fontWeight: 700 }}>원문 읽기 ↗</SourceArticleLink>
       <div style={{ marginTop: 28 }}>
         <RelatedArticleList articleId={article.id} items={related.map((item) => ({ ...item, href: `/articles/${encodeURIComponent(item.id)}` }))} />
       </div>

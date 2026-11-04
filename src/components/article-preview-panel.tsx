@@ -6,6 +6,7 @@ import { Badge, Text } from "@seed-design/react";
 import { RelatedArticleList } from "@/components/related-article-list";
 import { ArticleSummaryCopy } from "@/components/article-summary-copy";
 import { ShareButton } from "@/components/share-button";
+import { SourceArticleLink } from "@/components/source-article-link";
 import {
   getArticlePreviewAction,
   getArticleSummaryAction,
@@ -585,15 +586,14 @@ export function ArticlePreviewPanel({
 
               {/* 원문 이동은 요약 로딩과 분리해 제목 바로 아래에서 먼저 제공한다. */}
               <div className="article-preview-inline-cta">
-                <a
+                <SourceArticleLink
                   href={currentArticle.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  surface="article_preview"
                   className="article-preview-cta-btn"
                 >
                   <span>{currentArticle.sourceTitle ? `${currentArticle.sourceTitle}에서 전체 원문 읽기` : "전체 원문 읽기"}</span>
                   <span aria-hidden="true">↗</span>
-                </a>
+                </SourceArticleLink>
               </div>
 
               {/* 2. [최상위 계층] ✨ AI 엔지니어링 3-Box 브리핑 카드 */}
@@ -717,15 +717,14 @@ export function ArticlePreviewPanel({
 
         {/* 모바일 하단 고정 CTA 바: 언제든 손쉽게 전체 원문으로 이동 */}
         <div className="article-preview-bottom-bar">
-          <a
+          <SourceArticleLink
             href={currentArticle.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            surface="article_preview"
             className="article-preview-cta-btn"
           >
             <span>{currentArticle.sourceTitle ? `${currentArticle.sourceTitle}에서 전체 원문 읽기` : "전체 원문 읽기"}</span>
             <span aria-hidden="true">↗</span>
-          </a>
+          </SourceArticleLink>
         </div>
       </section>
     </div>

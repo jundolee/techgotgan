@@ -124,9 +124,10 @@
   `remoteConfig.fetchRemoteConfig: false`를 지정하고, Amplitude의 IP 주소·브라우저 언어·플랫폼 메타데이터
   수집도 비활성화했다. 개인정보처리방침은 GA4의 대략적인 위치·브라우저·기기 정보와 client ID, Amplitude
   브라우저/세션 식별자, 이벤트 범위, 계정 탈퇴 후 보유 한계를 설명하도록 갱신했다.
-- 주제·블로그 허브의 원문 카드도 홈 피드와 같은 `ArticleLink`를 사용한다. 따라서 `article_click` 이벤트와
-  내부 클릭수 집계는 검색 랜딩 허브에서 원문으로 이동한 경우도 포함한다. 이 이벤트는 GA4/GTM이 받으며,
-  Amplitude 검색 지표는 검색어 원문 없이 길이·단어 수·결과 수·주제·소스 필터 여부만 기록한다.
+- 주제·블로그 허브의 기사 카드도 홈 피드와 같은 `ArticleLink`를 사용한다. `article_click`은 카드 클릭 후 서비스 안의
+  기사 미리보기를 연 이벤트이며, 외부 원문 사이트 방문과는 구분한다. 원문 CTA는 `source_article_click`로 기록한다.
+- Amplitude의 `page_viewed`와 후속 이용 이벤트에는 안전한 UTM 값과 외부 유입 도메인을 세션 기준으로 붙여 채널별
+  유입·검색·원문 이동·공유를 비교한다. 검색 이벤트는 검색어 원문 대신 길이·단어 수·결과 수·주제·소스 필터만 기록한다.
 - 브라우저 아이콘은 `곳간 지붕과 글 선반` 심볼로 교체했고, 헤더 워드마크에도 같은 심볼을 붙였다.
 - `0013`·`0014`는 Dashboard SQL Editor에서 적용돼 CLI migration history에 기록되지 않았다. 원격 스키마와 기존
   migration 상태를 대조해 이력을 정리하기 전에는 `supabase db push`를 실행하지 않는다.
@@ -144,11 +145,11 @@
 | 단계 | 지표 | 측정 방법 |
 |---|---|---|
 | 유입 | 비브랜드/브랜드 검색 노출·클릭·CTR | Search Console에서 쿼리 유형을 나눠 비교 |
-| 첫 가치 경험 | 방문 세션 중 원문 기사 클릭 비율 | `article_click` 이벤트와 세션 수 비교 |
+| 첫 가치 경험 | 랜딩 사용자 중 원문 사이트를 연 비율 | Amplitude `source_article_click`의 고유 사용자와 UTM/referrer·화면 유형 비교 |
 | 탐색 품질 | 검색 실행 수, 결과 0건 비율, 결과 후 원문 클릭률 | `article_search_completed`에 글자 수·단어 수·결과 수만 기록하고 검색어 원문은 저장하지 않음 |
 | 재방문 | 7일 내 다시 방문해 읽음·즐겨찾기·원문 클릭을 한 사용자 | Amplitude의 재방문 사용자 및 이벤트 흐름 |
 
-Amplitude는 전체 URL·검색어를 자동 수집하지 않는다. 프로덕션 이벤트 요청은 200으로 응답했고 `page_viewed`는 경로만, `article_search_completed`는 검색 길이·단어 수·결과 수만 보낸다. GA4는 URL의 `q` 값을 Data Redaction에서 가리고, Enhanced Measurement 검색어 매개변수에서도 `q`를 제외했다. Production GA4 `page_view`에서 `q=(redacted)`를 확인했다. Search Console 속성은 GA4에 연결했지만 새 속성의 성과 데이터는 아직 처리 중이다. 검색 기준선이 확보되기 전에는 검색 유입 증가율이나 전환 목표를 임의로 완료 기준으로 만들지 않는다.
+Amplitude는 전체 URL·검색어를 자동 수집하지 않는다. `page_viewed`는 경로와 제한된 UTM 값/외부 유입 도메인만, `article_search_completed`는 검색 길이·단어 수·결과 수만 전송한다. `source_article_click`은 클릭 화면 유형과 원문 발행 도메인만 기록하며 기사 URL·제목·식별자는 보내지 않는다. UTM과 외부 유입 도메인은 브라우저 세션 저장소에서 30분 비활동 후 만료한다. `article_click`은 서비스 안의 기사 미리보기를 연 이벤트이며, 원문 이동 비교에는 `source_article_click`을 쓴다. GA4는 URL의 `q` 값을 Data Redaction에서 가리고 Enhanced Measurement 검색어 매개변수에서도 `q`를 제외했다. Production GA4 `page_view`에서 `q=(redacted)`를 확인했다. Search Console 속성은 GA4에 연결했다. 검색 유입과 전환은 최신 GA4/Search Console 원자료를 확인한 뒤 비교하고, 색인·제출 상태를 실제 유입으로 간주하지 않는다.
 
 ## 브랜드 결정 사항
 
