@@ -369,7 +369,7 @@ h3 {
   display: flex;
   align-items: center;
   gap: 4px;
-  min-height: 40px;
+  min-height: 44px;
 }
 .article-list-skeleton-tabs .skeleton { display: block; flex: 1 1 auto; min-width: 0; }
 .article-list-skeleton-topics { gap: 6px; overflow: hidden; }
@@ -377,6 +377,7 @@ h3 {
 .article-feed-controls .article-search-shell .skeleton { display: block; }
 .article-list-skeleton-preferences .skeleton,
 .article-bulk-actions > .article-list-skeleton-read-all { display: block; flex: 0 0 auto; }
+.article-list-skeleton-preferences { min-height: 38px; }
 .article-list-skeleton-source { min-width: 0; }
 .article-list-skeleton-grid { margin-top: 0; }
 .article-list-skeleton-item .skeleton { display: block; }
