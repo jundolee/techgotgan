@@ -14,16 +14,15 @@ import { trackArticleSearchCompleted } from "@/lib/analytics";
 import { loadArticlesAction } from "@/app/articles/actions";
 import type { ArticleFilter, ArticleListItem } from "@/lib/data/articles";
 import type { CategoryId } from "@/lib/categories";
+import { ARTICLE_PAGE_SIZE_OPTIONS, ARTICLE_VIEW_COOKIE, type ArticlePageSize } from "@/lib/article-feed-constants";
 
 const SEARCH_DEBOUNCE_MS = 400;
 
 // 두 글자 검색은 AI, DB, ML처럼 테크 글에서 자주 쓰는 약어에 필요하다.
 const MIN_AUTO_SEARCH_LENGTH = 2;
 
-const PAGE_SIZE_OPTIONS = [10, 30, 50] as const;
-type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 export type ArticleView = "list" | "card";
-const ARTICLE_VIEW_STORAGE_KEY = "techgotgan-article-view";
+const ARTICLE_VIEW_STORAGE_KEY = ARTICLE_VIEW_COOKIE;
 const EMPTY_READ_IDS = new Set<string>();
 const EMPTY_FAVORITE_OVERRIDES = new Map<string, boolean>();
 const articleViewListeners = new Set<() => void>();
@@ -34,6 +33,9 @@ function subscribeToArticleView(listener: () => void) {
 }
 
 function getArticleViewSnapshot(fallback: ArticleView): ArticleView {
+  const cookieView = document.cookie.split("; ").find((value) => value.startsWith(`${ARTICLE_VIEW_STORAGE_KEY}=`))?.split("=", 2)[1];
+  if (cookieView === "list" || cookieView === "card") return cookieView;
+
   let storedView: string | null = null;
   try {
     storedView = window.localStorage.getItem(ARTICLE_VIEW_STORAGE_KEY);
@@ -41,8 +43,7 @@ function getArticleViewSnapshot(fallback: ArticleView): ArticleView {
     // The cookie remains the server-side preference when localStorage is unavailable.
   }
   if (storedView === "list" || storedView === "card") return storedView;
-  const cookieView = document.cookie.split("; ").find((value) => value.startsWith(`${ARTICLE_VIEW_STORAGE_KEY}=`))?.split("=", 2)[1];
-  return cookieView === "list" || cookieView === "card" ? cookieView : fallback;
+  return fallback;
 }
 
 /**
@@ -57,6 +58,7 @@ export function ArticleList({
   initialSourceId,
   initialCategory = "all",
   initialView,
+  initialPageSize = 30,
   initialQuery,
   deferFirstThumbnail = false,
 }: {
@@ -66,6 +68,7 @@ export function ArticleList({
   initialSourceId: string;
   initialCategory?: CategoryId;
   initialView: ArticleView;
+  initialPageSize?: ArticlePageSize;
   initialQuery: string;
   deferFirstThumbnail?: boolean;
 }) {
@@ -75,7 +78,7 @@ export function ArticleList({
   const [query, setQuery] = useState(initialQuery);
   const [shortQuerySubmitted, setShortQuerySubmitted] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState<PageSize>(30);
+  const [pageSize, setPageSize] = useState<ArticlePageSize>(initialPageSize);
   const view = useSyncExternalStore(
     subscribeToArticleView,
     () => getArticleViewSnapshot(initialView),
@@ -271,6 +274,7 @@ export function ArticleList({
     if (nextFilter !== "unread") params.set("filter", nextFilter);
     if (nextSourceId !== "all") params.set("source", nextSourceId);
     if (nextCategory !== "all") params.set("category", nextCategory);
+    if (pageSize !== 30) params.set("pageSize", String(pageSize));
     if (nextQuery.trim()) params.set("q", nextQuery.trim());
     const qs = params.toString();
     return qs ? `/?${qs}` : "/";
@@ -396,11 +400,11 @@ export function ArticleList({
               aria-label="한 페이지에 표시할 글 수"
               value={pageSize}
               onChange={(event) => {
-                setPageSize(Number(event.target.value) as PageSize);
+                setPageSize(Number(event.target.value) as ArticlePageSize);
                 setPage(1);
               }}
             >
-              {PAGE_SIZE_OPTIONS.map((size) => <option key={size} value={size}>{size}개</option>)}
+              {ARTICLE_PAGE_SIZE_OPTIONS.map((size) => <option key={size} value={size}>{size}개</option>)}
             </select>
           </label>
         </div>
