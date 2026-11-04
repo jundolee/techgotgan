@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { loadArticleFeedAction } from "@/app/articles/actions";
 import type { ArticleFilter } from "@/lib/data/articles";
@@ -17,13 +16,15 @@ type DeferredArticleListProps = {
   children?: ReactNode;
 };
 
-const InteractiveArticleList = dynamic(
-  () => import("@/components/article-list").then((module) => module.ArticleList),
-  { ssr: false, loading: () => <ArticleListSkeleton /> }
-);
+type ArticleListComponent = (typeof import("@/components/article-list"))["ArticleList"];
+type LoadedFeed = {
+  feed: Awaited<ReturnType<typeof loadArticleFeedAction>>;
+  ArticleList: ArticleListComponent;
+};
 
 export function DeferredArticleList({ deferFirstThumbnail, children, ...props }: DeferredArticleListProps) {
-  const [feed, setFeed] = useState<Awaited<ReturnType<typeof loadArticleFeedAction>> | null>(null);
+  const [loaded, setLoaded] = useState<LoadedFeed | null>(null);
+  const feed = loaded?.feed ?? null;
   const [loadFailed, setLoadFailed] = useState(false);
   const loadStartedRef = useRef(false);
 
@@ -36,7 +37,9 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
       loadArticleFeedAction(),
       import("@/components/article-list"),
     ])
-      .then(([loadedFeed]) => setFeed(loadedFeed))
+      .then(([loadedFeed, articleListModule]) => {
+        setLoaded({ feed: loadedFeed, ArticleList: articleListModule.ArticleList });
+      })
       .catch(() => {
         loadStartedRef.current = false;
         setLoadFailed(true);
@@ -114,11 +117,12 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
     };
   }, [feed, loadFeed]);
 
-  if (feed) {
+  if (loaded) {
+    const InteractiveArticleList = loaded.ArticleList;
     return (
       <InteractiveArticleList
-        articles={feed.articles}
-        sources={feed.sources}
+        articles={loaded.feed.articles}
+        sources={loaded.feed.sources}
         {...props}
         deferFirstThumbnail={deferFirstThumbnail}
       />
