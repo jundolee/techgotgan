@@ -124,6 +124,20 @@ export default function ArticleModalLoading() {
             </div>
           </div>
 
+          {/* 데스크톱 인라인 CTA 자리 */}
+          <div className="article-preview-inline-cta">
+            <div
+              aria-hidden="true"
+              style={{
+                width: "100%",
+                height: 52,
+                borderRadius: 14,
+                background: "var(--seed-color-bg-neutral-weak)",
+                animation: "skeleton-pulse 1.4s ease-in-out infinite",
+              }}
+            />
+          </div>
+
           {/* AI 3-Box 요약 카드 스켈레톤 */}
           <div
             style={{
@@ -180,13 +194,15 @@ export default function ArticleModalLoading() {
               }}
             />
           </div>
+        </div>
 
-          {/* 원문 링크 버튼 스켈레톤 */}
+        {/* 모바일 CTA 고정 영역 높이를 먼저 확보해 로딩 완료 때 시트가 밀리지 않게 한다. */}
+        <div className="article-preview-bottom-bar" aria-hidden="true">
           <div
             style={{
               width: "100%",
-              height: 52,
-              borderRadius: 14,
+              height: 50,
+              borderRadius: 16,
               background: "var(--seed-color-bg-neutral-weak)",
               animation: "skeleton-pulse 1.4s ease-in-out infinite",
             }}

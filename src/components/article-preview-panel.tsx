@@ -583,6 +583,19 @@ export function ArticlePreviewPanel({
                 </Text>
               </div>
 
+              {/* 원문 이동은 요약 로딩과 분리해 제목 바로 아래에서 먼저 제공한다. */}
+              <div className="article-preview-inline-cta">
+                <a
+                  href={currentArticle.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="article-preview-cta-btn"
+                >
+                  <span>{currentArticle.sourceTitle ? `${currentArticle.sourceTitle}에서 전체 원문 읽기` : "전체 원문 읽기"}</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+
               {/* 2. [최상위 계층] ✨ AI 엔지니어링 3-Box 브리핑 카드 */}
               {canViewSummary && (isLoadingSummary ? (
                 <section aria-labelledby="ai-summary-heading" aria-busy="true" style={{ borderRadius: 20, padding: "18px clamp(16px, 3vw, 22px)", background: "linear-gradient(180deg, #fffaf5 0%, #ffffff 100%)", border: "1px solid #fbd8bc" }}>
@@ -687,20 +700,7 @@ export function ArticlePreviewPanel({
                 </section>
               ))}
 
-              {/* 3. [데스크톱 인라인 액션] 원문 읽기 CTA 버튼 */}
-              <div className="article-preview-inline-cta">
-                <a
-                  href={currentArticle.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="article-preview-cta-btn"
-                >
-                  <span>{currentArticle.sourceTitle ? `${currentArticle.sourceTitle}에서 전체 원문 읽기` : "전체 원문 읽기"}</span>
-                  <span aria-hidden="true">↗</span>
-                </a>
-              </div>
-
-              {/* 4. [지식 확장] AI 벡터 시맨틱 연관 기사 리스트 */}
+              {/* 3. [지식 확장] AI 벡터 시맨틱 연관 기사 리스트 */}
               <div style={{ borderTop: "1px solid var(--seed-color-stroke-neutral-subtle)", paddingTop: 16 }}>
                 <RelatedArticleList
                   articleId={currentArticle.id}
