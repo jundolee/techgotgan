@@ -163,6 +163,11 @@ export function ArticleLink({ articleId, articleTitle, href, sourceUrl, children
               <div className="article-preview-body article-preview-opening-body">
                 <div className="article-preview-opening-line article-preview-opening-line-short" />
                 <div className="article-preview-opening-line article-preview-opening-line-title" />
+                <div className="article-preview-inline-cta">
+                  <a href={pendingNavigation.sourceUrl} target="_blank" rel="noopener noreferrer" className="article-preview-cta-btn">
+                    <span>원문 읽기</span><span aria-hidden="true">↗</span>
+                  </a>
+                </div>
                 <div className="article-preview-opening-card">
                   <div className="article-preview-opening-line article-preview-opening-line-medium" />
                   <div className="article-preview-opening-line" />
