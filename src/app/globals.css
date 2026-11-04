@@ -809,6 +809,7 @@ h3 {
 
 .article-preview-inline-cta {
   display: block;
+  min-height: 50px;
 }
 
 .article-preview-cta-btn {
