@@ -13,7 +13,12 @@ import { DeferredArticleList } from "@/components/deferred-article-list";
 import { ArticleListStaticPreview } from "@/components/article-list-static-preview";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { CATEGORY_MAP, type CategoryId } from "@/lib/categories";
-import { HOME_STATIC_PREVIEW_LIMIT } from "@/lib/article-feed-constants";
+import {
+  ARTICLE_PAGE_SIZE_OPTIONS,
+  ARTICLE_VIEW_COOKIE,
+  HOME_STATIC_PREVIEW_LIMIT,
+  type ArticlePageSize,
+} from "@/lib/article-feed-constants";
 
 // dynamic="force-dynamic"을 쓰면 모든 fetch()가 cache: "no-store"로 강제되어 PostgREST 캐시가 무력화된다.
 // fetchCache = "default-cache"를 지정해 searchParams로 인한 동적 렌더링을 유지하면서도
@@ -21,7 +26,6 @@ import { HOME_STATIC_PREVIEW_LIMIT } from "@/lib/article-feed-constants";
 export const fetchCache = "default-cache";
 // 전역 SEO 메타데이터가 포함된 홈은 Edge 함수 크기 제한을 피하기 위해 Node.js에서 렌더링한다.
 export const runtime = "nodejs";
-const ARTICLE_VIEW_COOKIE = "techgotgan-article-view";
 const ONBOARDING_DISMISSED_COOKIE = "techgotgan_onboarding_dismissed";
 
 // 필터 탭을 명시적으로 고르지 않았을 때의 기본값 — 검색 중이 아니면 "안읽음"이 자연스럽지만,
@@ -36,6 +40,11 @@ function parseCategory(raw: string | undefined): CategoryId {
   return "all";
 }
 
+function parsePageSize(raw: string | undefined): ArticlePageSize {
+  const value = Number(raw);
+  return ARTICLE_PAGE_SIZE_OPTIONS.includes(value as ArticlePageSize) ? value as ArticlePageSize : 30;
+}
+
 /**
  * 글 목록 조회(캐시돼 있어도 방문자별 read_status 조회는 매번 발생)를 Suspense 경계 안에 둬서,
  * 헤더는 즉시 그리고 목록은 스켈레톤을 먼저 보여준 뒤 스트리밍으로 채운다.
@@ -45,6 +54,7 @@ async function ArticleListSection({
   initialSourceId,
   initialCategory,
   initialView,
+  initialPageSize,
   initialQuery,
   deferFirstThumbnail,
   deferInteractiveList,
@@ -53,6 +63,7 @@ async function ArticleListSection({
   initialSourceId: string;
   initialCategory: CategoryId;
   initialView: "list" | "card";
+  initialPageSize: ArticlePageSize;
   initialQuery: string;
   deferFirstThumbnail: boolean;
   deferInteractiveList: boolean;
@@ -60,11 +71,13 @@ async function ArticleListSection({
   const shouldSearchInitially = Array.from(initialQuery.trim()).length >= 2;
   const shouldDeferInteractiveList = deferInteractiveList && !shouldSearchInitially;
   if (shouldDeferInteractiveList) {
-    const [user, rawArticles] = await Promise.all([
+    const [user, rawArticles, sources] = await Promise.all([
       getCurrentUser(),
       getCachedArticleFeed(HOME_STATIC_PREVIEW_LIMIT),
+      listSources(),
     ]);
     const articles = await attachUserState(rawArticles, user?.id ?? null);
+    const sourceOptions = toSourceOptions(sources);
 
     return (
       <DeferredArticleList
@@ -72,15 +85,18 @@ async function ArticleListSection({
         initialSourceId={initialSourceId}
         initialCategory={initialCategory}
         initialView={initialView}
+        initialPageSize={initialPageSize}
         initialQuery={initialQuery}
         deferFirstThumbnail={deferFirstThumbnail}
       >
         <ArticleListStaticPreview
           articles={articles}
+          sources={sourceOptions}
           initialFilter={initialFilter}
           initialSourceId={initialSourceId}
           initialCategory={initialCategory}
           initialView={initialView}
+          initialPageSize={initialPageSize}
           deferFirstThumbnail={deferFirstThumbnail}
         />
       </DeferredArticleList>
@@ -101,9 +117,7 @@ async function ArticleListSection({
     ? await searchArticles(initialQuery, userId)
     : await attachUserState(rawArticles!, userId);
 
-  const sourceOptions = sources
-    .map((s) => ({ id: s.id, label: s.title ?? s.site_url, faviconUrl: s.favicon_url }))
-    .sort((a, b) => a.label.localeCompare(b.label, "ko"));
+  const sourceOptions = toSourceOptions(sources);
 
   return (
     <ArticleList
@@ -113,10 +127,17 @@ async function ArticleListSection({
       initialSourceId={initialSourceId}
       initialCategory={initialCategory}
       initialView={initialView}
+      initialPageSize={initialPageSize}
       initialQuery={initialQuery}
       deferFirstThumbnail={deferFirstThumbnail}
     />
   );
+}
+
+function toSourceOptions(sources: Awaited<ReturnType<typeof listSources>>) {
+  return sources
+    .map((source) => ({ id: source.id, label: source.title ?? source.site_url, faviconUrl: source.favicon_url }))
+    .sort((a, b) => a.label.localeCompare(b.label, "ko"));
 }
 
 export default async function Home({
@@ -127,6 +148,7 @@ export default async function Home({
     source?: string;
     category?: string;
     q?: string;
+    pageSize?: string;
     onboarding?: string;
     preview_onboarding?: string;
   }>;
@@ -137,6 +159,7 @@ export default async function Home({
     source: sourceId,
     category: rawCategory,
     q,
+    pageSize: rawPageSize,
     onboarding,
     preview_onboarding: previewOnboarding,
   } = await searchParams;
@@ -148,6 +171,7 @@ export default async function Home({
   const initialQuery = (q ?? "").trim();
   const initialFilter = parseFilter(rawFilter, initialQuery.length > 0);
   const initialCategory = parseCategory(rawCategory);
+  const initialPageSize = parsePageSize(rawPageSize);
   const deferInteractiveList = !initialQuery && !rawFilter && !sourceId && !rawCategory;
 
   return (
@@ -180,6 +204,7 @@ export default async function Home({
           initialSourceId={sourceId ?? "all"}
           initialCategory={initialCategory}
           initialView={initialView}
+          initialPageSize={initialPageSize}
           initialQuery={initialQuery}
           deferFirstThumbnail={deferFirstThumbnail}
           deferInteractiveList={deferInteractiveList}
