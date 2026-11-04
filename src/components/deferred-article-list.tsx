@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { loadArticleFeedAction } from "@/app/articles/actions";
 import type { ArticleFilter } from "@/lib/data/articles";
@@ -17,13 +16,15 @@ type DeferredArticleListProps = {
   children?: ReactNode;
 };
 
-const InteractiveArticleList = dynamic(
-  () => import("@/components/article-list").then((module) => module.ArticleList),
-  { ssr: false, loading: () => <ArticleListSkeleton /> }
-);
+type ArticleListComponent = (typeof import("@/components/article-list"))["ArticleList"];
+type LoadedFeed = {
+  feed: Awaited<ReturnType<typeof loadArticleFeedAction>>;
+  ArticleList: ArticleListComponent;
+};
 
 export function DeferredArticleList({ deferFirstThumbnail, children, ...props }: DeferredArticleListProps) {
-  const [feed, setFeed] = useState<Awaited<ReturnType<typeof loadArticleFeedAction>> | null>(null);
+  const [loaded, setLoaded] = useState<LoadedFeed | null>(null);
+  const feed = loaded?.feed ?? null;
   const [loadFailed, setLoadFailed] = useState(false);
   const loadStartedRef = useRef(false);
 
@@ -32,8 +33,13 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
     loadStartedRef.current = true;
     setLoadFailed(false);
 
-    void loadArticleFeedAction()
-      .then(setFeed)
+    void Promise.all([
+      loadArticleFeedAction(),
+      import("@/components/article-list"),
+    ])
+      .then(([loadedFeed, articleListModule]) => {
+        setLoaded({ feed: loadedFeed, ArticleList: articleListModule.ArticleList });
+      })
       .catch(() => {
         loadStartedRef.current = false;
         setLoadFailed(true);
@@ -85,16 +91,22 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
       idleTimer = window.setTimeout(loadFeed, 5_000);
     }
 
-    document.addEventListener("pointerdown", loadFeed, { once: true, passive: true });
-    document.addEventListener("keydown", loadFeed, { once: true });
-    document.addEventListener("click", loadFeed, { once: true, capture: true });
+    const loadForInPageInteraction = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest("a[href]")) return;
+      loadFeed();
+    };
+
+    document.addEventListener("pointerdown", loadForInPageInteraction, { passive: true });
+    document.addEventListener("keydown", loadForInPageInteraction);
+    document.addEventListener("click", loadForInPageInteraction, true);
 
     return () => {
       cancelled = true;
       observer?.disconnect();
-      document.removeEventListener("pointerdown", loadFeed);
-      document.removeEventListener("keydown", loadFeed);
-      document.removeEventListener("click", loadFeed, true);
+      document.removeEventListener("pointerdown", loadForInPageInteraction);
+      document.removeEventListener("keydown", loadForInPageInteraction);
+      document.removeEventListener("click", loadForInPageInteraction, true);
       if (stableTimer !== undefined) window.clearTimeout(stableTimer);
       if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
       if (idleTimer !== undefined) window.clearTimeout(idleTimer);
@@ -105,11 +117,12 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
     };
   }, [feed, loadFeed]);
 
-  if (feed) {
+  if (loaded) {
+    const InteractiveArticleList = loaded.ArticleList;
     return (
       <InteractiveArticleList
-        articles={feed.articles}
-        sources={feed.sources}
+        articles={loaded.feed.articles}
+        sources={loaded.feed.sources}
         {...props}
         deferFirstThumbnail={deferFirstThumbnail}
       />

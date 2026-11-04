@@ -68,8 +68,10 @@ export function CategoryFilterChips({
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: 5,
-                  padding: "5px 11px",
+                  minHeight: 44,
+                  padding: "0 12px",
                   borderRadius: "16px",
                   border: isSelected
                     ? "1px solid var(--seed-color-palette-gray-900, #111)"

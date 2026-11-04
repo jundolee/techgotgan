@@ -1,8 +1,82 @@
 import Image from "next/image";
 import type { ArticleFilter, ArticleListItem } from "@/lib/data/articles";
-import { getCategoryMeta, type CategoryId } from "@/lib/categories";
+import { CATEGORIES, getCategoryMeta, type CategoryId } from "@/lib/categories";
 import { HOME_STATIC_PREVIEW_LIMIT } from "@/lib/article-feed-constants";
 import { ArticleListControlsSkeleton } from "@/components/article-list-skeleton";
+
+const STATIC_FILTERS: { value: ArticleFilter; label: string }[] = [
+  { value: "all", label: "모든 글" },
+  { value: "unread", label: "읽지 않은 글" },
+  { value: "read", label: "읽은 글" },
+  { value: "favorite", label: "저장한 글" },
+];
+
+function browseHref(filter: ArticleFilter, sourceId: string, category: CategoryId) {
+  const params = new URLSearchParams();
+  if (filter !== "unread") params.set("filter", filter);
+  if (sourceId !== "all") params.set("source", sourceId);
+  if (category !== "all") params.set("category", category);
+  const query = params.toString();
+  return query ? `/?${query}` : "/";
+}
+
+function StaticFilterLinks({
+  filter,
+  sourceId,
+  category,
+}: {
+  filter: ArticleFilter;
+  sourceId: string;
+  category: CategoryId;
+}) {
+  return (
+    <nav className="article-status-tabs article-static-filter-tabs" aria-label="글 필터">
+      <div className="article-status-tabs-list article-static-filter-tabs-list">
+        {STATIC_FILTERS.map((option) => (
+          <a
+            key={option.value}
+            href={browseHref(option.value, sourceId, category)}
+            className="article-static-filter-tab"
+            aria-current={filter === option.value ? "page" : undefined}
+          >
+            {option.label}
+          </a>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function StaticCategoryLinks({
+  filter,
+  sourceId,
+  selectedCategory,
+}: {
+  filter: ArticleFilter;
+  sourceId: string;
+  selectedCategory: CategoryId;
+}) {
+  return (
+    <div className="article-topic-controls">
+      <div className="category-filter-scroll-shell">
+        <nav className="category-filter-scroll" aria-label="글 주제" tabIndex={0}>
+          <div className="category-filter-scroll-content">
+            {CATEGORIES.map((category) => (
+              <a
+                key={category.id}
+                href={browseHref(filter, sourceId, category.id)}
+                className="article-static-category-chip"
+                aria-current={selectedCategory === category.id ? "page" : undefined}
+              >
+                {category.label}
+              </a>
+            ))}
+          </div>
+        </nav>
+      </div>
+    </div>
+  );
+}
 
 export function ArticleListStaticPreview({
   articles,
@@ -29,8 +103,11 @@ export function ArticleListStaticPreview({
   }).slice(0, HOME_STATIC_PREVIEW_LIMIT);
 
   return (
-    <div aria-busy="true" aria-label="목록 기능을 불러오는 중">
-      <ArticleListControlsSkeleton />
+    <div>
+      <ArticleListControlsSkeleton
+        filterControl={<StaticFilterLinks filter={initialFilter} sourceId={initialSourceId} category={initialCategory} />}
+        categoryControl={<StaticCategoryLinks filter={initialFilter} sourceId={initialSourceId} selectedCategory={initialCategory} />}
+      />
       {visibleArticles.length > 0 ? (
         <ul className={`article-card-grid${initialView === "list" ? " is-list-view" : ""}`}>
           {visibleArticles.map((article, index) => (
