@@ -261,11 +261,11 @@ function StaticArticleRow({ article, priority, thumbnailSizes }: {
 
         <div className={`article-row-main${article.thumbnail_url ? " has-thumbnail" : ""}`}>
           <div className="article-row-copy">
-            <a href={href} data-article-link="true" className="article-row-link">
+            <a href={href} data-article-link="true" data-article-source-url={article.url} className="article-row-link">
               <h3>{article.title}</h3>
             </a>
             {article.excerpt && (
-              <a href={href} data-article-link="true" className="article-row-excerpt">
+              <a href={href} data-article-link="true" data-article-source-url={article.url} className="article-row-excerpt">
                 <p>{article.excerpt}</p>
               </a>
             )}
@@ -274,7 +274,7 @@ function StaticArticleRow({ article, priority, thumbnailSizes }: {
             </time>
           </div>
           {article.thumbnail_url && (
-            <a href={href} data-article-link="true" className="article-row-thumb">
+            <a href={href} data-article-link="true" data-article-source-url={article.url} className="article-row-thumb">
               <div className="seed-aspect-ratio article-row-thumb-aspect" style={{ position: "relative", borderRadius: 8, overflow: "hidden", background: "var(--seed-color-bg-neutral-weak)" }}>
                 {isOptimizableThumbnail(article.thumbnail_url) ? (
                   <Image

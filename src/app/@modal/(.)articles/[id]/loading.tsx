@@ -1,10 +1,28 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useSyncExternalStore } from "react";
+import { usePathname, useRouter } from "next/navigation";
+
+const subscribeToNothing = () => () => {};
+const getNoSourceUrl = () => null;
+
+function getStoredSourceUrl(pathname: string): string | null {
+  const articleId = pathname.match(/^\/articles\/([0-9a-f-]+)$/i)?.[1];
+  if (!articleId) return null;
+  try {
+    const storedUrl = window.sessionStorage.getItem(`techgotgan-article-source:${articleId}`);
+    if (!storedUrl) return null;
+    const parsed = new URL(storedUrl);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.href : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function ArticleModalLoading() {
   const router = useRouter();
+  const pathname = usePathname();
+  const sourceUrl = useSyncExternalStore(subscribeToNothing, () => getStoredSourceUrl(pathname), getNoSourceUrl);
   const backdropMouseDownTargetRef = useRef<EventTarget | null>(null);
 
   useEffect(() => {
@@ -124,18 +142,13 @@ export default function ArticleModalLoading() {
             </div>
           </div>
 
-          {/* 데스크톱 인라인 CTA 자리 */}
+          {/* 데스크톱 원문 CTA: 목록에서 전달받은 URL로 스켈레톤 없이 표시 */}
           <div className="article-preview-inline-cta">
-            <div
-              aria-hidden="true"
-              style={{
-                width: "100%",
-                height: 52,
-                borderRadius: 14,
-                background: "var(--seed-color-bg-neutral-weak)",
-                animation: "skeleton-pulse 1.4s ease-in-out infinite",
-              }}
-            />
+            {sourceUrl && (
+              <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="article-preview-cta-btn">
+                <span>원문 읽기</span><span aria-hidden="true">↗</span>
+              </a>
+            )}
           </div>
 
           {/* AI 3-Box 요약 카드 스켈레톤 */}
@@ -196,17 +209,13 @@ export default function ArticleModalLoading() {
           </div>
         </div>
 
-        {/* 모바일 CTA 고정 영역 높이를 먼저 확보해 로딩 완료 때 시트가 밀리지 않게 한다. */}
-        <div className="article-preview-bottom-bar" aria-hidden="true">
-          <div
-            style={{
-              width: "100%",
-              height: 50,
-              borderRadius: 16,
-              background: "var(--seed-color-bg-neutral-weak)",
-              animation: "skeleton-pulse 1.4s ease-in-out infinite",
-            }}
-          />
+        {/* 모바일 고정 CTA 영역도 URL이 도착하면 실제 링크로 표시한다. */}
+        <div className="article-preview-bottom-bar">
+          {sourceUrl && (
+            <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="article-preview-cta-btn">
+              <span>원문 읽기</span><span aria-hidden="true">↗</span>
+            </a>
+          )}
         </div>
       </section>
     </div>
