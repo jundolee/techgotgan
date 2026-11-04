@@ -1,52 +1,66 @@
-const ROW_COUNT = 5;
+const ROW_COUNT = 6;
 
-/**
- * ArticleList/ArticleRow와 같은 크기·간격으로 배치해, 실제 데이터가 스트리밍돼 들어올 때
- * 레이아웃이 덜컹거리지 않게 한다.
- */
-export function ArticleListSkeleton() {
+/** Keep the loading controls in the same rows and columns as the live feed. */
+export function ArticleListControlsSkeleton() {
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div className="skeleton" style={{ width: 80, height: 28 }} />
-        <div className="skeleton" style={{ width: 110, height: 28 }} />
+      <div className="article-feed-controls" aria-hidden="true">
+        <div className="article-status-tabs article-list-skeleton-tabs">
+          {[72, 102, 68, 82].map((width, index) => (
+            <span key={index} className="skeleton" style={{ width, height: 32, borderRadius: 8 }} />
+          ))}
+        </div>
+        <div className="article-topic-controls article-list-skeleton-topics">
+          {[58, 64, 54, 60, 58].map((width, index) => (
+            <span key={index} className="skeleton" style={{ width, height: 30, borderRadius: 16 }} />
+          ))}
+        </div>
+        <div className="article-search-shell" aria-hidden="true">
+          <span className="skeleton" style={{ width: 40, height: 40, borderRadius: 8 }} />
+        </div>
       </div>
 
-      <div
-        style={{
-          marginBottom: 24,
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
-        <div className="skeleton" style={{ width: 180, height: 40, borderRadius: 20 }} />
-        <div className="skeleton" style={{ width: 120, height: 40, borderRadius: 8 }} />
+      <div className="article-bulk-actions" aria-hidden="true">
+        <div className="article-list-preferences article-list-skeleton-preferences">
+          <span className="skeleton" style={{ width: 106, height: 36, borderRadius: 8 }} />
+          <span className="skeleton article-list-skeleton-source" style={{ width: 142, height: 36, borderRadius: 8 }} />
+          <span className="skeleton" style={{ width: 68, height: 36, borderRadius: 8 }} />
+        </div>
+        <span className="skeleton article-list-skeleton-read-all" style={{ width: 80, height: 36, borderRadius: 8 }} />
       </div>
+    </>
+  );
+}
 
-      <ul style={{ display: "flex", flexDirection: "column", listStyle: "none", padding: 0, margin: 0 }}>
-        {Array.from({ length: ROW_COUNT }).map((_, i) => (
-          <li
-            key={i}
-            style={{
-              display: "flex",
-              gap: 20,
-              padding: "20px 0",
-              borderBottom: "1px solid var(--seed-color-stroke-neutral-subtle)",
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-              <div className="skeleton" style={{ width: 100, height: 20, borderRadius: 4 }} />
-              <div className="skeleton" style={{ width: "70%", height: 22 }} />
-              <div className="skeleton" style={{ width: "90%", height: 16 }} />
-              <div className="skeleton" style={{ width: 140, height: 14 }} />
+export function ArticleListSkeleton({ view = "card" }: { view?: "list" | "card" }) {
+  return (
+    <div aria-busy="true" aria-label="글 목록을 불러오는 중">
+      <ArticleListControlsSkeleton />
+      <ul className={`article-card-grid article-list-skeleton-grid${view === "list" ? " is-list-view" : ""}`} aria-hidden="true">
+        {Array.from({ length: ROW_COUNT }, (_, index) => (
+          <li key={index} className="article-row-item article-list-skeleton-item">
+            <div className="article-row-content">
+              <div className="article-row-meta">
+                <span className="skeleton" style={{ width: 112, height: 24, borderRadius: 6 }} />
+                <span className="skeleton article-list-skeleton-category" style={{ width: 58, height: 24, borderRadius: 6 }} />
+                <span className="skeleton article-list-skeleton-action" style={{ width: 32, height: 32, borderRadius: 6 }} />
+              </div>
+              <div className="article-row-main has-thumbnail">
+                <div className="article-row-copy article-list-skeleton-copy">
+                  <span className="skeleton" style={{ width: "92%", height: 20 }} />
+                  <span className="skeleton article-list-skeleton-title-line" style={{ width: "68%", height: 20 }} />
+                  <span className="skeleton article-list-skeleton-excerpt" style={{ width: "88%", height: 14 }} />
+                  <span className="skeleton article-list-skeleton-excerpt" style={{ width: "62%", height: 14 }} />
+                  <span className="skeleton article-list-skeleton-date" style={{ width: 76, height: 12 }} />
+                </div>
+                <div className="article-row-thumb article-list-skeleton-thumb">
+                  <div className="article-row-thumb-aspect skeleton" />
+                </div>
+              </div>
             </div>
-            <div className="skeleton" style={{ width: "112px", height: "112px", flexShrink: 0 }} />
           </li>
         ))}
       </ul>
-    </>
+    </div>
   );
 }

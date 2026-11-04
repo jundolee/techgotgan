@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { loadArticleFeedAction } from "@/app/articles/actions";
 import type { ArticleFilter } from "@/lib/data/articles";
 import type { CategoryId } from "@/lib/categories";
+import { ArticleListSkeleton } from "@/components/article-list-skeleton";
 
 type DeferredArticleListProps = {
   initialFilter: ArticleFilter;
@@ -18,35 +19,8 @@ type DeferredArticleListProps = {
 
 const InteractiveArticleList = dynamic(
   () => import("@/components/article-list").then((module) => module.ArticleList),
-  { ssr: false, loading: () => <ArticleListPlaceholder /> }
+  { ssr: false, loading: () => <ArticleListSkeleton /> }
 );
-
-function ArticleListPlaceholder() {
-  return (
-    <div aria-busy="true" aria-label="글 목록을 불러오는 중">
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-        <div className="skeleton" style={{ width: 160, height: 40, borderRadius: 8 }} />
-        <div className="skeleton" style={{ width: 120, height: 40, borderRadius: 8 }} />
-      </div>
-      <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-        <div className="skeleton" style={{ width: 180, height: 40, borderRadius: 20 }} />
-        <div className="skeleton" style={{ width: 120, height: 40, borderRadius: 8 }} />
-      </div>
-      <ul style={{ display: "flex", flexDirection: "column", listStyle: "none", padding: 0, margin: 0 }}>
-        {Array.from({ length: 5 }, (_, index) => (
-          <li key={index} style={{ display: "flex", gap: 20, padding: "20px 0", borderBottom: "1px solid var(--seed-color-stroke-neutral-subtle)" }}>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-              <div className="skeleton" style={{ width: 100, height: 20, borderRadius: 4 }} />
-              <div className="skeleton" style={{ width: "70%", height: 22 }} />
-              <div className="skeleton" style={{ width: "90%", height: 16 }} />
-            </div>
-            <div className="skeleton" style={{ width: 112, height: 112, flexShrink: 0 }} />
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 export function DeferredArticleList({ deferFirstThumbnail, children, ...props }: DeferredArticleListProps) {
   const [feed, setFeed] = useState<Awaited<ReturnType<typeof loadArticleFeedAction>> | null>(null);
@@ -149,7 +123,7 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
           글 목록을 불러오지 못했어요. <button type="button" onClick={loadFeed}>다시 시도</button>
         </p>
       )}
-      {children ?? <ArticleListPlaceholder />}
+      {children ?? <ArticleListSkeleton />}
     </>
   );
 }

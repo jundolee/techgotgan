@@ -365,6 +365,32 @@ h3 {
   margin: 0;
 }
 
+.article-list-skeleton-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+}
+.article-list-skeleton-tabs .skeleton { display: block; flex: 1 1 auto; min-width: 0; }
+.article-list-skeleton-topics { gap: 6px; overflow: hidden; }
+.article-list-skeleton-topics .skeleton { display: block; flex: 0 0 auto; }
+.article-feed-controls .article-search-shell .skeleton { display: block; }
+.article-list-skeleton-preferences .skeleton,
+.article-bulk-actions > .article-list-skeleton-read-all { display: block; flex: 0 0 auto; }
+.article-list-skeleton-source { min-width: 0; }
+.article-list-skeleton-grid { margin-top: 0; }
+.article-list-skeleton-item .skeleton { display: block; }
+.article-list-skeleton-item .article-row-meta { gap: 6px; }
+.article-list-skeleton-category { flex: 0 0 auto; }
+.article-list-skeleton-action { flex: 0 0 auto; margin-left: auto; }
+.article-list-skeleton-copy { gap: 7px; }
+.article-list-skeleton-title-line { margin-bottom: 2px; }
+.article-list-skeleton-excerpt { margin-top: 1px; }
+.article-list-skeleton-date { margin-top: 6px; }
+.article-list-skeleton-thumb { overflow: hidden; border-radius: 8px; }
+.article-list-skeleton-thumb .article-row-thumb-aspect { width: 100%; aspect-ratio: 4 / 3; }
+.article-list-skeleton-grid.is-list-view .article-list-skeleton-thumb { width: 120px; }
+
 .category-filter-scroll-shell { display: flex; flex: 1 1 0; align-items: center; gap: 4px; min-width: 0; width: 100%; }
 .category-filter-scroll {
   flex: 1 1 auto;
@@ -419,6 +445,13 @@ h3 {
   .source-filter-trigger { max-width: min(40vw, 136px) !important; }
   .article-bulk-actions > .seed-action-button { flex: 0 0 auto; }
   .bulk-read-menu-content { right: 0; }
+  .article-list-skeleton-source { width: min(40vw, 136px) !important; }
+  .article-list-skeleton-read-all { width: 76px !important; }
+  .article-list-skeleton-grid .article-list-skeleton-item { padding: 12px; }
+  .article-list-skeleton-grid .article-list-skeleton-thumb .article-row-thumb-aspect { width: 88px !important; }
+  .article-list-skeleton-grid .article-row-meta { min-height: 32px; }
+  .article-list-skeleton-grid.is-list-view .article-list-skeleton-thumb { width: 88px; }
+  .article-list-skeleton-grid.is-list-view .article-list-skeleton-item { padding: 8px 0; }
 }
 
 .auth-page {

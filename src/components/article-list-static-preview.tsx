@@ -2,6 +2,7 @@ import Image from "next/image";
 import type { ArticleFilter, ArticleListItem } from "@/lib/data/articles";
 import { getCategoryMeta, type CategoryId } from "@/lib/categories";
 import { HOME_STATIC_PREVIEW_LIMIT } from "@/lib/article-feed-constants";
+import { ArticleListControlsSkeleton } from "@/components/article-list-skeleton";
 
 export function ArticleListStaticPreview({
   articles,
@@ -29,15 +30,7 @@ export function ArticleListStaticPreview({
 
   return (
     <div aria-busy="true" aria-label="목록 기능을 불러오는 중">
-      <div className="article-feed-controls" aria-hidden="true">
-        <div className="skeleton" style={{ width: 180, height: 40, borderRadius: 8 }} />
-        <div className="skeleton" style={{ width: 112, height: 40, borderRadius: 8 }} />
-      </div>
-      <div className="article-topic-controls" aria-hidden="true" style={{ gap: 6 }}>
-        {[72, 80, 74, 78, 72, 68].map((width, index) => (
-          <div key={index} className="skeleton" style={{ width, height: 30, borderRadius: 16 }} />
-        ))}
-      </div>
+      <ArticleListControlsSkeleton />
       {visibleArticles.length > 0 ? (
         <ul className={`article-card-grid${initialView === "list" ? " is-list-view" : ""}`}>
           {visibleArticles.map((article, index) => (
