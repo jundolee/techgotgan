@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { getAcquisitionContext } from "@/lib/acquisition-context";
 
 function afterStableLcp(callback: () => void): () => void {
   const browserWindow = window as Window & {
@@ -106,7 +107,10 @@ export function AmplitudeAnalytics() {
   useEffect(() => {
     if (!initialized || !pathname) return;
     void import("@amplitude/analytics-browser")
-      .then((amplitude) => amplitude.track("page_viewed", { page_path: pathname }))
+      .then((amplitude) => amplitude.track("page_viewed", {
+        page_path: pathname,
+        ...getAcquisitionContext(),
+      }))
       .catch(() => {});
   }, [initialized, pathname]);
 

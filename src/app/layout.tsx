@@ -142,6 +142,55 @@ export default function RootLayout({
           {`(function(w,l){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});})(window,'dataLayer');`}
         </Script>
       )}
+      {ANALYTICS_ENABLED && (
+        <Script id="acquisition-context" strategy="beforeInteractive">
+          {`(() => {
+            const storageKey = "techgotgan-acquisition-context";
+            const sessionWindowMs = 30 * 60 * 1000;
+            const safeValue = (value) => {
+              if (typeof value !== "string") return null;
+              const normalized = value.trim().toLowerCase();
+              return /^[a-z0-9][a-z0-9._-]{0,79}$/.test(normalized) ? normalized : null;
+            };
+            const campaignFields = ["utm_source", "utm_medium", "utm_campaign"];
+            const params = new URLSearchParams(window.location.search);
+            const hasCampaign = campaignFields.some((field) => params.has(field));
+            const context = {};
+            for (const field of campaignFields) {
+              const value = safeValue(params.get(field));
+              if (value) context[field] = value;
+            }
+            let referrerHost = null;
+            try {
+              if (document.referrer) {
+                const hostname = new URL(document.referrer).hostname.toLowerCase().replace(/^www\\./, "");
+                const ownHosts = new Set([
+                  window.location.hostname.toLowerCase().replace(/^www\\./, ""),
+                  "techgotgan.vercel.app",
+                  "magisa.vercel.app",
+                  "preview.techgotgan.co.kr",
+                ]);
+                if (!ownHosts.has(hostname) && hostname !== "accounts.google.com") referrerHost = safeValue(hostname);
+              }
+            } catch {}
+            if (referrerHost) context.referrer_host = referrerHost;
+            try {
+              if (hasCampaign || referrerHost) {
+                if (Object.keys(context).length > 0) {
+                  sessionStorage.setItem(storageKey, JSON.stringify({ captured_at: Date.now(), ...context }));
+                } else {
+                  sessionStorage.removeItem(storageKey);
+                }
+              } else {
+                const saved = JSON.parse(sessionStorage.getItem(storageKey) || "null");
+                if (!saved || typeof saved.captured_at !== "number" || Date.now() - saved.captured_at > sessionWindowMs) {
+                  sessionStorage.removeItem(storageKey);
+                }
+              }
+            } catch {}
+          })();`}
+        </Script>
+      )}
       {ANALYTICS_ENABLED && <AmplitudeAnalytics />}
       <body>
         <Script id="article-view-preference" strategy="beforeInteractive">

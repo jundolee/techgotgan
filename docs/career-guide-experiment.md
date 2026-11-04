@@ -34,7 +34,7 @@
 - GitHub README 링크에는 `utm_source=github&utm_medium=readme&utm_campaign=career_guide_toss_frontend`가 붙어 있다.
 - 가이드 상단에 공유 버튼을 두었다. 공유 링크에는 `utm_source=techgotgan&utm_medium=share&utm_campaign=career_guide_toss_frontend_2026q4`가 붙고, Amplitude에는 완료한 공유 방식과 `career_guide` 화면 유형만 전송한다.
 - 원문 이동은 `career_guide_interaction` 이벤트의 `action=source_click`, `detail=chapter|knowledge|interview|careers`로 본다. 익명 피드백은 `action=feedback`, `detail=helpful|not_helpful`이다.
-- GA4에서 랜딩 경로와 `Session source / medium`, `Session campaign`을 확인한다. Amplitude에서 `page_viewed`의 `/careers/toss-frontend`, 원문 클릭, 피드백, 공유 완료 이벤트를 확인한다.
+- GA4에서 랜딩 경로와 `Session source / medium`, `Session campaign`을 확인한다. Amplitude에서는 `page_viewed`의 `/careers/toss-frontend`와 UTM/referrer 속성, `career_guide_interaction`의 원문 클릭·피드백, 공유 완료를 확인한다. 원문 이동은 `source_article_click`도 함께 비교한다.
 - Amplitude 저장 차트: [Techgotgan 2주 실험 - 가이드 방문 및 행동](https://app.amplitude.com/analytics/solitary-sun-768076/chart/mz4utw3o). `page_viewed`는 `page_path=/careers/toss-frontend`, `career_guide_interaction`은 `guide=toss_frontend`로 각각 필터링해 고유 사용자를 본다. 저장 차트의 일별 기간은 2026-10-29~2026-11-12(UTC)다.
 - 링크를 직접 열어 검수한 운영자 방문은 결과에서 제외하거나 별도 메모한다.
 
@@ -92,3 +92,4 @@ GA4 사전 데이터에서 `velog / article` 유입이 확인되어, 기존 3편
 | 2026-10-30 01:40 UTC | 공유 미리보기 메타데이터 보정 | PR #118 Production 배포 후 가이드 전용 Open Graph 이미지와 페이지별 Twitter 제목·설명을 확인. 이미지 경로 HTTP 200. 수정된 가이드 URL을 IndexNow에 다시 제출해 HTTP 200 접수 확인 | 이전에는 Open Graph 이미지가 없고 Twitter 제목·설명이 홈 값으로 상속됐다. 공유 카드 개선 시각을 기록해 이후 공유 전환을 비교한다. IndexNow 접수는 색인 완료 증거가 아니다. |
 | 2026-10-29 03:37 UTC | GeekNews 스폰서 비구속 견적 문의 | `news@hada.io`로 7~14일 가능 구간·광고 위치·견적·성과 리포트를 문의. 발송 완료 확인 | 문의는 유입으로 계산하지 않는다. 견적 확인 후 예산 승인 전에는 예약·결제하지 않는다. |
 | 2026-10-29 03:35 UTC | OKKY 게시 허용 문의 발송 | `info@okky.kr`로 교육용 게시물과 외부 링크의 허용 여부·게시판·표기 기준을 문의 | 답변 전에는 게시하지 않는다. 이 문의는 방문 유입으로 계산하지 않는다. |
+| 2026-11-04 09:13 UTC | 8일차 전 캠페인 중간 확인 | Amplitude 저장 차트(기간 10/29~11/12, 확인 시 데이터 최신화 <1분)에서 `/careers/toss-frontend` `page_viewed` 고유 사용자 0명, `career_guide_interaction` 고유 사용자 0명. GA4는 계정 선택 화면에서 연결된 계정이 모두 로그아웃 상태라 최신 세션·UTM 수치를 확인하지 못함. | 현재 Amplitude에는 방문이나 가이드 상호작용이 관측되지 않았다. GA4 원자료가 없어 실제 세션이 전혀 없다고 단정하지 않는다. 11/05 중간 점검에서 GA4 접근과 UTM 유입을 재확인하고, 표본이 계속 부족하면 랜딩을 바꾸기보다 배포 경로를 보완한다. |

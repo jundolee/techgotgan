@@ -4,6 +4,7 @@ import { type CSSProperties, type MouseEvent, type ReactNode, useCallback, useEf
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { markArticleReadAction, markArticleReadFallbackAction } from "@/app/articles/actions";
+import { SourceArticleLink } from "@/components/source-article-link";
 
 interface ArticleLinkProps {
   articleId: string;
@@ -164,9 +165,9 @@ export function ArticleLink({ articleId, articleTitle, href, sourceUrl, children
                 <div className="article-preview-opening-line article-preview-opening-line-short" />
                 <div className="article-preview-opening-line article-preview-opening-line-title" />
                 <div className="article-preview-inline-cta">
-                  <a href={pendingNavigation.sourceUrl} target="_blank" rel="noopener noreferrer" className="article-preview-cta-btn">
+                  <SourceArticleLink href={pendingNavigation.sourceUrl} surface="article_transition" className="article-preview-cta-btn">
                     <span>원문 읽기</span><span aria-hidden="true">↗</span>
-                  </a>
+                  </SourceArticleLink>
                 </div>
                 <div className="article-preview-opening-card">
                   <div className="article-preview-opening-line article-preview-opening-line-medium" />
@@ -175,9 +176,9 @@ export function ArticleLink({ articleId, articleTitle, href, sourceUrl, children
                 </div>
               </div>
               <div className="article-preview-bottom-bar">
-                <a href={pendingNavigation.sourceUrl} target="_blank" rel="noopener noreferrer" className="article-preview-cta-btn">
+                <SourceArticleLink href={pendingNavigation.sourceUrl} surface="article_transition" className="article-preview-cta-btn">
                   <span>원문 읽기</span><span aria-hidden="true">↗</span>
-                </a>
+                </SourceArticleLink>
               </div>
             </section>
           </div>

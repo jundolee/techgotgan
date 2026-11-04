@@ -1,4 +1,5 @@
 import { Text } from "@seed-design/react";
+import { SourceArticleLink } from "@/components/source-article-link";
 import type { DigestArticle } from "@/lib/data/weekly-digests";
 
 function formatDate(value: string): string {
@@ -30,7 +31,7 @@ export function DigestArticleList({ articles, totalCount }: { articles: DigestAr
       <ul style={{ listStyle: "none", display: "flex", flexDirection: "column" }}>
         {articles.map((article) => (
           <li key={article.id} style={{ padding: "18px 0", borderBottom: "1px solid var(--seed-color-stroke-neutral-subtle)" }}>
-            <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <SourceArticleLink href={article.url} surface="weekly_digest" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <Text as="span" textStyle="t2Regular" color="var(--seed-color-fg-neutral-muted)">
                   {article.source?.title ?? article.source?.site_url ?? "알 수 없는 소스"}
@@ -47,7 +48,7 @@ export function DigestArticleList({ articles, totalCount }: { articles: DigestAr
                   {shortExcerpt(article.excerpt)}
                 </Text>
               )}
-            </a>
+            </SourceArticleLink>
           </li>
         ))}
       </ul>
