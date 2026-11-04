@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import { Text } from "@seed-design/react";
 import { ArticleLink } from "@/components/article-link";
 import { PageHeader } from "@/components/page-header";
+import { ShareButton } from "@/components/share-button";
 import {
   SITE_URL,
   getPublicCategoryIndex,
@@ -143,7 +144,12 @@ export default async function TopicPage({ params }: TopicPageProps) {
       </nav>
 
       <header style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <Text as="h1" textStyle="t8Bold" color="fg.neutral">{hub.meta.title}</Text>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+          <Text as="h1" textStyle="t8Bold" color="fg.neutral">{hub.meta.title}</Text>
+          {hub.articles.length > 0 && (
+            <ShareButton title={hub.meta.title} url={`/topics/${encodeURIComponent(hub.category)}`} size="small" variant="neutralWeak" shareSurface="topic_hub" shareCampaign="topic_hub_share_2026q4" />
+          )}
+        </div>
         <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">{hub.meta.description}</Text>
       </header>
 

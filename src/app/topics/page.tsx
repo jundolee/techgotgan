@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Text } from "@seed-design/react";
+import { ShareButton } from "@/components/share-button";
 import { PageHeader } from "@/components/page-header";
 import { getPublicCategoryIndex } from "@/lib/data/public-hubs";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
@@ -36,7 +37,12 @@ export default async function TopicsPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <PageHeader navHref="/" navLabel="전체 글" />
       <header style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <Text as="h1" textStyle="t8Bold" color="fg.neutral">테크 주제별 최신 글</Text>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+          <Text as="h1" textStyle="t8Bold" color="fg.neutral">테크 주제별 최신 글</Text>
+          {categories.length > 0 && (
+            <ShareButton title="테크 주제별 최신 글" url="/topics" size="small" variant="neutralWeak" shareSurface="topic_directory" shareCampaign="topic_directory_share_2026q4" />
+          )}
+        </div>
         <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">{DESCRIPTION}</Text>
       </header>
       <ul style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, listStyle: "none" }}>

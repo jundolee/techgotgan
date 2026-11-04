@@ -31,7 +31,14 @@ export function trackArticleSearchCompleted(
 /** Record completed share actions without sending article titles, IDs, or URLs. */
 export function trackShareActionCompleted(
   method: "web_share" | "link_copy",
-  surface: "article" | "weekly_digest" | "career_guide"
+  surface:
+    | "article"
+    | "weekly_digest"
+    | "career_guide"
+    | "topic_directory"
+    | "topic_hub"
+    | "blog_directory"
+    | "blog_hub"
 ): void {
   if (
     process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" ||
