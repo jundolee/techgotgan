@@ -14,7 +14,7 @@
 - `career_guide_toss_frontend`는 `velog / article`에서 3세션·3명, 참여율 100%, 평균 참여 시간 18초였다. 규모는 작지만 확인된 채널 중 가장 높은 의도 신호다. 유입은 [기존 Velog 글](https://velog.io/@xukitsuki/%ED%86%A0%EC%8A%A4-%ED%94%84%EB%A1%A0%ED%8A%B8%EC%97%94%EB%93%9C-%EC%A7%80%EC%9B%90-%EC%A0%84-%EC%9D%BD%EC%96%B4%EB%B3%BC-%EA%B8%B0%EC%88%A0-%EA%B8%80-3%ED%8E%B8)에 달린 UTM 링크에서 왔다.
 - `okky / community`는 36세션이었지만, 공개 운영정책에 외부 링크·상업적 게시물 제한이 있어 허가 없이 재게시하지 않는다.
 - `github / discussion`은 4세션, 참여 세션 0건이었다. 저장소 페이지 Traffic API는 10월 14~27일과 재확인한 10월 21일~11월 3일 모두 조회 0회·순방문 0명이었고 인기 referrer/path도 없었다. 저장소 페이지 조회는 사이트 방문이나 README 링크 클릭과 다른 지표다.
-- 저장소 Discussion #58은 10월 26일 “기술 블로그 글 찾다가 탭만 열 개 열린 적 있나요?”라는 질문형 게시물로 공개했고, 큐레이션 UTM 링크(`github_discussion_2026w44`)를 포함한다. 11월 4일 확인 기준 upvote 1개·댓글 0개였다. 반응 수는 사이트 방문이나 UTM 클릭 수로 보지 않는다.
+- 저장소 [Discussion #58](https://github.com/jundolee/techgotgan/discussions/58)은 10월 26일 “기술 블로그 글 찾다가 탭만 열 개 열린 적 있나요?”라는 질문형 게시물로 공개했고, 큐레이션 UTM 링크(`github_discussion_2026w44`)를 포함한다. 11월 4일 확인 기준 upvote 1개·댓글 0개였다. 반응 수는 사이트 방문이나 UTM 클릭 수로 보지 않는다.
 - Search Console에서 가이드는 색인됐지만 10월 20~26일 정확한 URL의 노출·클릭은 0회였다. 사이트 전체는 클릭 1회·노출 66회였다. SEO는 필요하지만 2주 안에 유입을 보장하는 채널로 보지 않는다.
 
 ### 채널 비교와 현재 판정
