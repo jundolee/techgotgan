@@ -1,20 +1,32 @@
+import type { ReactNode } from "react";
+
 const ROW_COUNT = 6;
 
 /** Keep the loading controls in the same rows and columns as the live feed. */
-export function ArticleListControlsSkeleton() {
+export function ArticleListControlsSkeleton({
+  filterControl,
+  categoryControl,
+}: {
+  filterControl?: ReactNode;
+  categoryControl?: ReactNode;
+} = {}) {
   return (
     <>
-      <div className="article-feed-controls" aria-hidden="true">
-        <div className="article-status-tabs article-list-skeleton-tabs">
-          {[72, 102, 68, 82].map((width, index) => (
-            <span key={index} className="skeleton" style={{ width, height: 32, borderRadius: 8 }} />
-          ))}
-        </div>
-        <div className="article-topic-controls article-list-skeleton-topics">
-          {[58, 64, 54, 60, 58].map((width, index) => (
-            <span key={index} className="skeleton" style={{ width, height: 30, borderRadius: 16 }} />
-          ))}
-        </div>
+      <div className="article-feed-controls">
+        {filterControl ?? (
+          <div className="article-status-tabs article-list-skeleton-tabs" aria-hidden="true">
+            {[72, 102, 68, 82].map((width, index) => (
+              <span key={index} className="skeleton" style={{ width, height: 32, borderRadius: 8 }} />
+            ))}
+          </div>
+        )}
+        {categoryControl ?? (
+          <div className="article-topic-controls article-list-skeleton-topics" aria-hidden="true">
+            {[58, 64, 54, 60, 58].map((width, index) => (
+              <span key={index} className="skeleton" style={{ width, height: 30, borderRadius: 16 }} />
+            ))}
+          </div>
+        )}
         <div className="article-search-shell" aria-hidden="true">
           <span className="skeleton" style={{ width: 40, height: 40, borderRadius: 8 }} />
         </div>
