@@ -174,7 +174,7 @@ export default async function Home({
         showTrigger={!hasDismissedOnboarding && !forceOnboardingPreview}
       />
 
-      <Suspense fallback={<ArticleListSkeleton />}>
+      <Suspense fallback={<ArticleListSkeleton view={initialView} />}>
         <ArticleListSection
           initialFilter={initialFilter}
           initialSourceId={sourceId ?? "all"}
