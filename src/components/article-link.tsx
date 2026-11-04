@@ -9,6 +9,7 @@ interface ArticleLinkProps {
   articleId: string;
   articleTitle: string;
   href: string;
+  sourceUrl: string;
   children: ReactNode;
   style?: CSSProperties;
   className?: string;
@@ -20,6 +21,7 @@ interface ArticleLinkProps {
 declare global {
   interface Window {
     __techgotganPendingArticlePath?: string;
+    __techgotganPendingArticleSourceUrl?: string;
   }
 }
 
@@ -27,11 +29,11 @@ declare global {
  * 클릭 시 앱 안의 상세 경로로 이동해 인터셉트 모달을 열고 읽음 처리를 트리거한다.
  * 새 탭이나 직접 URL 진입에서는 같은 경로의 독립 상세 페이지를 보여준다.
  */
-export function ArticleLink({ articleId, articleTitle, href, children, style, className, onRead, onReadChange }: ArticleLinkProps) {
+export function ArticleLink({ articleId, articleTitle, href, sourceUrl, children, style, className, onRead, onReadChange }: ArticleLinkProps) {
   const pathname = usePathname();
   const router = useRouter();
   const linkRef = useRef<HTMLAnchorElement>(null);
-  const [pendingNavigation, setPendingNavigation] = useState<{ sourcePath: string; targetPath: string } | null>(null);
+  const [pendingNavigation, setPendingNavigation] = useState<{ sourcePath: string; targetPath: string; sourceUrl: string } | null>(null);
 
   useEffect(() => {
     if (!pendingNavigation) return;
@@ -41,6 +43,9 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
   }, [pathname, pendingNavigation]);
 
   const articlePath = `/articles/${encodeURIComponent(articleId)}`;
+  const rememberSourceUrl = useCallback(() => {
+    try { window.sessionStorage.setItem(`techgotgan-article-source:${articleId}`, sourceUrl); } catch {}
+  }, [articleId, sourceUrl]);
 
   const trackClick = useCallback(() => {
     // GTM 맞춤 이벤트 트리거(article_click)로 GA4에서 아티클명 기준 집계가 가능하도록 push
@@ -83,14 +88,17 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
 
     // The root-layout bridge catches clicks that arrive before this client component hydrates.
     // Replay them through the App Router as soon as the matching link becomes interactive.
+    const pendingSourceUrl = window.__techgotganPendingArticleSourceUrl || sourceUrl;
     window.__techgotganPendingArticlePath = undefined;
+    window.__techgotganPendingArticleSourceUrl = undefined;
+    try { window.sessionStorage.setItem(`techgotgan-article-source:${articleId}`, pendingSourceUrl); } catch {}
     window.setTimeout(() => {
       trackClick();
-      setPendingNavigation({ sourcePath: pathname, targetPath: articlePath });
+      setPendingNavigation({ sourcePath: pathname, targetPath: articlePath, sourceUrl: pendingSourceUrl });
       router.push(articlePath, { scroll: false });
       onRead?.(articleId);
     }, 0);
-  }, [articleId, articlePath, onRead, pathname, router, trackClick]);
+  }, [articleId, articlePath, onRead, pathname, router, sourceUrl, trackClick]);
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (event.defaultPrevented) return;
@@ -107,11 +115,12 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
     if (window.__techgotganPendingArticlePath === articlePath) {
       window.__techgotganPendingArticlePath = undefined;
     }
+    rememberSourceUrl();
 
     // Route through the App Router explicitly so the article intercepting route is used on
     // every hydrated, same-window click instead of allowing a browser document navigation.
     event.preventDefault();
-    setPendingNavigation({ sourcePath: pathname, targetPath: articlePath });
+    setPendingNavigation({ sourcePath: pathname, targetPath: articlePath, sourceUrl });
     router.push(articlePath, { scroll: false });
     // Keep this Link mounted long enough to paint the optimistic modal shell before the unread
     // filter removes its row from the list.
@@ -127,6 +136,7 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
         // rendered every visible article preview in the background and competed with real clicks.
         prefetch="auto"
         data-article-link="true"
+        data-article-source-url={sourceUrl}
         style={style}
         className={className}
         onClick={handleClick}
@@ -158,6 +168,11 @@ export function ArticleLink({ articleId, articleTitle, href, children, style, cl
                   <div className="article-preview-opening-line" />
                   <div className="article-preview-opening-line article-preview-opening-line-short" />
                 </div>
+              </div>
+              <div className="article-preview-bottom-bar">
+                <a href={pendingNavigation.sourceUrl} target="_blank" rel="noopener noreferrer" className="article-preview-cta-btn">
+                  <span>원문 읽기</span><span aria-hidden="true">↗</span>
+                </a>
               </div>
             </section>
           </div>

@@ -55,7 +55,7 @@ function ArticleList({ articles }: { articles: PublicHubArticle[] }) {
     <ul className={styles.articleList}>
       {articles.map((article) => (
         <li key={article.id} className={styles.articleItem}>
-          <ArticleLink articleId={article.id} articleTitle={article.title} href={`/articles/${encodeURIComponent(article.id)}`} className={styles.articleLink}>
+          <ArticleLink articleId={article.id} articleTitle={article.title} href={`/articles/${encodeURIComponent(article.id)}`} sourceUrl={article.url} className={styles.articleLink}>
             <Text as="h3" textStyle="t5Bold" color="fg.neutral" className={styles.articleTitle}>{article.title}</Text>
             {article.excerpt && (
               <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)" className={styles.articleExcerpt}>

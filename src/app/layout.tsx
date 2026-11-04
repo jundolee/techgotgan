@@ -173,6 +173,11 @@ export default function RootLayout({
               if (url.origin !== window.location.origin || !/^\\/articles\\/[0-9a-f-]+$/i.test(url.pathname)) return;
               event.preventDefault();
               window.__techgotganPendingArticlePath = url.pathname;
+              const sourceUrl = anchor.getAttribute("data-article-source-url");
+              if (sourceUrl) {
+                window.__techgotganPendingArticleSourceUrl = sourceUrl;
+                try { sessionStorage.setItem("techgotgan-article-source:" + url.pathname.split("/").pop(), sourceUrl); } catch {}
+              }
             }, true);
           })();`}
         </Script>
