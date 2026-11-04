@@ -5,12 +5,14 @@ import { loadArticleFeedAction } from "@/app/articles/actions";
 import type { ArticleFilter } from "@/lib/data/articles";
 import type { CategoryId } from "@/lib/categories";
 import { ArticleListSkeleton } from "@/components/article-list-skeleton";
+import type { ArticlePageSize } from "@/lib/article-feed-constants";
 
 type DeferredArticleListProps = {
   initialFilter: ArticleFilter;
   initialSourceId: string;
   initialCategory: CategoryId;
   initialView: "list" | "card";
+  initialPageSize: ArticlePageSize;
   initialQuery: string;
   deferFirstThumbnail: boolean;
   children?: ReactNode;
@@ -26,6 +28,7 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
   const [loaded, setLoaded] = useState<LoadedFeed | null>(null);
   const feed = loaded?.feed ?? null;
   const [loadFailed, setLoadFailed] = useState(false);
+  const [hasOpenControlMenu, setHasOpenControlMenu] = useState(false);
   const loadStartedRef = useRef(false);
 
   const loadFeed = useCallback(() => {
@@ -45,6 +48,16 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
         setLoadFailed(true);
       });
   }, [feed]);
+
+  useEffect(() => {
+    const menus = [...document.querySelectorAll<HTMLDetailsElement>("details[data-deferred-feed-control]")];
+    if (menus.length === 0) return;
+
+    const updateOpenMenuState = () => setHasOpenControlMenu(menus.some((menu) => menu.open));
+    menus.forEach((menu) => menu.addEventListener("toggle", updateOpenMenuState));
+    updateOpenMenuState();
+    return () => menus.forEach((menu) => menu.removeEventListener("toggle", updateOpenMenuState));
+  }, []);
 
   useEffect(() => {
     if (feed) return;
@@ -93,7 +106,7 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
 
     const loadForInPageInteraction = (event: Event) => {
       const target = event.target;
-      if (target instanceof Element && target.closest("a[href]")) return;
+      if (target instanceof Element && target.closest("a[href], details[data-deferred-feed-control], form[data-deferred-feed-navigation]")) return;
       loadFeed();
     };
 
@@ -117,7 +130,7 @@ export function DeferredArticleList({ deferFirstThumbnail, children, ...props }:
     };
   }, [feed, loadFeed]);
 
-  if (loaded) {
+  if (loaded && !hasOpenControlMenu) {
     const InteractiveArticleList = loaded.ArticleList;
     return (
       <InteractiveArticleList

@@ -1,8 +1,11 @@
 import Image from "next/image";
+import { markAllArticlesReadFormAction, setArticleViewPreferenceAction } from "@/app/articles/actions";
 import type { ArticleFilter, ArticleListItem } from "@/lib/data/articles";
 import { CATEGORIES, getCategoryMeta, type CategoryId } from "@/lib/categories";
-import { HOME_STATIC_PREVIEW_LIMIT } from "@/lib/article-feed-constants";
+import { ARTICLE_PAGE_SIZE_OPTIONS, HOME_STATIC_PREVIEW_LIMIT, type ArticlePageSize } from "@/lib/article-feed-constants";
 import { ArticleListControlsSkeleton } from "@/components/article-list-skeleton";
+
+type StaticSourceOption = { id: string; label: string; faviconUrl?: string | null };
 
 const STATIC_FILTERS: { value: ArticleFilter; label: string }[] = [
   { value: "all", label: "모든 글" },
@@ -11,11 +14,12 @@ const STATIC_FILTERS: { value: ArticleFilter; label: string }[] = [
   { value: "favorite", label: "저장한 글" },
 ];
 
-function browseHref(filter: ArticleFilter, sourceId: string, category: CategoryId) {
+function browseHref(filter: ArticleFilter, sourceId: string, category: CategoryId, pageSize: ArticlePageSize) {
   const params = new URLSearchParams();
   if (filter !== "unread") params.set("filter", filter);
   if (sourceId !== "all") params.set("source", sourceId);
   if (category !== "all") params.set("category", category);
+  if (pageSize !== 30) params.set("pageSize", String(pageSize));
   const query = params.toString();
   return query ? `/?${query}` : "/";
 }
@@ -24,10 +28,12 @@ function StaticFilterLinks({
   filter,
   sourceId,
   category,
+  pageSize,
 }: {
   filter: ArticleFilter;
   sourceId: string;
   category: CategoryId;
+  pageSize: ArticlePageSize;
 }) {
   return (
     <nav className="article-status-tabs article-static-filter-tabs" aria-label="글 필터">
@@ -35,7 +41,7 @@ function StaticFilterLinks({
         {STATIC_FILTERS.map((option) => (
           <a
             key={option.value}
-            href={browseHref(option.value, sourceId, category)}
+            href={browseHref(option.value, sourceId, category, pageSize)}
             className="article-static-filter-tab"
             aria-current={filter === option.value ? "page" : undefined}
           >
@@ -51,10 +57,12 @@ function StaticCategoryLinks({
   filter,
   sourceId,
   selectedCategory,
+  pageSize,
 }: {
   filter: ArticleFilter;
   sourceId: string;
   selectedCategory: CategoryId;
+  pageSize: ArticlePageSize;
 }) {
   return (
     <div className="article-topic-controls">
@@ -64,7 +72,7 @@ function StaticCategoryLinks({
             {CATEGORIES.map((category) => (
               <a
                 key={category.id}
-                href={browseHref(filter, sourceId, category.id)}
+                href={browseHref(filter, sourceId, category.id, pageSize)}
                 className="article-static-category-chip"
                 aria-current={selectedCategory === category.id ? "page" : undefined}
               >
@@ -78,19 +86,98 @@ function StaticCategoryLinks({
   );
 }
 
+function StaticBulkControls({
+  filter,
+  sourceId,
+  category,
+  view,
+  pageSize,
+  sources,
+}: {
+  filter: ArticleFilter;
+  sourceId: string;
+  category: CategoryId;
+  view: "list" | "card";
+  pageSize: ArticlePageSize;
+  sources: StaticSourceOption[];
+}) {
+  const selectedSource = sources.find((source) => source.id === sourceId);
+  const sourceLabel = sourceId === "all" ? "전체 블로그" : selectedSource?.label ?? "블로그 선택";
+
+  return (
+    <div className="article-bulk-actions article-static-bulk-actions">
+      <div className="article-list-preferences">
+        <form action={setArticleViewPreferenceAction} className="article-view-switch" role="group" aria-label="글 보기 방식" data-deferred-feed-navigation>
+          <input type="hidden" name="pageSize" value={pageSize} />
+          <button type="submit" name="view" value="list" aria-pressed={view === "list"}>리스트</button>
+          <button type="submit" name="view" value="card" aria-pressed={view === "card"}>카드</button>
+        </form>
+
+        <details className="article-static-source-filter" data-deferred-feed-control>
+          <summary className="source-filter-trigger article-static-source-trigger" aria-label="블로그 선택">
+            <span className="source-filter-trigger-label">{sourceLabel}</span>
+            <span aria-hidden="true">⌄</span>
+          </summary>
+          <div className="article-static-source-menu">
+            <a href={browseHref(filter, "all", category, pageSize)} aria-current={sourceId === "all" ? "page" : undefined}>
+              전체 블로그
+            </a>
+            {sources.map((source) => (
+              <a
+                key={source.id}
+                href={browseHref(filter, source.id, category, pageSize)}
+                aria-current={sourceId === source.id ? "page" : undefined}
+              >
+                {source.label}
+              </a>
+            ))}
+          </div>
+        </details>
+
+        <details className="article-static-page-size" data-deferred-feed-control>
+          <summary className="article-static-page-size-trigger" aria-label={`한 페이지에 ${pageSize}개 글 표시`}>
+            <span>{pageSize}개</span>
+            <span aria-hidden="true">⌄</span>
+          </summary>
+          <div className="article-static-page-size-menu">
+            {ARTICLE_PAGE_SIZE_OPTIONS.map((size) => (
+              <a
+                key={size}
+                href={browseHref(filter, sourceId, category, size)}
+                aria-current={pageSize === size ? "page" : undefined}
+              >
+                {size}개
+              </a>
+            ))}
+          </div>
+        </details>
+      </div>
+
+      <form action={markAllArticlesReadFormAction} data-deferred-feed-navigation>
+        <input type="hidden" name="pageSize" value={pageSize} />
+        <button type="submit" className="article-static-read-all">모두 읽음</button>
+      </form>
+    </div>
+  );
+}
+
 export function ArticleListStaticPreview({
   articles,
+  sources,
   initialFilter,
   initialSourceId,
   initialCategory,
   initialView,
+  initialPageSize,
   deferFirstThumbnail,
 }: {
   articles: ArticleListItem[];
+  sources: StaticSourceOption[];
   initialFilter: ArticleFilter;
   initialSourceId: string;
   initialCategory: CategoryId;
   initialView: "list" | "card";
+  initialPageSize: ArticlePageSize;
   deferFirstThumbnail: boolean;
 }) {
   const visibleArticles = articles.filter((article) => {
@@ -100,13 +187,23 @@ export function ArticleListStaticPreview({
     if (initialSourceId !== "all" && article.source?.id !== initialSourceId) return false;
     if (initialCategory !== "all" && article.category !== initialCategory) return false;
     return true;
-  }).slice(0, HOME_STATIC_PREVIEW_LIMIT);
+  }).slice(0, Math.min(HOME_STATIC_PREVIEW_LIMIT, initialPageSize));
 
   return (
     <div>
       <ArticleListControlsSkeleton
-        filterControl={<StaticFilterLinks filter={initialFilter} sourceId={initialSourceId} category={initialCategory} />}
-        categoryControl={<StaticCategoryLinks filter={initialFilter} sourceId={initialSourceId} selectedCategory={initialCategory} />}
+        filterControl={<StaticFilterLinks filter={initialFilter} sourceId={initialSourceId} category={initialCategory} pageSize={initialPageSize} />}
+        categoryControl={<StaticCategoryLinks filter={initialFilter} sourceId={initialSourceId} selectedCategory={initialCategory} pageSize={initialPageSize} />}
+        bulkControl={
+          <StaticBulkControls
+            filter={initialFilter}
+            sourceId={initialSourceId}
+            category={initialCategory}
+            view={initialView}
+            pageSize={initialPageSize}
+            sources={sources}
+          />
+        }
       />
       {visibleArticles.length > 0 ? (
         <ul className={`article-card-grid${initialView === "list" ? " is-list-view" : ""}`}>
