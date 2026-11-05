@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { trackAudienceLandingAction } from "@/lib/analytics";
 
 export function AudienceLandingActionLink({
@@ -9,26 +9,28 @@ export function AudienceLandingActionLink({
   action,
   children,
   className,
+  style,
   external = false,
 }: {
   href: string;
-  action: "planner_search" | "developer_topic" | "mcp_setup";
+  action: "planner_search" | "developer_topic" | "mcp_setup" | "topic_hub_landing";
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
   external?: boolean;
 }) {
   const handleClick = () => trackAudienceLandingAction(action);
 
   if (external) {
     return (
-      <a href={href} className={className} target="_blank" rel="noopener noreferrer" onClick={handleClick}>
+      <a href={href} className={className} style={style} target="_blank" rel="noopener noreferrer" onClick={handleClick}>
         {children}
       </a>
     );
   }
 
   return (
-    <Link href={href} className={className} onClick={handleClick}>
+    <Link href={href} className={className} style={style} onClick={handleClick}>
       {children}
     </Link>
   );

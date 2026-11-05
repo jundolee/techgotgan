@@ -30,7 +30,7 @@ export function trackArticleSearchCompleted(
 
 /** Measure which persona path a visitor chooses without collecting search text. */
 export function trackAudienceLandingAction(
-  action: "planner_search" | "developer_topic" | "mcp_setup"
+  action: "planner_search" | "developer_topic" | "mcp_setup" | "topic_hub_landing"
 ): void {
   if (
     process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" ||

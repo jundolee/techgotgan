@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Text } from "@seed-design/react";
 import { ArticleLink } from "@/components/article-link";
+import { AudienceLandingActionLink } from "@/components/audience-landing-action-link";
 import { PageHeader } from "@/components/page-header";
 import { ShareButton } from "@/components/share-button";
 import {
@@ -164,6 +165,24 @@ export default async function TopicPage({ params }: TopicPageProps) {
           <Link href="/careers/toss-frontend" style={{ color: "#9a3412", fontWeight: 700, textDecoration: "underline" }}>
             토스 프론트엔드 지원 전 읽을 글 보기 →
           </Link>
+        </aside>
+      )}
+
+      {(hub.category === "ai_ml" || hub.category === "backend") && (
+        <aside
+          aria-label="제품 사례 검색 안내"
+          style={{ display: "grid", gap: 8, padding: 18, border: "1px solid #fed7aa", borderRadius: 12, background: "#fffaf5" }}
+        >
+          <Text as="p" textStyle="t3Regular" color="fg.neutral">
+            추천·검색·결제처럼 제품 문제와 맞닿은 기술 사례가 필요하다면, 기획자·개발자별 검색 경로를 확인해 보세요.
+          </Text>
+          <AudienceLandingActionLink
+            href="/for-product-teams"
+            action="topic_hub_landing"
+            style={{ display: "inline-flex", alignItems: "center", minHeight: 40, color: "#9a3412", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 4 }}
+          >
+            제품 사례 검색 방법 보기 →
+          </AudienceLandingActionLink>
         </aside>
       )}
 
