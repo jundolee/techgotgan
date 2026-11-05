@@ -5,7 +5,7 @@ import { AudienceLandingActionLink } from "@/components/audience-landing-action-
 import { PageHeader } from "@/components/page-header";
 import { ShareButton } from "@/components/share-button";
 import { searchArticles } from "@/lib/data/articles";
-import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/app/seo";
+import { SITE_NAME, SITE_URL } from "@/app/seo";
 import styles from "./page.module.css";
 
 export const runtime = "nodejs";
@@ -14,6 +14,7 @@ export const fetchCache = "default-cache";
 const canonical = `${SITE_URL}/for-product-teams`;
 const title = "기획자·개발자를 위한 기술 블로그 검색";
 const description = "한국 기업 기술 블로그의 사례를 주제와 발행처별로 찾고, 기획과 개발에 필요한 원문까지 이어 읽어보세요.";
+const shareImage = `${canonical}/opengraph-image`;
 
 export const metadata: Metadata = {
   title,
@@ -26,9 +27,9 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     locale: "ko_KR",
     type: "website",
-    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: title }],
+    images: [{ url: shareImage, width: 1200, height: 630, alt: title }],
   },
-  twitter: { card: "summary_large_image", title: `${title} | ${SITE_NAME}`, description, images: [DEFAULT_OG_IMAGE] },
+  twitter: { card: "summary_large_image", title: `${title} | ${SITE_NAME}`, description, images: [shareImage] },
 };
 
 export default async function ProductTeamsPage() {
