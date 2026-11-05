@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon, Text } from "@seed-design/react";
 import { IconChevronDownSmallLine } from "@karrotmarket/react-monochrome-icon";
+import { AudienceLandingActionLink } from "@/components/audience-landing-action-link";
 import { BrandLink } from "@/components/brand-link";
 
 export function PageHeader({
@@ -27,7 +28,7 @@ export function PageHeader({
               <Link href="/topics">주제별 글</Link>
               <Link href="/blogs">블로그 목록</Link>
               <Link href="/digest">주간 큐레이션</Link>
-              <Link href="/for-product-teams">기획자·개발자 활용</Link>
+              <AudienceLandingActionLink href="/for-product-teams" action="explore_menu_entry">기획자·개발자 활용</AudienceLandingActionLink>
             </nav>
           </details>
         )}

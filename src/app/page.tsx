@@ -8,6 +8,7 @@ import { listSources } from "@/lib/data/sources";
 import { ArticleList } from "@/components/article-list";
 import { ArticleListSkeleton } from "@/components/article-list-skeleton";
 import { PageHeader } from "@/components/page-header";
+import { AudienceLandingActionLink } from "@/components/audience-landing-action-link";
 import { HeaderAuthSlot } from "@/components/header-auth-slot";
 import { OnboardingModalSlot } from "@/components/onboarding-modal-slot";
 import { DeferredArticleList } from "@/components/deferred-article-list";
@@ -197,9 +198,9 @@ export default async function Home({
           기업 기술 블로그별 최신 글 보기 →
         </Link>
         {" · "}
-        <Link href="/for-product-teams" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+        <AudienceLandingActionLink href="/for-product-teams" action="home_entry" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
           기획자·개발자별 활용 방법 →
-        </Link>
+        </AudienceLandingActionLink>
       </Text>
 
 
