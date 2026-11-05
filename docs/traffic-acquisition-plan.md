@@ -125,6 +125,7 @@ Velog 공개 글은 기술 선택을 면접 답변으로 정리하는 6문장 �
 - **측정:** `utm_source=ai_agent&utm_medium=mcp` 랜딩, 이후 원문 클릭, 7일 재방문을 본다. 도구 호출 수는 별도로 수집하지 않으므로 사이트 유입으로 이어진 경우만 성과로 센다.
 - **주의:** 제목과 발췌문은 외부 글에서 온 비신뢰 데이터로 취급한다. 전문·개인 데이터·검색어 로그는 서버에 저장하지 않는다.
 - **2026-11-05 Production 동작 확인:** `https://www.techgotgan.co.kr/api/mcp`에서 MCP `initialize`, `tools/list`, `search_korean_engineering_blogs` 호출을 각각 HTTP 200으로 확인했다. 실제 검색 호출은 RSS 최신 200개를 읽고 검색 링크에 `utm_source=ai_agent`, `utm_medium=mcp`, 캠페인 UTM을 반환했다. 이는 프로토콜·검색 경로의 직접 확인이지 외부 클라이언트 사용이나 유입 증거는 아니다. 다음 단계는 실제 개발자 에이전트 환경에서 연결 방법을 안내하고, 해당 UTM 랜딩·원문 이동·7일 재방문을 확인하는 것이다.
+- **2026-11-05 MCP Registry 상태 확인:** 공식 Registry API에서 `io.github.jundolee/techgotgan-search` 조회는 404(미등록)를 반환했다. 공개 원격 전용 서버도 패키지 없이 등록할 수 있으며 `io.github` 등록에는 GitHub OAuth가 필요하다([공식 등록 안내](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/quickstart.mdx)). `mcp/server.json`의 `websiteUrl`을 한국어 랜딩으로 맞추고 공개 검증 API에서 `valid: true`, `issues: []`를 확인했지만 OAuth나 공개 등록은 진행하지 않았다.
 
 ## 운영 규칙
 
