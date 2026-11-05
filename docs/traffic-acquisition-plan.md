@@ -4,7 +4,7 @@
 
 한국어 채널을 이용하는 **회사 엔지니어링 사례를 찾는 국내 소프트웨어 개발자**를 우선 타겟으로 둔다. 첫 하위 집단은 토스 프론트엔드 지원·조사를 준비하는 개발자이고, 다음은 특정 주제의 구현 사례를 찾는 개발자다. 한국 거주 여부를 분석 이벤트로 추정하지 않고, 한국어 콘텐츠·채널별 캠페인으로 타겟한다.
 
-성공은 랜딩이나 회원가입 제출만으로 세지 않는다. Amplitude `authenticated_session_started`는 서버가 로그인된 Supabase 사용자를 확인한 세션에서만 발생하도록 하고, 이 이벤트의 UTM/referrer 기준 고유 사용자를 실제 로그인 전환으로 비교한다. `auth_page_viewed`와 `auth_attempt_started`는 전환 과정의 이탈 위치를 찾는 보조 지표다.
+성공은 랜딩이나 회원가입 제출만으로 세지 않는다. GA4와 Amplitude의 `authenticated_session_started`는 서버가 로그인된 Supabase 사용자를 확인한 세션에서만 발생하도록 하고, 이 이벤트의 고유 사용자와 UTM/source·medium을 실제 로그인 전환으로 비교한다. Amplitude `auth_page_viewed`와 `auth_attempt_started`는 전환 과정의 이탈 위치를 찾는 보조 지표다.
 
 현재 14일 캠페인은 2026-10-29 03:26 UTC에 Velog 후속 글을 공개하면서 시작했다. [실험 로그와 측정 정의](career-guide-experiment.md)를 기준으로 2026-11-12 03:26 UTC까지 관찰한다.
 
@@ -32,9 +32,11 @@
 
 2026-11-05 GA4 보고서에서 2026-10-08~11-04를 확인했다. 전체 사이트는 활성 사용자 219명, 신규 사용자 216명, 세션 424건, 참여 세션 214건(참여율 50.47%)이었다. `South Korea`는 활성 사용자 95명(43.38%), 신규 사용자 92명, 참여 세션 202건(전체 참여 세션의 94.39%), 참여율 67.56%였다. 미국은 활성 사용자 63명이지만 참여 세션 3건(1.40%)에 그쳤고, 프랑스·네덜란드 등에서도 참여가 거의 없어 비한국 트래픽에는 자동화·데이터센터 유입이 섞였을 가능성이 높다. 국가 값은 IP 기반 위치이며 한국 사용자 신원 판정이나 실제 로그인 수가 아니다.
 
-한국 국가 필터를 적용한 세션 소스/매체 보고서는 299세션을 보여줬다. `google / organic`은 50세션, 참여율 74%; `okky / community`는 36세션, 참여율 52.78%; `jundolee_blog / article`은 7세션, 참여율 85.71%; `velog / article`은 3세션, 참여율 100%였다. 후자의 두 채널은 표본이 너무 작아 우열을 말할 수 없다. `accounts.google.com / referral`도 78세션(한국 세션의 26.09%), 참여 세션 63건, 평균 참여 2분 44초로 크게 잡혔다. 이 도메인은 Google OAuth 왕복이 유입으로 잘못 귀속됐을 가능성이 있어 실제 획득 채널로 계산하지 말고 GA4 원치 않는 추천 제외 설정과 로그인 흐름에서 확인해야 한다. `experiment_qa / qa` 15세션, `localhost:3147 / referral` 6세션, `qa / browser` 4세션, `internalqa / screenshot` 2세션 등 테스트 출처도 별도로 분리한다.
+한국 국가 필터를 적용한 세션 소스/매체 보고서는 299세션을 보여줬다. `google / organic`은 50세션, 참여율 74%; `okky / community`는 36세션, 참여율 52.78%; `jundolee_blog / article`은 7세션, 참여율 85.71%; `velog / article`은 3세션, 참여율 100%였다. 후자의 두 채널은 표본이 너무 작아 우열을 말할 수 없다. `accounts.google.com / referral`도 78세션(한국 세션의 26.09%), 참여 세션 63건, 평균 참여 2분 44초로 크게 잡혔다. 2026-11-05 Google 태그 설정에서 `accounts.google.com`이 원치 않는 추천 도메인으로 이미 등록되어 있음을 확인했다. 규칙의 시작일은 확인하지 못했고 GA4 보고 기간은 10/08~11/04이므로 78세션을 현재 설정의 실패나 실제 획득 채널로 단정하지 않는다. 이후 로그인 세션에서 보고되는 source/medium을 다시 확인한다. `experiment_qa / qa` 15세션, `localhost:3147 / referral` 6세션, `qa / browser` 4세션, `internalqa / screenshot` 2세션 등 테스트 출처도 별도로 분리한다.
 
-같은 기간 GA4 이벤트 보고서에는 이벤트 이름이 9개(`page_view`, `user_engagement`, `article_click`, `session_start`, `scroll`, `first_visit`, `click`, `form_start`, `view_search_results`)였고 `login`, `sign_up`, 인증 완료 이벤트는 없었다. 모든 GA4 주요 이벤트 수가 0이었다. Amplitude 가이드 리포트(10/29~11/12)에서도 `/careers/toss-frontend` `page_viewed` 고유 사용자와 `career_guide_interaction` 고유 사용자가 0명이었다. 이는 해당 도구에서 관측된 신호일 뿐 실제 방문이 전혀 없었다는 확정값이 아니다. 따라서 한국 유입은 실제로 존재하지만 실제 로그인 전환은 현재 GA4 데이터로 증명할 수 없다. 로그인 세션 이벤트를 배포하고 GA4 주요 이벤트와 Amplitude를 함께 점검해야 한다.
+같은 기간 GA4 이벤트 보고서에는 이벤트 이름이 9개(`page_view`, `user_engagement`, `article_click`, `session_start`, `scroll`, `first_visit`, `click`, `form_start`, `view_search_results`)였고 `login`, `sign_up`, 인증 완료 이벤트는 없었다. South Korea 필터가 적용된 페이지 보고서에서 `/login`은 49조회·15활성 사용자·평균 참여 1분 55초였다. 이는 로그인 의향 경로에 도착한 수치이며 실제 인증 완료 수가 아니다. Amplitude 가이드 리포트(10/29~11/12)에서도 `/careers/toss-frontend` `page_viewed` 고유 사용자와 `career_guide_interaction` 고유 사용자가 0명이었다. 이는 해당 도구에서 관측된 신호일 뿐 실제 방문이 전혀 없었다는 확정값은 아니다.
+
+2026-11-05 PR #195 (`660f5ee0f779ec213072620d0065fd71e39560db`)를 Production에 배포했다. 서버가 로그인된 Supabase 사용자를 확인한 뒤 `authenticated_session_started`와 인증 방식만 `dataLayer`에 보내고, Amplitude에도 동일 전환 이벤트를 보낸다. GTM 컨테이너 `GTM-P2HHB9CG` 버전 6에 GA4 이벤트 태그·맞춤 이벤트 트리거·`auth_method` 변수를 게시했고, GA4의 같은 이벤트를 주요 이벤트로 등록했다. Production의 비로그인 페이지에서 GTM 컨테이너 로드와 가입 화면은 확인했으며 이 세션에서는 인증 이벤트가 발생하지 않았다. GA4 주요 이벤트에도 이벤트가 아직 수신되지 않았다고 표시된다. 따라서 한국 유입과 로그인 화면 방문은 확인됐지만 실제 로그인 전환은 아직 증명되지 않았다. 이후 실제 사용자의 로그인을 기다리고 source/medium별 인증 완료 사용자 수를 확인한다.
 
 ## 채널 우선순위와 실행
 
