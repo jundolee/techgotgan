@@ -9,11 +9,6 @@ let trackedInCurrentDocument = false;
 
 export function AuthenticatedSessionTracker({ authMethod }: { authMethod: AuthMethod }) {
   useEffect(() => {
-    if (
-      process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" ||
-      !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY
-    ) return;
-
     if (trackedInCurrentDocument) return;
 
     const now = Date.now();
@@ -29,7 +24,17 @@ export function AuthenticatedSessionTracker({ authMethod }: { authMethod: AuthMe
     }
 
     trackedInCurrentDocument = true;
-    trackAuthenticatedSessionStarted(authMethod);
+    (window as Window & { dataLayer?: unknown[] }).dataLayer?.push({
+      event: "authenticated_session_started",
+      auth_method: authMethod,
+    });
+
+    if (
+      process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === "true" &&
+      process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY
+    ) {
+      trackAuthenticatedSessionStarted(authMethod);
+    }
   }, [authMethod]);
 
   return null;
