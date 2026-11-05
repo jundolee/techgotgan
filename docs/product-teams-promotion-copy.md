@@ -25,7 +25,7 @@
 
 **본문:** 코드 작업 중 회사의 공개 기술 사례가 필요할 때, MCP 호환 AI 코딩 도구에 테크곳간 검색 서버를 연결할 수 있습니다. 공개 RSS 최신 글의 제목과 발췌문을 검색하고 발행처·원문 링크를 돌려줍니다. 전문을 가져오지 않고, 검색 기록도 서버에 저장하지 않습니다. 연결 방법과 도구 설정은 저장소 안내에서 확인할 수 있습니다.
 
-**도구 안내:** `https://github.com/jundolee/techgotgan/tree/main/tools/techgotgan-mcp`
+**도구 안내:** `https://github.com/jundolee/techgotgan/blob/main/tools/techgotgan-mcp/README.ko.md`
 
 **서비스 링크 예시:** `https://www.techgotgan.co.kr/?q=Next.js&utm_source=ai_agent&utm_medium=mcp&utm_campaign=techgotgan_agent_search_2026q4`
 

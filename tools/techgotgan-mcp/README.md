@@ -1,5 +1,7 @@
 # Techgotgan Search for AI Coding Agents
 
+한국어 설정 안내는 [README.ko.md](README.ko.md)를 참고하세요.
+
 This read-only MCP server lets coding agents search recent Korean company engineering blog posts while researching a codebase or technical question.
 
 It reads only Techgotgan's public RSS feed. It does not log in, access user data, or fetch full article bodies. Search matches titles and RSS excerpts from the latest feed items, then returns the original article links and a UTM-tagged Techgotgan search link for broader results.
