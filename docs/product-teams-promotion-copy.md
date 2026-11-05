@@ -33,6 +33,6 @@
 
 ## 판정 기준
 
-캠페인별로 외부 게시 노출·클릭, 랜딩 고유 사용자, `audience_landing_action`, `article_search_completed`, `article_click`, `source_article_click`, 공유 유입, 7일 재방문을 분리한다. `audience_landing_action`은 `planner_search`, `developer_topic`, `mcp_setup` 중 선택한 행동만 기록하며 검색어·기사 제목은 전송하지 않는다. 캠페인별 랜딩 사용자가 30명 미만이면 성공·실패를 판정하지 않고 표본 부족으로 기록한다. 유입이 검색으로 이어지지 않으면 대상 메시지를, 검색이 원문 이동으로 이어지지 않으면 결과의 관련성과 원문 안내를 먼저 검토한다.
+캠페인별로 외부 게시 노출·클릭, 랜딩 고유 사용자, `audience_landing_action`, `article_search_completed`, `article_click`, `source_article_click`, 공유 유입, 7일 재방문을 분리한다. `audience_landing_action`은 `topic_hub_landing`, `planner_search`, `developer_topic`, `mcp_setup` 중 선택한 행동만 기록하며 검색어·기사 제목은 전송하지 않는다. 캠페인별 랜딩 사용자가 30명 미만이면 성공·실패를 판정하지 않고 표본 부족으로 기록한다. 유입이 검색으로 이어지지 않으면 대상 메시지를, 검색이 원문 이동으로 이어지지 않으면 결과의 관련성과 원문 안내를 먼저 검토한다.
 
 **상태:** 문안과 측정 링크 준비. 제3자 계정에 게시하지 않았고, MCP Registry 등록이나 외부 게시 결과도 확인되지 않았다.
