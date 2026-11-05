@@ -7,7 +7,8 @@ import { SITE_URL } from "./seo";
 
 // Latest Production page revisions for static content changes not represented by article data.
 const CAREER_GUIDE_LAST_MODIFIED = "2026-10-30T01:43:53.000Z";
-const PRODUCT_TEAMS_LAST_MODIFIED = "2026-11-05T10:41:28.000Z";
+const PRODUCT_TEAMS_LAST_MODIFIED = "2026-11-05T14:40:49.000Z";
+const PRODUCT_SEARCH_GUIDE_LAST_MODIFIED = "2026-11-05T14:40:49.000Z";
 const HOME_LAST_MODIFIED = "2026-10-30T02:50:15.000Z";
 const STATIC_TOPIC_LAST_MODIFIED: Record<string, string> = {
   ai_ml: "2026-11-05T10:01:13.000Z",
@@ -48,6 +49,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const topicsIndexLastModified = latestDate(topics.map((topic) => topic.lastModified));
 
   return [
+    {
+      url: `${SITE_URL}/guides/product-search-for-planners`,
+      lastModified: PRODUCT_SEARCH_GUIDE_LAST_MODIFIED,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
     {
       url: `${SITE_URL}/for-product-teams`,
       lastModified: PRODUCT_TEAMS_LAST_MODIFIED,

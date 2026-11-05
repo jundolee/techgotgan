@@ -15,6 +15,8 @@ export function AudienceLandingActionLink({
   href: string;
   action:
     | "planner_search"
+    | "planner_guide"
+    | "planner_landing"
     | "developer_topic"
     | "mcp_setup"
     | "topic_hub_landing"

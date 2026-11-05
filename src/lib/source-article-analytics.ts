@@ -9,7 +9,8 @@ export type SourceArticleSurface =
   | "article_preview"
   | "article_detail"
   | "weekly_digest"
-  | "career_guide";
+  | "career_guide"
+  | "editorial_guide";
 
 /** Record an outbound source click without eagerly loading the analytics SDK. */
 export function trackSourceArticleClick(sourceUrl: string, surface: SourceArticleSurface): void {
