@@ -28,6 +28,18 @@ export function trackArticleSearchCompleted(
   });
 }
 
+/** Measure which persona path a visitor chooses without collecting search text. */
+export function trackAudienceLandingAction(
+  action: "planner_search" | "developer_topic" | "mcp_setup"
+): void {
+  if (
+    process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" ||
+    !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY
+  ) return;
+
+  track("audience_landing_action", { action, ...getAcquisitionContext() });
+}
+
 /** Record completed share actions without sending article titles, IDs, or URLs. */
 export function trackShareActionCompleted(
   method: "web_share" | "link_copy",
@@ -39,6 +51,7 @@ export function trackShareActionCompleted(
     | "topic_hub"
     | "blog_directory"
     | "blog_hub"
+    | "audience_landing"
 ): void {
   if (
     process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" ||
