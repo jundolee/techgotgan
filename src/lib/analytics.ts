@@ -37,7 +37,7 @@ export function trackAudienceLandingAction(
     !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY
   ) return;
 
-  track("audience_landing_action", { action, ...getAcquisitionContext() });
+  queueAmplitudeEvent("audience_landing_action", { action, ...getAcquisitionContext() });
 }
 
 /** Record completed share actions without sending article titles, IDs, or URLs. */

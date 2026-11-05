@@ -185,6 +185,13 @@
   line-height: 1.6;
 }
 
+.excerpt {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
 .mcpNote {
   padding-top: 4px;
 }
