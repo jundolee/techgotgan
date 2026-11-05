@@ -113,9 +113,13 @@ export default async function ProductTeamsPage() {
           <AudienceLandingActionLink href="/topics/backend" action="developer_topic">백엔드 글 보기</AudienceLandingActionLink>
           <AudienceLandingActionLink href="/topics/ai_ml" action="developer_topic">AI·ML 글 보기</AudienceLandingActionLink>
         </nav>
-        <p className={styles.mcpNote}>
-          AI 코딩 도구 안에서 검색하려면 <AudienceLandingActionLink href="https://github.com/jundolee/techgotgan/tree/main/tools/techgotgan-mcp" action="mcp_setup" external>MCP 연결 안내</AudienceLandingActionLink>를 확인하세요.
-        </p>
+        <div className={styles.mcpSetup}>
+          <p className={styles.mcpNote}>AI 코딩 도구에 연결할 원격 MCP 주소</p>
+          <code>https://www.techgotgan.co.kr/api/mcp</code>
+          <AudienceLandingActionLink href="https://github.com/jundolee/techgotgan/blob/main/tools/techgotgan-mcp/README.ko.md" action="mcp_setup" external>
+            한국어 연결 방법 보기 →
+          </AudienceLandingActionLink>
+        </div>
       </section>
     </main>
   );

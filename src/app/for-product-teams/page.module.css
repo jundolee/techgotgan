@@ -196,6 +196,25 @@
   padding-top: 4px;
 }
 
+.mcpSetup {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 16px 0 0;
+}
+
+.mcpSetup code {
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.mcpSetup > a {
+  color: #9a3412;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 @media (max-width: 600px) {
   .main {
     gap: 32px;

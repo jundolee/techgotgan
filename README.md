@@ -10,6 +10,8 @@
 
 제품 사례를 조사하는 기획자나 구현 근거를 찾는 개발자라면 [기획자·개발자별 활용 방법](https://www.techgotgan.co.kr/for-product-teams?utm_source=github&utm_medium=readme&utm_campaign=product_teams_landing_2026q4)에서 바로 검색을 시작할 수 있습니다.
 
+AI 코딩 도구에서 검색을 연결하려면 [한국어 MCP 설정 안내](tools/techgotgan-mcp/README.ko.md)를 참고하세요.
+
 ## 이렇게 이용할 수 있어요
 
 1. 홈에서 찾고 싶은 기술이나 도구를 검색합니다. 제목·요약·태그를 대상으로 여러 발행처의 글을 찾습니다.
