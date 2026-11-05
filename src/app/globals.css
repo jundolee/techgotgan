@@ -1037,8 +1037,12 @@ h3 {
 }
 
 .article-view-switch button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
   min-height: 44px;
-  padding: 0 9px;
+  padding: 0;
   border: 0;
   border-radius: 5px;
   background: transparent;
@@ -1047,6 +1051,8 @@ h3 {
   font-size: 13px;
   cursor: pointer;
 }
+
+.article-view-switch .seed-icon { width: 20px; height: 20px; }
 
 .article-view-switch button[aria-pressed="true"] {
   background: var(--seed-color-bg-layer-default, #fff);

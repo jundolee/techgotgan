@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
-import { Text } from "@seed-design/react";
+import { Icon, Text } from "@seed-design/react";
+import { IconArticleLine, IconGridLine } from "@karrotmarket/react-monochrome-icon";
 import { ArticleRow } from "./article-row";
 import { ArticleFilterTabs } from "./article-filter-tabs";
 import { SourceFilterSelect, type SourceOption } from "./source-filter-select";
@@ -387,8 +388,12 @@ export function ArticleList({
       <div className={`article-bulk-actions${searchExpanded ? " search-expanded" : ""}`}>
         <div className="article-list-preferences">
           <div className="article-view-switch" role="group" aria-label="글 보기 방식">
-            <button type="button" aria-pressed={view === "list"} onClick={() => changeView("list")}>리스트</button>
-            <button type="button" aria-pressed={view === "card"} onClick={() => changeView("card")}>카드</button>
+            <button type="button" aria-label="리스트 보기" title="리스트 보기" aria-pressed={view === "list"} onClick={() => changeView("list")}>
+              <Icon svg={<IconArticleLine />} />
+            </button>
+            <button type="button" aria-label="카드 보기" title="카드 보기" aria-pressed={view === "card"} onClick={() => changeView("card")}>
+              <Icon svg={<IconGridLine />} />
+            </button>
           </div>
           <SourceFilterSelect sources={sources} current={sourceId} onChange={(value) => {
             setSourceId(value);
