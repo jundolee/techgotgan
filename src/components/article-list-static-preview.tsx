@@ -1,3 +1,5 @@
+import { Icon } from "@seed-design/react";
+import { IconArticleLine, IconGridLine } from "@karrotmarket/react-monochrome-icon";
 import Image from "next/image";
 import { markAllArticlesReadFormAction, setArticleViewPreferenceAction } from "@/app/articles/actions";
 import type { ArticleFilter, ArticleListItem } from "@/lib/data/articles";
@@ -109,8 +111,12 @@ function StaticBulkControls({
       <div className="article-list-preferences">
         <form action={setArticleViewPreferenceAction} className="article-view-switch" role="group" aria-label="글 보기 방식" data-deferred-feed-navigation>
           <input type="hidden" name="pageSize" value={pageSize} />
-          <button type="submit" name="view" value="list" aria-pressed={view === "list"}>리스트</button>
-          <button type="submit" name="view" value="card" aria-pressed={view === "card"}>카드</button>
+          <button type="submit" name="view" value="list" aria-label="리스트 보기" title="리스트 보기" aria-pressed={view === "list"}>
+            <Icon svg={<IconArticleLine />} />
+          </button>
+          <button type="submit" name="view" value="card" aria-label="카드 보기" title="카드 보기" aria-pressed={view === "card"}>
+            <Icon svg={<IconGridLine />} />
+          </button>
         </form>
 
         <details className="article-static-source-filter" data-deferred-feed-control>
