@@ -1,7 +1,7 @@
 "use client";
 
-import { track } from "@amplitude/analytics-browser";
 import { getAcquisitionContext } from "@/lib/acquisition-context";
+import { queueAmplitudeEvent } from "@/lib/amplitude-event-queue";
 
 /** Send search quality metrics without collecting the text a reader searched for. */
 export function trackArticleSearchCompleted(
@@ -18,7 +18,7 @@ export function trackArticleSearchCompleted(
   const normalizedQuery = query.trim();
   if (!normalizedQuery) return;
 
-  track("article_search_completed", {
+  queueAmplitudeEvent("article_search_completed", {
     query_length: Array.from(normalizedQuery).length,
     term_count: normalizedQuery.split(/\s+/u).filter(Boolean).length,
     result_count: resultCount,
@@ -58,7 +58,7 @@ export function trackShareActionCompleted(
     !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY
   ) return;
 
-  track("share_action_completed", {
+  queueAmplitudeEvent("share_action_completed", {
     share_method: method,
     share_surface: surface,
     ...getAcquisitionContext(),
@@ -71,5 +71,39 @@ export function trackArticleGraphInteraction(
   properties: { node_kind?: string; graph_size?: number; added_nodes?: number; added_edges?: number }
 ): void {
   if (process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" || !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY) return;
-  track("article_graph_interaction", { action, ...properties, ...getAcquisitionContext() });
+  queueAmplitudeEvent("article_graph_interaction", { action, ...properties, ...getAcquisitionContext() });
+}
+
+export function trackCareerGuideInteraction(action: string, detail: string): void {
+  queueAmplitudeEvent("career_guide_interaction", {
+    guide: "toss_frontend",
+    action,
+    detail,
+    ...getAcquisitionContext(),
+  });
+}
+
+export type AuthMethod = "google" | "email_password";
+export type AuthFlow = "login" | "signup";
+
+export function trackAuthPageViewed(flow: AuthFlow): void {
+  queueAmplitudeEvent("auth_page_viewed", {
+    auth_flow: flow,
+    ...getAcquisitionContext(),
+  });
+}
+
+export function trackAuthAttemptStarted(authMethod: AuthMethod, flow: AuthFlow): void {
+  queueAmplitudeEvent("auth_attempt_started", {
+    auth_method: authMethod,
+    auth_flow: flow,
+    ...getAcquisitionContext(),
+  });
+}
+
+export function trackAuthenticatedSessionStarted(authMethod: AuthMethod): void {
+  queueAmplitudeEvent("authenticated_session_started", {
+    auth_method: authMethod,
+    ...getAcquisitionContext(),
+  });
 }

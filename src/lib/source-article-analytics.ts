@@ -1,6 +1,7 @@
 "use client";
 
 import { getAcquisitionContext } from "@/lib/acquisition-context";
+import { queueAmplitudeEvent } from "@/lib/amplitude-event-queue";
 
 export type SourceArticleSurface =
   | "article_transition"
@@ -12,11 +13,6 @@ export type SourceArticleSurface =
 
 /** Record an outbound source click without eagerly loading the analytics SDK. */
 export function trackSourceArticleClick(sourceUrl: string, surface: SourceArticleSurface): void {
-  if (
-    process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" ||
-    !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY
-  ) return;
-
   let sourceHost: string;
   try {
     const url = new URL(sourceUrl);
@@ -26,11 +22,9 @@ export function trackSourceArticleClick(sourceUrl: string, surface: SourceArticl
     return;
   }
 
-  void import("@amplitude/analytics-browser")
-    .then((amplitude) => amplitude.track("source_article_click", {
-      source_host: sourceHost,
-      surface,
-      ...getAcquisitionContext(),
-    }))
-    .catch(() => {});
+  queueAmplitudeEvent("source_article_click", {
+    source_host: sourceHost,
+    surface,
+    ...getAcquisitionContext(),
+  });
 }

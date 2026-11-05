@@ -146,10 +146,11 @@
 |---|---|---|
 | 유입 | 비브랜드/브랜드 검색 노출·클릭·CTR | Search Console에서 쿼리 유형을 나눠 비교 |
 | 첫 가치 경험 | 랜딩 사용자 중 원문 사이트를 연 비율 | Amplitude `source_article_click`의 고유 사용자와 UTM/referrer·화면 유형 비교 |
+| 실제 로그인 | 캠페인별 인증 세션 고유 사용자와 가입/로그인 단계별 이탈 | `auth_page_viewed` → `auth_attempt_started` → `authenticated_session_started`를 UTM/referrer·인증 방식별로 비교 |
 | 탐색 품질 | 검색 실행 수, 결과 0건 비율, 결과 후 원문 클릭률 | `article_search_completed`에 글자 수·단어 수·결과 수만 기록하고 검색어 원문은 저장하지 않음 |
 | 재방문 | 7일 내 다시 방문해 읽음·즐겨찾기·원문 클릭을 한 사용자 | Amplitude의 재방문 사용자 및 이벤트 흐름 |
 
-Amplitude는 전체 URL·검색어를 자동 수집하지 않는다. `page_viewed`는 경로와 제한된 UTM 값/외부 유입 도메인만, `article_search_completed`는 검색 길이·단어 수·결과 수만 전송한다. `source_article_click`은 클릭 화면 유형과 원문 발행 도메인만 기록하며 기사 URL·제목·식별자는 보내지 않는다. UTM과 외부 유입 도메인은 브라우저 세션 저장소에서 30분 비활동 후 만료한다. `article_click`은 서비스 안의 기사 미리보기를 연 이벤트이며, 원문 이동 비교에는 `source_article_click`을 쓴다. GA4는 URL의 `q` 값을 Data Redaction에서 가리고 Enhanced Measurement 검색어 매개변수에서도 `q`를 제외했다. Production GA4 `page_view`에서 `q=(redacted)`를 확인했다. Search Console 속성은 GA4에 연결했다. 검색 유입과 전환은 최신 GA4/Search Console 원자료를 확인한 뒤 비교하고, 색인·제출 상태를 실제 유입으로 간주하지 않는다.
+Amplitude는 전체 URL·검색어를 자동 수집하지 않는다. `page_viewed`는 경로와 제한된 UTM 값/외부 유입 도메인만, `article_search_completed`는 검색 길이·단어 수·결과 수만 전송한다. `source_article_click`은 클릭 화면 유형과 원문 발행 도메인만 기록하며 기사 URL·제목·식별자는 보내지 않는다. `authenticated_session_started`는 헤더에서 Supabase 인증 사용자를 확인했을 때만 발생하고 인증 방식만 보낸다. UTM과 외부 유입 도메인은 브라우저 세션 저장소에서 30분 비활동 후 만료한다. `article_click`은 서비스 안의 기사 미리보기를 연 이벤트이며, 원문 이동 비교에는 `source_article_click`을 쓴다. GA4는 URL의 `q` 값을 Data Redaction에서 가리고 Enhanced Measurement 검색어 매개변수에서도 `q`를 제외했다. Production GA4 `page_view`에서 `q=(redacted)`를 확인했다. Search Console 속성은 GA4에 연결했다. 검색 유입과 전환은 최신 GA4/Search Console 원자료를 확인한 뒤 비교하고, 색인·제출 상태를 실제 유입으로 간주하지 않는다.
 
 ## 브랜드 결정 사항
 

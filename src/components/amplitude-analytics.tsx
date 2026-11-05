@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { getAcquisitionContext } from "@/lib/acquisition-context";
+import { markAmplitudeReadyAndDrainQueue } from "@/lib/amplitude-event-queue";
 
 function afterStableLcp(callback: () => void): () => void {
   const browserWindow = window as Window & {
@@ -92,6 +93,10 @@ export function AmplitudeAnalytics() {
             autocapture: false,
             remoteConfig: { fetchRemoteConfig: false },
             trackingOptions: { ipAddress: false, language: false, platform: false },
+          });
+          const queuedEvents = markAmplitudeReadyAndDrainQueue();
+          queuedEvents.forEach(({ eventType, properties }) => {
+            amplitude.track(eventType, properties);
           });
           setInitialized(true);
         })

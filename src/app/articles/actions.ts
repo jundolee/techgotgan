@@ -19,6 +19,7 @@ import { listSources } from "@/lib/data/sources";
 import { getCurrentUser, getVerifiedUserId } from "@/lib/supabase/current-user";
 import { canViewArticleSummary } from "@/lib/article-summary-access";
 import { ARTICLE_PAGE_SIZE_OPTIONS, ARTICLE_VIEW_COOKIE } from "@/lib/article-feed-constants";
+import { safeNextPath } from "@/lib/safe-next-path";
 
 async function getCurrentUserId(): Promise<string | null> {
   const user = await getCurrentUser();
@@ -43,12 +44,20 @@ async function getArticleReadUserId(): Promise<string | null> {
   }
 }
 
-// 즐겨찾기/전체 읽음 처리처럼 사용자가 명시적으로 누르는 상호작용은 로그인이 필요하다 — 현재 페이지로
-// 되돌아올 수 있도록 referer를 next로 실어 로그인 화면으로 보낸다 (docs/decisions.md 참고).
-async function redirectToLogin(): Promise<never> {
+// 즐겨찾기/전체 읽음처럼 계정에 기록하려는 행동은 가입 의도가 높다. 가입 안내를 먼저 보여주고
+// 기존 계정 사용자는 로그인으로 전환할 수 있도록 현재 페이지를 안전한 next 경로로 유지한다.
+async function redirectToSignupIntent(): Promise<never> {
   const referer = (await headers()).get("referer");
-  const next = referer ? new URL(referer).pathname + new URL(referer).search : "/";
-  redirect(`/login?next=${encodeURIComponent(next)}`);
+  let next = "/";
+  if (referer) {
+    try {
+      const url = new URL(referer);
+      next = safeNextPath(`${url.pathname}${url.search}`);
+    } catch {}
+  }
+  const params = new URLSearchParams({ intent: "signup" });
+  if (next !== "/") params.set("next", next);
+  redirect(`/login?${params}`);
 }
 
 export async function markArticleReadAction(articleId: string): Promise<"saved" | "unauthenticated" | "failed"> {
@@ -183,7 +192,7 @@ export async function setArticleViewPreferenceAction(formData: FormData): Promis
 
 export async function markAllArticlesReadFormAction(formData: FormData): Promise<never> {
   const userId = await getArticleReadUserId();
-  if (!userId) return redirectToLogin();
+  if (!userId) return redirectToSignupIntent();
   await markAllArticlesRead(userId);
 
   const pageSize = pageSizeFromForm(formData);
@@ -192,7 +201,7 @@ export async function markAllArticlesReadFormAction(formData: FormData): Promise
 
 export async function markAllArticlesUnreadAction() {
   const userId = await getCurrentUserId();
-  if (!userId) return redirectToLogin();
+  if (!userId) return redirectToSignupIntent();
   await markAllArticlesUnread(userId);
   revalidatePath("/");
 }
