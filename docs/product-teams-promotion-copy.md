@@ -6,6 +6,7 @@
 - **개발자:** 구현 중 비슷한 기술 선택을 조사하고, 필요하면 MCP 호환 AI 코딩 도구에서 최신 공개 글을 찾는다.
 - **목적:** 게시물 반응 자체보다 랜딩 방문 후 검색, 서비스 안의 글 열기, 원문 이동을 확인한다.
 - **공통 랜딩:** `/for-product-teams`
+- **기획자 읽기 가이드:** `/guides/product-search-for-planners` (네이버 D2 원문, 검토 질문, 검색 CTA)
 - **기획자 캠페인:** `product_manager_research_techgotgan_2026q4`
 - **개발자 MCP 캠페인:** `techgotgan_agent_search_2026q4`
 
@@ -18,6 +19,16 @@
 **링크:** `https://www.techgotgan.co.kr/for-product-teams?utm_source=disquiet&utm_medium=maker_post&utm_campaign=product_manager_research_techgotgan_2026q4`
 
 이 문안은 디스콰이엇 메이커 포스트 형식을 우선 후보로 작성했다. 제품 등록·게시 전에는 해당 계정의 현재 게시 조건과 접근 권한을 확인한다.
+
+## 개인 블로그용 기획자 글 초안
+
+**제목:** 검색 기능을 기획할 때, 기술 블로그에서 확인할 다섯 가지
+
+**본문:** 검색창을 추가하는 것만으로 검색 경험이 완성되지는 않습니다. 사용자는 같은 뜻을 여러 말로 입력하고, 데이터에는 오탈자와 별칭이 있으며, 결과가 없거나 늦게 나오는 순간도 생깁니다. [네이버 D2의 호텔 검색 사례](https://d2.naver.com/helloworld/4896087)는 다국어 질의, 장소 매칭, 검색어와 스니펫 추출을 함께 다룹니다. 이 사례를 읽으며 기획 검토에서 확인할 다섯 가지를 정리했습니다. 어떤 말로 찾는지, 검색 대상이 충분한지, 무엇을 같은 대상으로 볼지, 좋은 결과를 어떤 지표로 판단할지, 출시 뒤 누가 운영할지입니다. 사례의 수치와 적용 조건은 원문을 확인하세요.
+
+**링크:** `https://www.techgotgan.co.kr/guides/product-search-for-planners?utm_source=jundolee_blog&utm_medium=article&utm_campaign=maker_ep04_product_research_2026q4`
+
+이 초안은 개인 블로그의 기존 메이커 연재 뒤에 이어갈 후보 글이다. `jundolee_blog / article`의 과거 7세션은 소스/매체 집계이며, 어느 편이 방문을 만들었는지는 분리되지 않았다. 공개 게시 전에는 계정 게시 승인을 받는다.
 
 ## 개발자용 MCP 소개 문안
 
@@ -33,6 +44,6 @@
 
 ## 판정 기준
 
-캠페인별로 외부 게시 노출·클릭, 랜딩 고유 사용자, `audience_landing_action`, `article_search_completed`, `article_click`, `source_article_click`, 공유 유입, 7일 재방문을 분리한다. `audience_landing_action`은 `home_entry`, `blog_directory_entry`, `explore_menu_entry`, `topic_hub_landing`, `planner_search`, `developer_topic`, `mcp_setup` 중 선택한 행동만 기록하며 검색어·기사 제목은 전송하지 않는다. 캠페인별 랜딩 사용자가 30명 미만이면 성공·실패를 판정하지 않고 표본 부족으로 기록한다. 유입이 검색으로 이어지지 않으면 대상 메시지를, 검색이 원문 이동으로 이어지지 않으면 결과의 관련성과 원문 안내를 먼저 검토한다.
+캠페인별로 외부 게시 노출·클릭, 랜딩 고유 사용자, `audience_landing_action`, `article_search_completed`, `article_click`, `source_article_click`, 공유 유입, 7일 재방문을 분리한다. `audience_landing_action`은 `home_entry`, `blog_directory_entry`, `explore_menu_entry`, `topic_hub_landing`, `planner_guide`, `planner_landing`, `planner_search`, `developer_topic`, `mcp_setup` 중 선택한 행동만 기록하며 검색어·기사 제목은 전송하지 않는다. 읽기 가이드의 원문 이동은 `source_article_click`의 `editorial_guide` surface로 분리한다. 캠페인별 랜딩 사용자가 30명 미만이면 성공·실패를 판정하지 않고 표본 부족으로 기록한다. 유입이 검색으로 이어지지 않으면 대상 메시지를, 검색이 원문 이동으로 이어지지 않으면 결과의 관련성과 원문 안내를 먼저 검토한다.
 
 **상태:** 문안과 측정 링크 준비. MCP Registry 공개 조회는 아직 등록되지 않은 상태(HTTP 404)지만, 공식 검증 API에서 현재 서버 메타데이터가 `valid: true`로 확인됐다. `websiteUrl`은 한국어 랜딩을 가리킨다. GitHub OAuth와 공개 등록, 제3자 계정 게시물은 진행하지 않았다.

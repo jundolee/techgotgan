@@ -29,7 +29,8 @@ export function ShareButton({
     | "topic_hub"
     | "blog_directory"
     | "blog_hub"
-    | "audience_landing";
+    | "audience_landing"
+    | "content_guide";
   shareCampaign?: string;
 }) {
   const [copied, setCopied] = useState(false);

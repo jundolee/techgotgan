@@ -77,6 +77,9 @@ export default async function ProductTeamsPage() {
           <AudienceLandingActionLink href="/?q=%EA%B2%80%EC%83%89" action="planner_search">검색 사례 검색 <span aria-hidden="true">→</span></AudienceLandingActionLink>
           <AudienceLandingActionLink href="/?q=%EA%B2%B0%EC%A0%9C" action="planner_search">결제 사례 검색 <span aria-hidden="true">→</span></AudienceLandingActionLink>
         </nav>
+        <AudienceLandingActionLink href="/guides/product-search-for-planners" action="planner_guide" className={styles.guideLink}>
+          기획자용 검색 사례 읽기 가이드 보기 →
+        </AudienceLandingActionLink>
         <div className={styles.results}>
           <h3>‘추천’ 검색 결과</h3>
           {recommendationArticles.length > 0 ? (

@@ -34,6 +34,8 @@ export function trackAudienceLandingAction(
     | "planner_search"
     | "developer_topic"
     | "mcp_setup"
+    | "planner_guide"
+    | "planner_landing"
     | "topic_hub_landing"
     | "home_entry"
     | "blog_directory_entry"
@@ -59,6 +61,7 @@ export function trackShareActionCompleted(
     | "blog_directory"
     | "blog_hub"
     | "audience_landing"
+    | "content_guide"
 ): void {
   if (
     process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" ||
