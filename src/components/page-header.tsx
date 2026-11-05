@@ -27,6 +27,7 @@ export function PageHeader({
               <Link href="/topics">주제별 글</Link>
               <Link href="/blogs">블로그 목록</Link>
               <Link href="/digest">주간 큐레이션</Link>
+              <Link href="/for-product-teams">기획자·개발자 활용</Link>
             </nav>
           </details>
         )}
