@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Text } from "@seed-design/react";
 import { PageHeader } from "@/components/page-header";
+import { AudienceLandingActionLink } from "@/components/audience-landing-action-link";
 import { ShareButton } from "@/components/share-button";
 import { SITE_URL, getPublicBlogIndex } from "@/lib/data/public-hubs";
 import { SITE_NAME } from "@/app/seo";
@@ -76,7 +77,8 @@ export default async function BlogsPage() {
       </p>
 
       <p className="blog-suggestion-note">
-        제품 사례나 구현 근거를 찾고 있나요? <Link href="/for-product-teams">기획자·개발자별 활용 방법 →</Link>
+        제품 사례나 구현 근거를 찾고 있나요?{" "}
+        <AudienceLandingActionLink href="/for-product-teams" action="blog_directory_entry">기획자·개발자별 활용 방법 →</AudienceLandingActionLink>
       </p>
 
       <section aria-labelledby="blog-list">

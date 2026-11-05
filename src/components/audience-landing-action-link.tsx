@@ -13,7 +13,14 @@ export function AudienceLandingActionLink({
   external = false,
 }: {
   href: string;
-  action: "planner_search" | "developer_topic" | "mcp_setup" | "topic_hub_landing";
+  action:
+    | "planner_search"
+    | "developer_topic"
+    | "mcp_setup"
+    | "topic_hub_landing"
+    | "home_entry"
+    | "blog_directory_entry"
+    | "explore_menu_entry";
   children: ReactNode;
   className?: string;
   style?: CSSProperties;

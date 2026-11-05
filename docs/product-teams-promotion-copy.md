@@ -33,6 +33,6 @@
 
 ## 판정 기준
 
-캠페인별로 외부 게시 노출·클릭, 랜딩 고유 사용자, `audience_landing_action`, `article_search_completed`, `article_click`, `source_article_click`, 공유 유입, 7일 재방문을 분리한다. `audience_landing_action`은 `topic_hub_landing`, `planner_search`, `developer_topic`, `mcp_setup` 중 선택한 행동만 기록하며 검색어·기사 제목은 전송하지 않는다. 캠페인별 랜딩 사용자가 30명 미만이면 성공·실패를 판정하지 않고 표본 부족으로 기록한다. 유입이 검색으로 이어지지 않으면 대상 메시지를, 검색이 원문 이동으로 이어지지 않으면 결과의 관련성과 원문 안내를 먼저 검토한다.
+캠페인별로 외부 게시 노출·클릭, 랜딩 고유 사용자, `audience_landing_action`, `article_search_completed`, `article_click`, `source_article_click`, 공유 유입, 7일 재방문을 분리한다. `audience_landing_action`은 `home_entry`, `blog_directory_entry`, `explore_menu_entry`, `topic_hub_landing`, `planner_search`, `developer_topic`, `mcp_setup` 중 선택한 행동만 기록하며 검색어·기사 제목은 전송하지 않는다. 캠페인별 랜딩 사용자가 30명 미만이면 성공·실패를 판정하지 않고 표본 부족으로 기록한다. 유입이 검색으로 이어지지 않으면 대상 메시지를, 검색이 원문 이동으로 이어지지 않으면 결과의 관련성과 원문 안내를 먼저 검토한다.
 
 **상태:** 문안과 측정 링크 준비. MCP Registry 공개 조회는 아직 등록되지 않은 상태(HTTP 404)지만, 공식 검증 API에서 현재 서버 메타데이터가 `valid: true`로 확인됐다. `websiteUrl`은 한국어 랜딩을 가리킨다. GitHub OAuth와 공개 등록, 제3자 계정 게시물은 진행하지 않았다.
