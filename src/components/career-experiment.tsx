@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { track } from "@amplitude/analytics-browser";
-import { getAcquisitionContext } from "@/lib/acquisition-context";
+import { trackCareerGuideInteraction } from "@/lib/analytics";
 import { trackSourceArticleClick } from "@/lib/source-article-analytics";
 
 function record(action: string, detail: string) {
   if (process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" || !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY) return;
-  track("career_guide_interaction", { guide: "toss_frontend", action, detail, ...getAcquisitionContext() });
+  trackCareerGuideInteraction(action, detail);
 }
 
 export function CareerLink({ href, id, children }: { href: string; id: string; children: React.ReactNode }) {

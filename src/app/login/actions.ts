@@ -15,6 +15,12 @@ function redirectToSignupError(message: string, next: string): never {
   redirect(`/login?${params}`);
 }
 
+function redirectToSignupConfirmation(next: string): never {
+  const params = new URLSearchParams({ intent: "signup", status: "confirmation_sent" });
+  if (next !== "/") params.set("next", next);
+  redirect(`/login?${params}`);
+}
+
 // 로그인 전 익명 방문자 쿠키로 쌓아둔 읽음/즐겨찾기 기록을 최초 로그인 시 이 계정으로 옮긴다
 // (docs/decisions.md 참고). 방문자 쿠키가 없으면(이미 옮겨졌거나 애초에 없던 경우) 아무 일도 안 한다.
 async function migrateVisitorDataIfNeeded(userId: string): Promise<void> {
@@ -35,6 +41,7 @@ async function getOrigin(): Promise<string> {
 }
 
 export async function signInWithProviderAction(provider: OAuthProvider, next: string, _formData: FormData) {
+  void _formData;
   const origin = await getOrigin();
   const callbackUrl = new URL("/auth/callback", origin);
   callbackUrl.searchParams.set("next", safeNextPath(next));
@@ -69,12 +76,24 @@ export async function signUpAction(formData: FormData) {
     redirectToSignupError("비밀번호가 서로 일치하지 않아요", next);
   }
 
+  const origin = await getOrigin();
+  const emailRedirectTo = new URL("/auth/callback", origin);
+  emailRedirectTo.searchParams.set("next", next);
+
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { nickname } } });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { nickname }, emailRedirectTo: emailRedirectTo.toString() },
+  });
 
   if (error) {
     redirectToSignupError(error.message, next);
   }
+  // Supabase returns a user with no session when email confirmation is required. Do not
+  // redirect as if the person were logged in; the email callback completes the actual session.
+  if (!data.session) redirectToSignupConfirmation(next);
+
   if (data.user) {
     await migrateVisitorDataIfNeeded(data.user.id);
   }

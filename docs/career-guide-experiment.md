@@ -3,7 +3,7 @@
 ## 실험 요약
 
 - **기간:** 첫 외부 배포인 Velog 글 공개 시각 2026-10-29 03:26 UTC(한국시간 12:26)부터 2026-11-12 03:26 UTC까지 14일.
-- **목표:** 공유 가능한 기업별 읽기 안내 페이지가 신규 방문을 만들고, 방문자가 실제 기술 글을 여는지 확인한다.
+- **목표:** 한국 개발자 독자군을 위한 공유 가능한 기업별 읽기 안내 페이지가 신규 방문과 원문 이동, 실제 인증 로그인 세션을 만드는지 확인한다. 이 토스 프론트엔드 실험은 더 넓은 한국 개발자 타겟의 첫 하위 집단이다.
 - **대상:** 토스 프론트엔드 지원을 준비하거나 토스의 공개 기술 사례를 조사하는 개발자.
 - **랜딩 페이지:** <https://www.techgotgan.co.kr/careers/toss-frontend>
 - **가설:** 회사와 직무 맥락을 붙여 공개 기술 자료와 읽기 질문을 선별하면, 단순 링크 목록보다 공유와 원문 탐색이 늘어난다.
@@ -34,7 +34,7 @@
 - GitHub README 링크에는 `utm_source=github&utm_medium=readme&utm_campaign=career_guide_toss_frontend`가 붙어 있다.
 - 가이드 상단에 공유 버튼을 두었다. 공유 링크에는 `utm_source=techgotgan&utm_medium=share&utm_campaign=career_guide_toss_frontend_2026q4`가 붙고, Amplitude에는 완료한 공유 방식과 `career_guide` 화면 유형만 전송한다.
 - 원문 이동은 `career_guide_interaction` 이벤트의 `action=source_click`, `detail=chapter|knowledge|interview|careers`로 본다. 익명 피드백은 `action=feedback`, `detail=helpful|not_helpful`이다.
-- GA4에서 랜딩 경로와 `Session source / medium`, `Session campaign`을 확인한다. Amplitude에서는 `page_viewed`의 `/careers/toss-frontend`와 UTM/referrer 속성, `career_guide_interaction`의 원문 클릭·피드백, 공유 완료를 확인한다. 원문 이동은 `source_article_click`도 함께 비교한다.
+- GA4에서 랜딩 경로와 `Session source / medium`, `Session campaign`을 확인한다. Amplitude에서는 `page_viewed`의 `/careers/toss-frontend`와 UTM/referrer 속성, `career_guide_interaction`의 원문 클릭·피드백, 공유 완료를 확인한다. 원문 이동은 `source_article_click`, 로그인 전환은 서버가 실제 Supabase 세션을 확인한 `authenticated_session_started`로 구분한다. 가입 화면 조회나 제출 시도는 로그인 완료로 세지 않는다.
 - Amplitude 저장 차트: [Techgotgan 2주 실험 - 가이드 방문 및 행동](https://app.amplitude.com/analytics/solitary-sun-768076/chart/mz4utw3o). `page_viewed`는 `page_path=/careers/toss-frontend`, `career_guide_interaction`은 `guide=toss_frontend`로 각각 필터링해 고유 사용자를 본다. 저장 차트의 일별 기간은 2026-10-29~2026-11-12(UTC)다.
 - 링크를 직접 열어 검수한 운영자 방문은 결과에서 제외하거나 별도 메모한다.
 
@@ -68,9 +68,9 @@ GA4 사전 데이터에서 `velog / article` 유입이 확인되어, 기존 3편
 
 ## 판정 기준
 
-- **최소 관찰선:** 14일 동안 테스트 방문을 제외한 랜딩 고유 방문자 30명. 30명 미만이면 판정 유보이며, 채널 배포 부족과 랜딩 전환 부족을 구분한다.
+- **최소 관찰선:** 14일 동안 테스트 방문을 제외한 랜딩 고유 방문자 30명. 30명 미만이면 채널 성공/실패 판정을 유보한다. 실제 로그인 전환은 `authenticated_session_started`의 고유 사용자로 확인하고, 가입 클릭·이메일 확인 대기 상태와 구분한다.
 - **유입 신호:** source/medium이 식별되는 외부 방문이 발생하고, 어느 채널에서 왔는지 확인할 수 있다.
-- **가치 신호:** 방문자 중 원문 자료를 연 비율과 피드백 내용을 함께 본다. 클릭은 관심 신호이지 취업 준비에 도움이 됐다는 증명은 아니다.
+- **가치 신호:** 방문자 중 원문 자료를 연 비율, 실제 인증 로그인 세션, 피드백을 함께 본다. 원문 클릭은 관심 신호이지 취업 준비에 도움이 됐다는 증명은 아니다.
 - **공유 신호:** 공유 완료 이벤트와 `utm_medium=share`로 유입된 세션을 따로 본다. 공유 버튼 클릭 수만으로 바이럴이라고 판단하지 않는다.
 - **후속 결정:** 유입이 있되 원문 클릭이 적으면 랜딩의 대상/선별 기준/자료 설명을 고친다. 특정 채널만 유입을 만든다면 다음 실험에서 그 채널을 집중한다. 30명 미만이면 PMF나 랜딩 실패로 판단하지 않고 배포 채널과 기간을 보완한다.
 

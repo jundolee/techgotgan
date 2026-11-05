@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Text } from "@seed-design/react";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { signOutAction } from "@/app/login/actions";
+import { AuthenticatedSessionTracker } from "@/components/authenticated-session-tracker";
 
 // PageHeader는 즉시 그려지고 이 부분만 스트리밍으로 채워지도록 별도 Suspense 경계로 분리했다 —
 // getUser()가 Supabase Auth 서버를 왕복하는 동안 헤더 전체가 지연되지 않게 하기 위함
@@ -25,9 +26,11 @@ async function AuthSlotContent() {
   }
 
   const nickname = user.user_metadata.nickname ?? user.user_metadata.full_name ?? user.user_metadata.name;
+  const authMethod = user.app_metadata.provider === "google" ? "google" : "email_password";
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <AuthenticatedSessionTracker authMethod={authMethod} />
       {nickname && (
         <Text as="span" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)">
           {nickname}
