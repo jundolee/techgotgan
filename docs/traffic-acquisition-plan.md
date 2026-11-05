@@ -84,8 +84,10 @@ Velog 공개 글은 기술 선택을 면접 답변으로 정리하는 6문장 �
 - **기획자 실험:** 제품 문제를 다루는 개별 자료에서 이 페이지로 연결하고 `utm_campaign=product_manager_research_techgotgan_2026q4`를 사용한다. 먼저 게시물의 외부 노출·클릭을 기록하고, 랜딩 `page_viewed` → `audience_landing_action: planner_search` → `article_search_completed` → `source_article_click` → 7일 재방문 순서로 본다.
 - **개발자 실험:** 기존 MCP와 별도 UTM `techgotgan_agent_search_2026q4`를 유지한다. 실제 코딩 에이전트 설정 문서나 호출만 세지 않고 랜딩 `page_viewed` → `audience_landing_action: developer_topic|mcp_setup` → 검색·원문 이동·재방문을 성과로 본다.
 - **판정:** 두 대상의 캠페인과 랜딩 행동을 섞지 않는다. 각 대상의 방문자가 30명 미만이면 채널 성공·실패를 판정하지 않는다. 페이지 방문은 있으나 검색이 없으면 대상 메시지를, 검색은 있으나 원문 이동이 없으면 검색 결과와 원문 안내를 먼저 검토한다.
-- **2026-11-05 구현 확인:** `/for-product-teams` 랜딩, 홈·둘러보기·블로그 목록·README의 진입 링크, 공유 이벤트 분류, sitemap 항목을 추가했다. `npm run build`, TypeScript 검사, 변경 파일 ESLint가 통과했고 로컬 SSR은 HTTP 200 및 canonical·기획자/개발자 문구·검색/주제 링크를 반환했다. 로컬 환경에는 Supabase 자격 증명이 없어 추천 검색 결과 샘플은 대체 문구로 표시됐다. Production에서 `/?q=추천` 검색이 실제 글을 반환하는 것은 확인했지만, 새 랜딩은 아직 Production 배포 전이다.
-- **현 상태:** 페이지 코드와 GitHub README 진입 링크를 준비했다. 대상 경로 클릭을 `audience_landing_action`으로 익명 측정하며 검색어와 기사 제목은 보내지 않는다. Production 반영 전에는 공개 랜딩이나 유입으로 세지 않는다.
+- **2026-11-05 구현 확인:** `/for-product-teams` 랜딩, 홈·둘러보기·블로그 목록·README의 진입 링크, 공유 이벤트 분류, sitemap 항목을 추가했다. `npm run build`, TypeScript 검사, 변경 파일 ESLint가 통과했고 로컬 SSR은 HTTP 200 및 canonical·기획자/개발자 문구·검색/주제 링크를 반환했다. 로컬 환경에는 Supabase 자격 증명이 없어 추천 검색 결과 샘플은 대체 문구로 표시됐다.
+- **2026-11-05 Production 확인:** PR #190 (`2459d1375733853b8a5bb1e0849a68af7a216cb6`)을 09:33 UTC에 병합했다. Vercel Production 배포 `7570051388`은 09:33:57 UTC에 `success`가 됐다. 09:38 UTC 확인에서 랜딩, 홈, 블로그 목록, sitemap 모두 HTTP 200이었고 랜딩 canonical, 기획자·개발자 섹션, 실제 추천 결과 2건, sitemap 경로를 확인했다. 추천·검색·결제 검색 URL과 프론트엔드·백엔드·AI/ML 주제 허브도 각각 HTTP 200과 글 결과를 반환했다.
+- **유입 판정:** 페이지와 분석 경로가 공개됐지만 이 요청에 의한 Production 응답 확인은 실제 사용자 방문이 아니다. 외부 게시물은 아직 공개하지 않았으며 세션·원문 이동 성과는 계속 측정해야 한다.
+- **현 상태:** 공개 랜딩과 GitHub README 진입 링크가 활성화됐다. 대상 경로 클릭은 `audience_landing_action`으로 익명 측정하며 검색어와 기사 제목은 보내지 않는다. 다음 단계는 기획자용 Maker 포스트 한 건을 배포하고 UTM·검색·원문 이동을 관찰하는 것이다.
 
 ### 디스콰이엇 제품 등록 후보
 
