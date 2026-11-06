@@ -518,6 +518,19 @@ interface PublicTechnologyArticleRow {
   };
 }
 
+interface PublicTechnologySearchRow {
+  id: string;
+  title: string;
+  url: string;
+  excerpt: string | null;
+  published_at: string | null;
+  category: string;
+  tags: string[] | null;
+  source_id: string;
+  source_title: string | null;
+  source_site_url: string;
+}
+
 export function isPublicTechnologyTerm(value: string): boolean {
   return PUBLIC_TECHNOLOGY_TERMS.some((term) => term.slug === value);
 }
@@ -538,7 +551,7 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
     { revalidate: 300, tags: ["articles", "sources"] }
   );
 
-  const articles = rows
+  let articles = rows
     .filter(
       (row) =>
         row.tags?.some((tag) => tag.toLowerCase() === term.tag) &&
@@ -557,6 +570,38 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
         slug: getPublicSourceSlug(row.source),
       },
     } satisfies PublicHubArticle));
+
+  if (articles.length < MIN_PUBLIC_TECHNOLOGY_ARTICLES) {
+    const [searchRows, sources] = await Promise.all([
+      fetchCachedRpcFromSupabase<PublicTechnologySearchRow[]>("search_articles", { search_query: term.query }, {
+        revalidate: 300,
+        tags: ["articles", "sources"],
+      }),
+      listSources(),
+    ]);
+    const activeSourceIds = new Set(sources.filter((source) => source.is_active).map((source) => source.id));
+    const existingIds = new Set(articles.map((article) => article.id));
+    const textMatches = searchRows
+      .filter((row) => activeSourceIds.has(row.source_id) && matchesTechnologyTermText(row.title, row.excerpt, term.slug))
+      .filter((row) => !existingIds.has(row.id))
+      .map((row) => ({
+        id: row.id,
+        title: row.title,
+        url: row.url,
+        excerpt: row.excerpt,
+        publishedAt: row.published_at,
+        discoveredAt: null,
+        category: isPublicCategory(row.category) ? row.category : "general",
+        source: {
+          title: publicSourceDisplayName({ title: row.source_title, site_url: row.source_site_url }),
+          slug: getPublicSourceSlug({ title: row.source_title, site_url: row.source_site_url }),
+        },
+      } satisfies PublicHubArticle));
+
+    articles = [...articles, ...textMatches]
+      .sort((a, b) => (Date.parse(b.publishedAt ?? "") || 0) - (Date.parse(a.publishedAt ?? "") || 0))
+      .slice(0, MAX_PUBLIC_TECHNOLOGY_ARTICLES);
+  }
 
   const lastModified = articles.reduce<string | null>((latest, article) => {
     const candidate = article.discoveredAt ?? article.publishedAt;
