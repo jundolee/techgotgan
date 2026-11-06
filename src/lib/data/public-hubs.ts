@@ -24,43 +24,43 @@ export interface PublicCategoryMeta {
 export const PUBLIC_CATEGORY_META: Record<ArticleCategory, PublicCategoryMeta> = {
   frontend: {
     label: "Frontend",
-    title: "프론트엔드 최신 글",
-    description: "React, 웹 플랫폼, 디자인 시스템과 프론트엔드 개발 경험에 관한 최신 글을 모았습니다.",
+    title: "프론트엔드 기술 블로그 최신 글",
+    description: "기업 기술 블로그에서 React, 웹 플랫폼, 디자인 시스템과 프론트엔드 개발 경험에 관한 최신 글을 모았습니다.",
   },
   backend: {
     label: "Backend",
-    title: "백엔드 최신 글",
-    description: "서버, API, 데이터베이스와 안정적인 서비스 운영을 다루는 최신 백엔드 글을 모았습니다.",
+    title: "백엔드 기술 블로그 최신 글",
+    description: "기업 기술 블로그에서 서버, API, 데이터베이스와 안정적인 서비스 운영을 다루는 최신 백엔드 글을 모았습니다.",
   },
   ai_ml: {
     label: "AI / ML",
-    title: "AI · 머신러닝 최신 글",
-    description: "생성형 AI, 머신러닝 모델, 데이터 기반 제품 개발에 관한 최신 글을 모았습니다.",
+    title: "AI·머신러닝 기술 블로그 최신 글",
+    description: "기업 테크 블로그에서 생성형 AI, 머신러닝 모델과 데이터 기반 제품 개발에 관한 최신 글을 모았습니다.",
   },
   devops: {
     label: "DevOps",
-    title: "DevOps 최신 글",
-    description: "클라우드, 인프라, 배포 자동화와 신뢰성 있는 운영에 관한 최신 글을 모았습니다.",
+    title: "DevOps 기술 블로그 최신 글",
+    description: "기업 기술 블로그에서 클라우드, 인프라, 배포 자동화와 신뢰성 있는 운영에 관한 최신 글을 모았습니다.",
   },
   mobile: {
     label: "Mobile",
-    title: "모바일 개발 최신 글",
-    description: "iOS, Android, 크로스 플랫폼과 모바일 제품 개발에 관한 최신 글을 모았습니다.",
+    title: "모바일 개발 관련 기술 블로그 최신 글",
+    description: "기업 기술 블로그에서 iOS, Android, 크로스 플랫폼과 모바일 제품 개발에 관한 최신 글을 모았습니다.",
   },
   data: {
     label: "Data",
-    title: "데이터 최신 글",
-    description: "데이터 엔지니어링, 분석, 실험과 데이터 플랫폼에 관한 최신 글을 모았습니다.",
+    title: "데이터 기술 블로그 최신 글",
+    description: "기업 기술 블로그에서 데이터 엔지니어링, 분석, 실험과 데이터 플랫폼에 관한 최신 글을 모았습니다.",
   },
   culture: {
     label: "Culture",
-    title: "개발 문화 최신 글",
+    title: "개발 문화 관련 기술 블로그 최신 글",
     description: "팀의 일하는 방식, 커리어, 협업과 기술 조직 문화에 관한 최신 글을 모았습니다.",
   },
   general: {
     label: "General",
-    title: "테크 최신 글",
-    description: "특정 주제로 분류되지 않은 기술 소식과 개발 이야기를 모았습니다.",
+    title: "테크 블로그 최신 글",
+    description: "특정 주제로 분류되지 않은 기업 기술 블로그의 기술 소식과 개발 이야기를 모았습니다.",
   },
 };
 
