@@ -541,7 +541,6 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
   const articles = rows
     .filter(
       (row) =>
-        row.category === term.category &&
         row.tags?.some((tag) => tag.toLowerCase() === term.tag) &&
         matchesTechnologyTermText(row.title, row.excerpt, term.slug)
     )
