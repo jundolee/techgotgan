@@ -38,9 +38,9 @@ export default async function TopicsPage() {
       <PageHeader navHref="/" navLabel="전체 글" />
       <header style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-          <Text as="h1" textStyle="t8Bold" color="fg.neutral">테크 주제별 최신 글</Text>
+          <Text as="h1" textStyle="t8Bold" color="fg.neutral">{TITLE}</Text>
           {categories.length > 0 && (
-            <ShareButton title="테크 주제별 최신 글" url="/topics" size="small" variant="neutralWeak" shareSurface="topic_directory" shareCampaign="topic_directory_share_2026q4" />
+            <ShareButton title={TITLE} url="/topics" size="small" variant="neutralWeak" shareSurface="topic_directory" shareCampaign="topic_directory_share_2026q4" />
           )}
         </div>
         <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">{DESCRIPTION}</Text>
