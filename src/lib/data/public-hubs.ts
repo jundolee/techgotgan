@@ -51,8 +51,8 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     tag: "react",
     query: "react",
     category: "frontend",
-    title: "React 기술 블로그 최신 글",
-    description: "React 컴포넌트, 렌더링, 상태 관리와 제품 적용 사례를 다룬 회사 기술 블로그 글입니다.",
+    title: "React(리액트) 기술 블로그 최신 글",
+    description: "React(리액트) 컴포넌트, 렌더링, 상태 관리와 제품 적용 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "nextjs",
@@ -61,7 +61,7 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     query: "nextjs",
     category: "frontend",
     title: "Next.js 기술 블로그 최신 글",
-    description: "Next.js 렌더링, 라우팅, 캐시와 웹 서비스 운영 사례를 다룬 회사 기술 블로그 글입니다.",
+    description: "Next.js(넥스트.js) 렌더링, 라우팅, 캐시와 웹 서비스 운영 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "typescript",
@@ -70,7 +70,7 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     query: "typescript",
     category: "frontend",
     title: "TypeScript 기술 블로그 최신 글",
-    description: "TypeScript 타입 설계와 JavaScript 제품 개발 경험을 다룬 회사 기술 블로그 글입니다.",
+    description: "TypeScript(타입스크립트) 타입 설계와 JavaScript 제품 개발 경험을 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "css",
@@ -87,8 +87,8 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     tag: "spring",
     query: "spring",
     category: "backend",
-    title: "Spring 기술 블로그 최신 글",
-    description: "Spring과 Java 서버 개발, API 설계와 서비스 운영 사례를 다룬 회사 기술 블로그 글입니다.",
+    title: "Spring(스프링) 기술 블로그 최신 글",
+    description: "Spring(스프링)과 Java 서버 개발, API 설계와 서비스 운영 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "kubernetes",
@@ -96,8 +96,8 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     tag: "k8s",
     query: "kubernetes",
     category: "devops",
-    title: "Kubernetes 기술 블로그 최신 글",
-    description: "Kubernetes 기반 배포, 컨테이너 운영과 인프라 개선 사례를 다룬 회사 기술 블로그 글입니다.",
+    title: "Kubernetes(쿠버네티스) 기술 블로그 최신 글",
+    description: "Kubernetes(쿠버네티스, K8s) 기반 배포, 컨테이너 운영과 인프라 개선 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "docker",
@@ -115,7 +115,7 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     query: "llm",
     category: "ai_ml",
     title: "LLM 기술 블로그 최신 글",
-    description: "대규모 언어 모델의 제품 적용, 추론, 평가와 운영 사례를 다룬 회사 기술 블로그 글입니다.",
+    description: "대규모 언어 모델(LLM)의 제품 적용, 추론, 평가와 운영 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "rag",
@@ -133,7 +133,7 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     query: "agent",
     category: "ai_ml",
     title: "AI 에이전트 기술 블로그 최신 글",
-    description: "도구를 사용하고 작업을 수행하는 AI 에이전트의 구현·평가·운영 사례를 다룬 회사 기술 블로그 글입니다.",
+    description: "도구를 사용하고 작업을 수행하는 AI 에이전트(Agent)의 구현·평가·운영 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "cloud",
@@ -151,7 +151,7 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     query: "cicd",
     category: "devops",
     title: "CI/CD 기술 블로그 최신 글",
-    description: "지속적 통합·배포 파이프라인과 개발·릴리스 자동화 사례를 다룬 회사 기술 블로그 글입니다.",
+    description: "지속적 통합·배포(Continuous Integration/Continuous Delivery) 파이프라인과 개발 자동화 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "spark",
@@ -159,8 +159,8 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     tag: "spark",
     query: "spark",
     category: "data",
-    title: "Apache Spark 기술 블로그 최신 글",
-    description: "Apache Spark를 활용한 대규모 데이터 처리와 분석 파이프라인 사례를 다룬 회사 기술 블로그 글입니다.",
+    title: "Apache Spark(스파크) 기술 블로그 최신 글",
+    description: "Apache Spark(스파크)를 활용한 대규모 데이터 처리와 분석 파이프라인 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "sql",
@@ -177,8 +177,8 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     tag: "db",
     query: "database",
     category: "backend",
-    title: "데이터베이스 기술 블로그 최신 글",
-    description: "관계형·비관계형 데이터베이스의 스키마, 쿼리와 안정적인 운영 사례를 다룬 회사 기술 블로그 글입니다.",
+    title: "데이터베이스(DB) 기술 블로그 최신 글",
+    description: "관계형·비관계형 데이터베이스(DB)의 스키마, 쿼리와 안정적인 운영 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "go",
@@ -186,8 +186,8 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     tag: "go",
     query: "go",
     category: "backend",
-    title: "Go 기술 블로그 최신 글",
-    description: "Go 언어로 구현한 서버, 분산 시스템과 개발 도구 사례를 다룬 회사 기술 블로그 글입니다.",
+    title: "Go(Golang) 기술 블로그 최신 글",
+    description: "Go(Golang) 언어로 구현한 서버, 분산 시스템과 개발 도구 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "cross-platform",
@@ -213,8 +213,8 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     tag: "android",
     query: "android",
     category: "mobile",
-    title: "Android 기술 블로그 최신 글",
-    description: "Android 앱, Kotlin과 모바일 제품 개발·운영 사례를 다룬 회사 기술 블로그 글입니다.",
+    title: "Android(안드로이드) 기술 블로그 최신 글",
+    description: "Android(안드로이드) 앱, Kotlin과 모바일 제품 개발·운영 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
     slug: "kafka",
@@ -223,7 +223,7 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     query: "kafka",
     category: "data",
     title: "Kafka 기술 블로그 최신 글",
-    description: "Apache Kafka 기반 이벤트 스트리밍, 데이터 파이프라인과 운영 사례를 다룬 회사 기술 블로그 글입니다.",
+    description: "Apache Kafka(카프카) 기반 이벤트 스트리밍, 데이터 파이프라인과 운영 사례를 다룬 회사 기술 블로그 글입니다.",
   },
 ];
 

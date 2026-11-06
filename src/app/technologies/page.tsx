@@ -7,7 +7,7 @@ import { getPublicTechnologyIndex } from "@/lib/data/public-hubs";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
 
 const TITLE = "기술 용어별 최신 기술 블로그 글";
-const DESCRIPTION = "React, TypeScript, Kubernetes 등 기술 용어별로 기업 기술 블로그의 글을 찾아 원문까지 이어 읽어보세요.";
+const DESCRIPTION = "React(리액트), TypeScript(타입스크립트), Kubernetes(쿠버네티스) 등 기술 용어별로 기업 기술 블로그의 글을 찾아 원문까지 이어 읽어보세요.";
 const CANONICAL = `${SITE_URL}/technologies`;
 
 export async function generateMetadata(): Promise<Metadata> {
