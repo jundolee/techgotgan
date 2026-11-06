@@ -198,6 +198,10 @@ export default async function Home({
           기업 기술 블로그별 최신 글 보기 →
         </Link>
         {" · "}
+        <Link href="/technologies" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+          React·TypeScript 등 기술별 최신 글 →
+        </Link>
+        {" · "}
         <AudienceLandingActionLink href="/for-product-teams" action="home_entry" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
           기획자·개발자별 활용 방법 →
         </AudienceLandingActionLink>

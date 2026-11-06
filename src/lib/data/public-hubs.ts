@@ -2,7 +2,7 @@ import "server-only";
 import { CATEGORIES, type ArticleCategory } from "@/lib/categories";
 import { getCachedArticlesForSource, type ArticleListItem } from "@/lib/data/articles";
 import { listSources, type Source } from "@/lib/data/sources";
-import { fetchCachedRpcFromSupabase } from "@/lib/supabase/cached-rest";
+import { fetchCachedFromSupabase, fetchCachedRpcFromSupabase } from "@/lib/supabase/cached-rest";
 import { SITE_URL } from "@/app/seo";
 
 const MAX_HUB_ARTICLES = 20;
@@ -18,6 +18,142 @@ export interface PublicCategoryMeta {
   title: string;
   description: string;
 }
+
+export interface PublicTechnologyTermMeta {
+  slug: string;
+  label: string;
+  tag: string;
+  query: string;
+  category: ArticleCategory;
+  title: string;
+  description: string;
+}
+
+export interface PublicTechnologyHub {
+  term: PublicTechnologyTermMeta;
+  articles: PublicHubArticle[];
+  lastModified: string | null;
+}
+
+export interface PublicTechnologyIndexItem {
+  term: PublicTechnologyTermMeta;
+  articleCount: number;
+  lastModified: string | null;
+}
+
+const MIN_PUBLIC_TECHNOLOGY_ARTICLES = 3;
+const MAX_PUBLIC_TECHNOLOGY_ARTICLES = 20;
+
+export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
+  {
+    slug: "react",
+    label: "React",
+    tag: "react",
+    query: "react",
+    category: "frontend",
+    title: "React 기술 블로그 최신 글",
+    description: "React 컴포넌트, 렌더링, 상태 관리와 제품 적용 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
+    slug: "nextjs",
+    label: "Next.js",
+    tag: "nextjs",
+    query: "nextjs",
+    category: "frontend",
+    title: "Next.js 기술 블로그 최신 글",
+    description: "Next.js 렌더링, 라우팅, 캐시와 웹 서비스 운영 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
+    slug: "typescript",
+    label: "TypeScript",
+    tag: "typescript",
+    query: "typescript",
+    category: "frontend",
+    title: "TypeScript 기술 블로그 최신 글",
+    description: "TypeScript 타입 설계와 JavaScript 제품 개발 경험을 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
+    slug: "css",
+    label: "CSS",
+    tag: "css",
+    query: "css",
+    category: "frontend",
+    title: "CSS 기술 블로그 최신 글",
+    description: "CSS, 디자인 시스템과 웹 화면 구현·성능 개선 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
+    slug: "spring",
+    label: "Spring",
+    tag: "spring",
+    query: "spring",
+    category: "backend",
+    title: "Spring 기술 블로그 최신 글",
+    description: "Spring과 Java 서버 개발, API 설계와 서비스 운영 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
+    slug: "kubernetes",
+    label: "Kubernetes",
+    tag: "k8s",
+    query: "kubernetes",
+    category: "devops",
+    title: "Kubernetes 기술 블로그 최신 글",
+    description: "Kubernetes 기반 배포, 컨테이너 운영과 인프라 개선 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
+    slug: "docker",
+    label: "Docker",
+    tag: "docker",
+    query: "docker",
+    category: "devops",
+    title: "Docker 기술 블로그 최신 글",
+    description: "Docker 컨테이너를 이용한 개발 환경, 빌드와 서비스 배포 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
+    slug: "llm",
+    label: "LLM",
+    tag: "llm",
+    query: "llm",
+    category: "ai_ml",
+    title: "LLM 기술 블로그 최신 글",
+    description: "대규모 언어 모델의 제품 적용, 추론, 평가와 운영 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
+    slug: "rag",
+    label: "RAG",
+    tag: "rag",
+    query: "rag",
+    category: "ai_ml",
+    title: "RAG 기술 블로그 최신 글",
+    description: "검색 증강 생성(RAG), 임베딩과 지식 검색 구현 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
+    slug: "ios",
+    label: "iOS",
+    tag: "ios",
+    query: "ios",
+    category: "mobile",
+    title: "iOS 기술 블로그 최신 글",
+    description: "Swift와 iOS 앱 개발, 모바일 제품 운영 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
+    slug: "android",
+    label: "Android",
+    tag: "android",
+    query: "android",
+    category: "mobile",
+    title: "Android 기술 블로그 최신 글",
+    description: "Android 앱, Kotlin과 모바일 제품 개발·운영 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
+    slug: "kafka",
+    label: "Kafka",
+    tag: "kafka",
+    query: "kafka",
+    category: "data",
+    title: "Kafka 기술 블로그 최신 글",
+    description: "Apache Kafka 기반 이벤트 스트리밍, 데이터 파이프라인과 운영 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+];
 
 // 검색어가 가리키는 주제와 페이지의 실제 내용을 맞추기 위해 카테고리별 설명을 따로 둔다.
 // id는 수집 파이프라인이 저장하는 표준 category 값과 동일하다.
@@ -256,6 +392,75 @@ export async function getPublicCategoryIndex(): Promise<PublicCategoryIndexItem[
       ? [{ category, meta: PUBLIC_CATEGORY_META[category], articleCount: Number(row.article_count), lastModified: row.last_modified }]
       : [];
   });
+}
+
+interface PublicTechnologyArticleRow {
+  id: string;
+  title: string;
+  url: string;
+  excerpt: string | null;
+  published_at: string | null;
+  discovered_at: string | null;
+  category: string;
+  tags: string[] | null;
+  source: {
+    id: string;
+    title: string | null;
+    site_url: string;
+  };
+}
+
+export function isPublicTechnologyTerm(value: string): boolean {
+  return PUBLIC_TECHNOLOGY_TERMS.some((term) => term.slug === value);
+}
+
+export async function getPublicTechnologyHub(slug: string): Promise<PublicTechnologyHub | null> {
+  const term = PUBLIC_TECHNOLOGY_TERMS.find((item) => item.slug === slug);
+  if (!term) return null;
+
+  const rows = await fetchCachedFromSupabase<PublicTechnologyArticleRow[]>(
+    "articles",
+    {
+      select: "id,title,url,excerpt,published_at,discovered_at,category,tags,source:sources!inner(id,title,site_url)",
+      tags: `cs.{${term.tag}}`,
+      "source.is_active": "eq.true",
+      order: "published_at.desc.nullslast,discovered_at.desc",
+      limit: String(MAX_PUBLIC_TECHNOLOGY_ARTICLES),
+    },
+    { revalidate: 300, tags: ["articles", "sources"] }
+  );
+
+  const articles = rows
+    .filter((row) => row.tags?.some((tag) => tag.toLowerCase() === term.tag))
+    .map((row) => ({
+      id: row.id,
+      title: row.title,
+      url: row.url,
+      excerpt: row.excerpt,
+      publishedAt: row.published_at,
+      discoveredAt: row.discovered_at,
+      category: isPublicCategory(row.category) ? row.category : "general",
+      source: {
+        title: publicSourceDisplayName(row.source),
+        slug: getPublicSourceSlug(row.source),
+      },
+    } satisfies PublicHubArticle));
+
+  const lastModified = articles.reduce<string | null>((latest, article) => {
+    const candidate = article.discoveredAt ?? article.publishedAt;
+    return candidate && (!latest || Date.parse(candidate) > Date.parse(latest)) ? candidate : latest;
+  }, null);
+
+  return { term, articles, lastModified };
+}
+
+export async function getPublicTechnologyIndex(): Promise<PublicTechnologyIndexItem[]> {
+  const hubs = await Promise.all(PUBLIC_TECHNOLOGY_TERMS.map((term) => getPublicTechnologyHub(term.slug)));
+  return hubs.flatMap((hub) =>
+    hub && hub.articles.length >= MIN_PUBLIC_TECHNOLOGY_ARTICLES
+      ? [{ term: hub.term, articleCount: hub.articles.length, lastModified: hub.lastModified }]
+      : []
+  );
 }
 
 export async function getPublicCategoryHub(category: string): Promise<PublicCategoryHub | null> {
