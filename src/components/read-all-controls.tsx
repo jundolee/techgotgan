@@ -18,7 +18,7 @@ export function ReadAllControls({ onMarkAllRead }: { onMarkAllRead: () => () => 
         if (result === "unauthenticated") {
           rollback();
           const next = `${window.location.pathname}${window.location.search}`;
-          const params = new URLSearchParams({ intent: "signup", next });
+          const params = new URLSearchParams({ intent: "signup", reason: "reading_progress", next });
           router.push(`/login?${params}`);
         }
       } catch (error) {

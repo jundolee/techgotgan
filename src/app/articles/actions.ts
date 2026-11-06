@@ -20,6 +20,7 @@ import { getCurrentUser, getVerifiedUserId } from "@/lib/supabase/current-user";
 import { canViewArticleSummary } from "@/lib/article-summary-access";
 import { ARTICLE_PAGE_SIZE_OPTIONS, ARTICLE_VIEW_COOKIE } from "@/lib/article-feed-constants";
 import { safeNextPath } from "@/lib/safe-next-path";
+import type { SignupReason } from "@/lib/auth-funnel";
 
 async function getCurrentUserId(): Promise<string | null> {
   const user = await getCurrentUser();
@@ -46,7 +47,7 @@ async function getArticleReadUserId(): Promise<string | null> {
 
 // 즐겨찾기/전체 읽음처럼 계정에 기록하려는 행동은 가입 의도가 높다. 가입 안내를 먼저 보여주고
 // 기존 계정 사용자는 로그인으로 전환할 수 있도록 현재 페이지를 안전한 next 경로로 유지한다.
-async function redirectToSignupIntent(): Promise<never> {
+async function redirectToSignupIntent(reason: SignupReason): Promise<never> {
   const referer = (await headers()).get("referer");
   let next = "/";
   if (referer) {
@@ -56,6 +57,7 @@ async function redirectToSignupIntent(): Promise<never> {
     } catch {}
   }
   const params = new URLSearchParams({ intent: "signup" });
+  params.set("reason", reason);
   if (next !== "/") params.set("next", next);
   redirect(`/login?${params}`);
 }
@@ -192,7 +194,7 @@ export async function setArticleViewPreferenceAction(formData: FormData): Promis
 
 export async function markAllArticlesReadFormAction(formData: FormData): Promise<never> {
   const userId = await getArticleReadUserId();
-  if (!userId) return redirectToSignupIntent();
+  if (!userId) return redirectToSignupIntent("reading_progress");
   await markAllArticlesRead(userId);
 
   const pageSize = pageSizeFromForm(formData);
@@ -201,7 +203,7 @@ export async function markAllArticlesReadFormAction(formData: FormData): Promise
 
 export async function markAllArticlesUnreadAction() {
   const userId = await getCurrentUserId();
-  if (!userId) return redirectToSignupIntent();
+  if (!userId) return redirectToSignupIntent("reading_progress");
   await markAllArticlesUnread(userId);
   revalidatePath("/");
 }

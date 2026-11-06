@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { migrateVisitorDataToUser } from "@/lib/data/articles";
 import { safeNextPath } from "@/lib/safe-next-path";
+import { normalizeSignupReason } from "@/lib/auth-funnel";
 import { LEGACY_VISITOR_COOKIE_NAME, VISITOR_COOKIE_NAME } from "@/lib/visitor";
 
 // rss-parser/cheerio는 아니지만 next/headers의 cookies()를 통해 세션 쿠키를 직접 써야 해서
@@ -12,6 +13,8 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = safeNextPath(searchParams.get("next"));
+  const isSignupIntent = searchParams.get("intent") === "signup";
+  const signupReason = isSignupIntent ? normalizeSignupReason(searchParams.get("reason")) : undefined;
 
   if (code) {
     const supabase = await createClient();
@@ -31,5 +34,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent("로그인에 실패했어요. 다시 시도해주세요.")}`);
+  const loginUrl = new URL("/login", origin);
+  loginUrl.searchParams.set("error", "로그인에 실패했어요. 다시 시도해주세요.");
+  if (isSignupIntent) loginUrl.searchParams.set("intent", "signup");
+  if (next !== "/") loginUrl.searchParams.set("next", next);
+  if (signupReason) loginUrl.searchParams.set("reason", signupReason);
+  return NextResponse.redirect(loginUrl);
 }

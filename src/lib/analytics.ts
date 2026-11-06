@@ -2,6 +2,9 @@
 
 import { getAcquisitionContext } from "@/lib/acquisition-context";
 import { queueAmplitudeEvent } from "@/lib/amplitude-event-queue";
+import type { SignupReason } from "@/lib/auth-funnel";
+
+export type { SignupReason } from "@/lib/auth-funnel";
 
 /** Send search quality metrics without collecting the text a reader searched for. */
 export function trackArticleSearchCompleted(
@@ -96,17 +99,23 @@ export function trackCareerGuideInteraction(action: string, detail: string): voi
 export type AuthMethod = "google" | "email_password";
 export type AuthFlow = "login" | "signup";
 
-export function trackAuthPageViewed(flow: AuthFlow): void {
+export function trackAuthPageViewed(flow: AuthFlow, signupReason?: SignupReason): void {
   queueAmplitudeEvent("auth_page_viewed", {
     auth_flow: flow,
+    ...(signupReason ? { signup_reason: signupReason } : {}),
     ...getAcquisitionContext(),
   });
 }
 
-export function trackAuthAttemptStarted(authMethod: AuthMethod, flow: AuthFlow): void {
+export function trackAuthAttemptStarted(
+  authMethod: AuthMethod,
+  flow: AuthFlow,
+  signupReason?: SignupReason,
+): void {
   queueAmplitudeEvent("auth_attempt_started", {
     auth_method: authMethod,
     auth_flow: flow,
+    ...(signupReason ? { signup_reason: signupReason } : {}),
     ...getAcquisitionContext(),
   });
 }

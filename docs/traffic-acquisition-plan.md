@@ -38,6 +38,8 @@
 
 2026-11-05 PR #195 (`660f5ee0f779ec213072620d0065fd71e39560db`)를 Production에 배포했다. 서버가 로그인된 Supabase 사용자를 확인한 뒤 `authenticated_session_started`와 인증 방식만 `dataLayer`에 보내고, Amplitude에도 동일 전환 이벤트를 보낸다. GTM 컨테이너 `GTM-P2HHB9CG` 버전 6에 GA4 이벤트 태그·맞춤 이벤트 트리거·`auth_method` 변수를 게시했고, GA4의 같은 이벤트를 주요 이벤트로 등록했다. Production의 비로그인 페이지에서 GTM 컨테이너 로드와 가입 화면은 확인했으며 이 세션에서는 인증 이벤트가 발생하지 않았다. GA4 주요 이벤트에도 이벤트가 아직 수신되지 않았다고 표시된다. 따라서 한국 유입과 로그인 화면 방문은 확인됐지만 실제 로그인 전환은 아직 증명되지 않았다. 이후 실제 사용자의 로그인을 기다리고 source/medium별 인증 완료 사용자 수를 확인한다.
 
+2026-11-06 후속 전환 개선에서는 로그인으로 이어지는 행동 이유를 함께 측정한다. 즐겨찾기 저장은 `favorite_save`, 읽음 기록 저장은 `reading_progress`로 나누고, 해당 이유를 `/login?intent=signup`에 전달해 로그인 화면의 안내와 Google 버튼 문구를 행동에 맞춘다. Amplitude `auth_page_viewed`·`auth_attempt_started`에 이 범주만 넣어 어떤 행동이 가입 시도를 만드는지 확인한다. GA4·Amplitude `authenticated_session_started`만 실제 로그인 전환으로 센다. 글 ID, 제목, 이메일, 계정 ID는 보내지 않는다.
+
 ## 채널 우선순위와 실행
 
 | 우선순위 | 채널 | 근거 | 실행 상태 |
