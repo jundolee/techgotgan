@@ -113,7 +113,7 @@ Velog 공개 글은 기술 선택을 면접 답변으로 정리하는 6문장 �
 - **게시 내용:** 제품을 만들다 보면 특정 기술 선택의 배경이 궁금해 여러 회사의 기술 블로그를 찾아보게 됩니다. 글을 놓치거나 어디서 봤는지 다시 찾기 어려워 공개 글을 주제와 발행처별로 모아보는 테크곳간을 만들었습니다. `/topics/frontend`에서 최신 글을 살펴보고, 글 상세에서 발행처 원문으로 이어 읽어보세요. 둘러보기와 원문 읽기는 가입 없이 이용할 수 있습니다. 읽음 표시와 즐겨찾기를 계정에 저장하고 다른 기기에서도 이어서 보려면 무료 회원가입으로 기록을 남길 수 있어요. 어떤 회사 블로그나 주제가 빠졌는지, 원문까지 탐색하는 흐름이 어땠는지 피드백을 받고 싶습니다.
 - **게시된 포스트:** [회사 기술 사례를 찾을 때 블로그 탭을 계속 늘리지 않으려고 만들었습니다](https://disquiet.io/posts/BgC2zp). 기존 테크곳간 제품에 연결했다.
 - **주제 허브 링크:** `https://www.techgotgan.co.kr/topics/frontend?utm_source=disquiet&utm_medium=maker_post&utm_campaign=techgotgan_disquiet_2026q4`
-- **가입 CTA:** `https://www.techgotgan.co.kr/login?intent=signup&utm_source=disquiet&utm_medium=maker_post_signup&utm_campaign=techgotgan_disquiet_2026q4`
+- **가입 CTA:** `https://www.techgotgan.co.kr/login?intent=signup&reason=reading_progress&utm_source=disquiet&utm_medium=maker_post_signup&utm_campaign=techgotgan_disquiet_2026q4`. 2026-11-06 Production 가입 화면은 이 링크에서 읽음 기록 저장 이유에 맞춘 안내와 Google 버튼 문구를 보여준다.
 - **상태(2026-11-05):** 승인된 Maker 포스트를 공개했고 공개 URL과 두 UTM 링크가 HTTP 200을 반환했다. 제품 방문 URL 수정은 플랫폼 관리자 검토 대기 중이다. 게시 공개 자체는 방문·가입·로그인 전환 증거가 아니므로 GA4와 Amplitude의 인증 완료 이벤트를 따로 확인한다.
 - **판정:** UTM 세션, `article_search_completed`, `source_article_click`, 공유, 7일 재방문을 따로 본다. 30명 미만이면 성공/실패를 단정하지 않고 표본 부족으로 둔다.
 
