@@ -9,16 +9,22 @@ import { SITE_URL } from "./seo";
 const CAREER_GUIDE_LAST_MODIFIED = "2026-10-30T01:43:53.000Z";
 const PRODUCT_TEAMS_LAST_MODIFIED = "2026-11-05T14:40:49.000Z";
 const PRODUCT_SEARCH_GUIDE_LAST_MODIFIED = "2026-11-05T14:40:49.000Z";
-const HOME_LAST_MODIFIED = "2026-10-30T02:50:15.000Z";
+const HOME_LAST_MODIFIED = "2026-11-06T02:56:15.000Z";
+const TOPICS_INDEX_LAST_MODIFIED = "2026-11-06T03:07:00.000Z";
 const STATIC_TOPIC_LAST_MODIFIED: Record<string, string> = {
-  ai_ml: "2026-11-05T10:01:13.000Z",
-  backend: "2026-11-05T10:01:13.000Z",
-  frontend: "2026-10-30T01:37:00.000Z",
+  ai_ml: "2026-11-06T02:56:15.000Z",
+  backend: "2026-11-06T02:56:15.000Z",
+  frontend: "2026-11-06T02:56:15.000Z",
+  devops: "2026-11-06T02:56:15.000Z",
+  mobile: "2026-11-06T02:56:15.000Z",
+  data: "2026-11-06T02:56:15.000Z",
+  culture: "2026-11-06T02:56:15.000Z",
+  general: "2026-11-06T02:56:15.000Z",
 };
 const STATIC_BLOG_LAST_MODIFIED: Record<string, string> = {
   "토스-기술-블로그-토스-테크-toss-tech": "2026-10-30T02:03:59.000Z",
 };
-const BLOG_INDEX_LAST_MODIFIED = "2026-10-30T02:15:00.000Z";
+const BLOG_INDEX_LAST_MODIFIED = "2026-11-06T03:00:21.000Z";
 
 function latestContentDate<T extends { discovered_at?: string | null; published_at?: string | null }>(
   items: T[]
@@ -75,7 +81,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${SITE_URL}/topics`,
-      lastModified: topicsIndexLastModified ?? undefined,
+      lastModified: latestDate([topicsIndexLastModified ?? null, TOPICS_INDEX_LAST_MODIFIED]),
       changeFrequency: "weekly",
       priority: 0.8,
     },

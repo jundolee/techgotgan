@@ -7,8 +7,8 @@ import { PageHeader } from "@/components/page-header";
 import { getPublicCategoryIndex } from "@/lib/data/public-hubs";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
 
-const TITLE = "테크 주제별 최신 글";
-const DESCRIPTION = "AI, 프론트엔드, 백엔드, DevOps, 데이터 등 주제별로 테크 블로그의 최신 글을 찾아보세요.";
+const TITLE = "기술 블로그 주제별 최신 글";
+const DESCRIPTION = "프론트엔드, 백엔드, AI·머신러닝, DevOps 등 기술 주제별로 기업 테크 블로그의 최신 글을 찾아 원문까지 읽어보세요.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -38,9 +38,9 @@ export default async function TopicsPage() {
       <PageHeader navHref="/" navLabel="전체 글" />
       <header style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-          <Text as="h1" textStyle="t8Bold" color="fg.neutral">테크 주제별 최신 글</Text>
+          <Text as="h1" textStyle="t8Bold" color="fg.neutral">{TITLE}</Text>
           {categories.length > 0 && (
-            <ShareButton title="테크 주제별 최신 글" url="/topics" size="small" variant="neutralWeak" shareSurface="topic_directory" shareCampaign="topic_directory_share_2026q4" />
+            <ShareButton title={TITLE} url="/topics" size="small" variant="neutralWeak" shareSurface="topic_directory" shareCampaign="topic_directory_share_2026q4" />
           )}
         </div>
         <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">{DESCRIPTION}</Text>

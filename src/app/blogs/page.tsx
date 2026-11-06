@@ -14,8 +14,8 @@ export const runtime = "nodejs";
 export const fetchCache = "default-cache";
 
 const CANONICAL_URL = `${SITE_URL}/blogs`;
-const TITLE = "기업 기술 블로그 모음 | 최신 IT·개발 글";
-const DESCRIPTION = "토스·당근 등 기업과 개발자가 운영하는 국내외 기술 블로그를 발행처별로 모았습니다. 최신 글의 제목과 요약을 살펴보고, 관심 있는 글은 원문으로 이어 읽어보세요.";
+const TITLE = "기술 블로그 모음 | 국내외 기업 최신 글";
+const DESCRIPTION = "국내외 기업의 기술 블로그를 회사별로 찾아보세요. 최신 개발 글의 제목과 요약을 살펴보고 관심 있는 글은 원문으로 이어 읽을 수 있습니다.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -66,6 +66,31 @@ export default async function BlogsPage() {
           {DESCRIPTION}
         </Text>
       </header>
+
+      <section aria-labelledby="directory-guide" style={{ display: "grid", gap: 8 }}>
+        <Text as="h2" id="directory-guide" textStyle="t5Bold" color="fg.neutral">
+          회사별 기술 블로그와 최신 개발 글 찾기
+        </Text>
+        <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)">
+          회사 이름을 선택하면 해당 기술 블로그에서 최근 수집한 글을 볼 수 있습니다. 글 제목을 열어 요약과 태그를 살펴본 뒤 원문으로 이동하세요. 검색어가 정해져 있다면 전체 글에서 검색하고, 주제로 둘러보려면{" "}
+          <Link href="/topics" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+            기술 블로그 주제별 최신 글
+          </Link>
+          을 확인할 수 있습니다. 목록과 원문은 로그인 없이 이용할 수 있습니다.
+        </Text>
+      </section>
+
+      <section aria-labelledby="collection-method" style={{ display: "grid", gap: 8 }}>
+        <Text as="h2" id="collection-method" textStyle="t5Bold" color="fg.neutral">
+          기술 블로그 수집 방식과 원문 출처
+        </Text>
+        <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)">
+          공개 RSS·Atom 피드를 우선 이용하고, 피드가 없는 발행처는 공개 페이지의 글 정보를 읽어 목록을 만듭니다. 테크곳간은 글 제목과 요약, 발행처를 보여주고 원문은 작성한 회사의 블로그로 연결합니다. 찾는 회사 기술 블로그가 목록에 없다면{" "}
+          <Link href="/suggest" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+            블로그 추가를 제안해 주세요
+          </Link>.
+        </Text>
+      </section>
 
       <p className="blog-suggestion-note">
         찾는 블로그가 없나요?{" "}

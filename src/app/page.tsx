@@ -188,10 +188,10 @@ export default async function Home({
         color="fg.neutral"
         style={{ marginBottom: 8 }}
       >
-        흩어진 테크 블로그 글을 한곳에서 찾아 읽어요
+        기술 블로그 최신 글을 한곳에서 찾아 읽어요
       </Text>
       <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)" style={{ marginBottom: 20 }}>
-        여러 기술 블로그의 새 글을 제목·요약·태그로 검색하고 주제별·블로그별로 살펴볼 수 있어요. 글 상세와 원문은 로그인 없이 볼 수 있고, 로그인하면 읽음 표시와 즐겨찾기를 동기화하고 개인 노트를 저장할 수 있어요.
+        국내외 기업의 테크 블로그 새 글을 제목·요약·태그로 검색하고, 프론트엔드·백엔드·AI 같은 주제나 발행처별로 살펴보세요. 글 상세와 원문은 로그인 없이 읽을 수 있습니다.
       </Text>
       <Text as="p" textStyle="t2Regular" color="var(--seed-color-fg-neutral-muted)" style={{ marginTop: -12, marginBottom: 20 }}>
         <Link href="/blogs" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
