@@ -5,19 +5,23 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { migrateVisitorDataToUser } from "@/lib/data/articles";
 import { safeNextPath } from "@/lib/safe-next-path";
+import { normalizeSignupReason, type SignupReason } from "@/lib/auth-funnel";
+import type { AuthFlow } from "@/lib/analytics";
 import { LEGACY_VISITOR_COOKIE_NAME, VISITOR_COOKIE_NAME } from "@/lib/visitor";
 
 type OAuthProvider = "google";
 
-function redirectToSignupError(message: string, next: string): never {
+function redirectToSignupError(message: string, next: string, reason?: SignupReason): never {
   const params = new URLSearchParams({ intent: "signup", error: message });
   if (next !== "/") params.set("next", next);
+  if (reason) params.set("reason", reason);
   redirect(`/login?${params}`);
 }
 
-function redirectToSignupConfirmation(next: string): never {
+function redirectToSignupConfirmation(next: string, reason?: SignupReason): never {
   const params = new URLSearchParams({ intent: "signup", status: "confirmation_sent" });
   if (next !== "/") params.set("next", next);
+  if (reason) params.set("reason", reason);
   redirect(`/login?${params}`);
 }
 
@@ -40,11 +44,19 @@ async function getOrigin(): Promise<string> {
   return `${proto}://${host}`;
 }
 
-export async function signInWithProviderAction(provider: OAuthProvider, next: string, _formData: FormData) {
+export async function signInWithProviderAction(
+  provider: OAuthProvider,
+  next: string,
+  flow: AuthFlow,
+  signupReason: SignupReason | undefined,
+  _formData: FormData,
+) {
   void _formData;
   const origin = await getOrigin();
   const callbackUrl = new URL("/auth/callback", origin);
   callbackUrl.searchParams.set("next", safeNextPath(next));
+  if (flow === "signup") callbackUrl.searchParams.set("intent", "signup");
+  if (flow === "signup" && signupReason) callbackUrl.searchParams.set("reason", signupReason);
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -57,7 +69,11 @@ export async function signInWithProviderAction(provider: OAuthProvider, next: st
   });
 
   if (error || !data.url) {
-    redirect(`/login?error=${encodeURIComponent(error?.message ?? "로그인을 시작하지 못했어요")}`);
+    const params = new URLSearchParams({ error: error?.message ?? "로그인을 시작하지 못했어요" });
+    if (flow === "signup") params.set("intent", "signup");
+    if (next !== "/") params.set("next", safeNextPath(next));
+    if (flow === "signup" && signupReason) params.set("reason", signupReason);
+    redirect(`/login?${params}`);
   }
   redirect(data.url);
 }
@@ -68,17 +84,20 @@ export async function signUpAction(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
   const next = safeNextPath(formData.get("next"));
+  const signupReason = normalizeSignupReason(formData.get("reason"));
 
   if (!nickname || !email || !password) {
-    redirectToSignupError("닉네임, 이메일, 비밀번호를 입력해주세요", next);
+    redirectToSignupError("닉네임, 이메일, 비밀번호를 입력해주세요", next, signupReason);
   }
   if (password !== passwordConfirm) {
-    redirectToSignupError("비밀번호가 서로 일치하지 않아요", next);
+    redirectToSignupError("비밀번호가 서로 일치하지 않아요", next, signupReason);
   }
 
   const origin = await getOrigin();
   const emailRedirectTo = new URL("/auth/callback", origin);
   emailRedirectTo.searchParams.set("next", next);
+  emailRedirectTo.searchParams.set("intent", "signup");
+  if (signupReason) emailRedirectTo.searchParams.set("reason", signupReason);
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
@@ -88,11 +107,11 @@ export async function signUpAction(formData: FormData) {
   });
 
   if (error) {
-    redirectToSignupError(error.message, next);
+    redirectToSignupError(error.message, next, signupReason);
   }
   // Supabase returns a user with no session when email confirmation is required. Do not
   // redirect as if the person were logged in; the email callback completes the actual session.
-  if (!data.session) redirectToSignupConfirmation(next);
+  if (!data.session) redirectToSignupConfirmation(next, signupReason);
 
   if (data.user) {
     await migrateVisitorDataIfNeeded(data.user.id);

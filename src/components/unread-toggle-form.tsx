@@ -27,7 +27,7 @@ export function UnreadToggleForm({ articleId, compact = false, onReadChange }: {
         if (result === "unauthenticated") {
           onReadChange?.(articleId, true);
           const next = `${window.location.pathname}${window.location.search}`;
-          const params = new URLSearchParams({ intent: "signup", next });
+          const params = new URLSearchParams({ intent: "signup", reason: "reading_progress", next });
           router.push(`/login?${params}`);
         }
       } catch (error) {

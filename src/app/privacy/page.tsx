@@ -50,7 +50,8 @@ export default function PrivacyPolicyPage() {
             <li>Google Analytics 4가 수집하는 대략적인 위치, 브라우저·기기 정보 및 브라우저별 client ID</li>
             <li>Amplitude 분석용 페이지 경로, 허용 형식의 UTM source·medium·campaign 값, 외부 유입 도메인</li>
             <li>원문 링크 클릭 시 클릭 위치와 발행 도메인 (Amplitude 분석 이벤트)</li>
-            <li>회원가입/로그인 화면 조회·제출 여부와 서버에서 확인한 인증 세션 시작 여부, 인증 방식(구글/이메일) (GA4 및 Amplitude 분석 이벤트)</li>
+            <li>Amplitude 회원가입/로그인 분석 이벤트가 수집하는 흐름, 저장 의도 분류(즐겨찾기·읽음 기록), 인증 방식</li>
+            <li>GA4와 Amplitude가 수집하는 서버 확인 인증 세션 시작 여부와 인증 방식(구글/이메일)</li>
             <li>기사·주간 큐레이션·기업별 읽기 안내·주제/블로그 페이지의 공유 동작 완료 여부, 공유 방식과 화면 유형 (Amplitude 분석 이벤트)</li>
           </ul>
         </Section>
@@ -114,7 +115,7 @@ export default function PrivacyPolicyPage() {
             <li>Google Analytics 4 및 Amplitude 분석 이벤트에는 로그인 이메일, 실명, 계정 ID와 같은 개인정보를 포함하지 않으며, 주소창의 검색어(q 파라미터) 역시 가려진 상태로 처리됩니다.</li>
             <li>Amplitude는 페이지 경로와 30분 비활동 후 만료되는 세션 기준의 유입 정보(UTM source·medium·campaign, 외부 유입 도메인)를 수집합니다. UTM 값은 영문·숫자·점·밑줄·하이픈 형식만 사용합니다.</li>
             <li>원문 링크 클릭 이벤트에는 화면 유형과 발행 도메인만 포함하며, 원문 주소·기사 제목·기사 식별자는 전송하지 않습니다.</li>
-            <li>가입/로그인 분석 이벤트(auth_page_viewed, auth_attempt_started, authenticated_session_started)에는 화면 흐름, 인증 방식, 서버에서 확인한 인증 세션 시작 여부만 포함합니다. 로그인 이메일, 실명, Supabase 계정 ID는 분석 도구에 전송하지 않습니다.</li>
+            <li>Amplitude 회원가입/로그인 이벤트(auth_page_viewed, auth_attempt_started)에는 화면 흐름, 저장 의도 분류(favorite_save, reading_progress), 인증 방식만 포함합니다. GA4와 Amplitude의 인증 완료 이벤트(authenticated_session_started)에는 인증 방식만 포함합니다. 로그인 이메일, 실명, Supabase 계정 ID, 글 제목·식별자는 분석 도구에 전송하지 않습니다.</li>
             <li>공유 분석 이벤트에는 공유 동작을 완료한 방식(브라우저 공유 또는 링크 복사)과 화면 유형(기사, 주간 큐레이션, 기업별 읽기 안내, 주제 디렉터리·허브, 블로그 디렉터리·허브)만 포함하며, 제목·식별자·URL은 전송하지 않습니다. 링크를 받은 사람의 실제 방문은 공유 URL의 UTM으로 별도 집계합니다.</li>
           </ul>
         </Section>

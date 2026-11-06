@@ -35,7 +35,7 @@ export function FavoriteToggleForm({
         if (result === "unauthenticated") {
           onChange?.(articleId, isFavorite);
           const next = `${window.location.pathname}${window.location.search}`;
-          const params = new URLSearchParams({ intent: "signup", next });
+          const params = new URLSearchParams({ intent: "signup", reason: "favorite_save", next });
           router.push(`/login?${params}`);
         }
       } catch (error) {
