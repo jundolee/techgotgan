@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { Text } from "@seed-design/react";
 import { ShareButton } from "@/components/share-button";
 import { PageHeader } from "@/components/page-header";
-import { getPublicCategoryIndex } from "@/lib/data/public-hubs";
+import { getPublicCategoryIndex, getPublicTechnologyIndex } from "@/lib/data/public-hubs";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
 
 const TITLE = "기술 블로그 주제별 최신 글";
@@ -22,7 +22,7 @@ export const fetchCache = "default-cache";
 
 export default async function TopicsPage() {
   await connection();
-  const categories = await getPublicCategoryIndex();
+  const [categories, technologies] = await Promise.all([getPublicCategoryIndex(), getPublicTechnologyIndex()]);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -63,6 +63,26 @@ export default async function TopicsPage() {
           );
         })}
       </ul>
+      {technologies.length > 0 && (
+        <section aria-labelledby="technology-index" style={{ display: "grid", gap: 12 }}>
+          <Text as="h2" id="technology-index" textStyle="t6Bold" color="fg.neutral">
+            기술 용어로 회사 기술 블로그 찾기
+          </Text>
+          <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)">
+            React, TypeScript, Kubernetes처럼 기술 이름을 기준으로 관련 글과 발행처를 살펴보세요.
+          </Text>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {technologies.map(({ term }) => (
+              <Link key={term.slug} href={`/technologies/${term.slug}`} style={{ border: "1px solid var(--seed-color-stroke-neutral-subtle)", borderRadius: 999, padding: "7px 12px" }}>
+                {term.label} 기술 블로그
+              </Link>
+            ))}
+            <Link href="/technologies" style={{ alignSelf: "center", textDecoration: "underline", textUnderlineOffset: 3 }}>
+              기술별 전체 보기 →
+            </Link>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
