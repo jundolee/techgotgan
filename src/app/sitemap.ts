@@ -12,6 +12,7 @@ const PRODUCT_SEARCH_GUIDE_LAST_MODIFIED = "2026-11-05T14:40:49.000Z";
 const HOME_LAST_MODIFIED = "2026-11-06T03:24:18.000Z";
 const TOPICS_INDEX_LAST_MODIFIED = "2026-11-06T03:24:18.000Z";
 const TECHNOLOGY_INDEX_LAST_MODIFIED = "2026-11-06T03:24:18.000Z";
+const TECHNOLOGY_TERMS_LAST_MODIFIED = "2026-11-06T03:29:39.000Z";
 const STATIC_TOPIC_LAST_MODIFIED: Record<string, string> = {
   ai_ml: "2026-11-06T02:56:15.000Z",
   backend: "2026-11-06T02:56:15.000Z",
@@ -104,7 +105,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           },
           ...technologies.map((technology) => ({
             url: `${SITE_URL}/technologies/${technology.term.slug}`,
-            lastModified: technology.lastModified ?? undefined,
+            lastModified: latestDate([technology.lastModified, TECHNOLOGY_TERMS_LAST_MODIFIED]),
             changeFrequency: "daily" as const,
             priority: 0.7,
           })),
