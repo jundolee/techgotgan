@@ -38,7 +38,7 @@
 
 2026-11-05 PR #195 (`660f5ee0f779ec213072620d0065fd71e39560db`)를 Production에 배포했다. 서버가 로그인된 Supabase 사용자를 확인한 뒤 `authenticated_session_started`와 인증 방식만 `dataLayer`에 보내고, Amplitude에도 동일 전환 이벤트를 보낸다. GTM 컨테이너 `GTM-P2HHB9CG` 버전 6에 GA4 이벤트 태그·맞춤 이벤트 트리거·`auth_method` 변수를 게시했고, GA4의 같은 이벤트를 주요 이벤트로 등록했다. Production의 비로그인 페이지에서 GTM 컨테이너 로드와 가입 화면은 확인했으며 이 세션에서는 인증 이벤트가 발생하지 않았다. GA4 주요 이벤트에도 이벤트가 아직 수신되지 않았다고 표시된다. 따라서 한국 유입과 로그인 화면 방문은 확인됐지만 실제 로그인 전환은 아직 증명되지 않았다. 이후 실제 사용자의 로그인을 기다리고 source/medium별 인증 완료 사용자 수를 확인한다.
 
-2026-11-06 후속 전환 개선에서는 로그인으로 이어지는 행동 이유를 함께 측정한다. 즐겨찾기 저장은 `favorite_save`, 읽음 기록 저장은 `reading_progress`로 나누고, 해당 이유를 `/login?intent=signup`에 전달해 로그인 화면의 안내와 Google 버튼 문구를 행동에 맞춘다. Amplitude `auth_page_viewed`·`auth_attempt_started`에 이 범주만 넣어 어떤 행동이 가입 시도를 만드는지 확인한다. GA4·Amplitude `authenticated_session_started`만 실제 로그인 전환으로 센다. 글 ID, 제목, 이메일, 계정 ID는 보내지 않는다.
+2026-11-06 후속 전환 개선(PR #207)에서는 로그인으로 이어지는 행동 이유를 함께 측정한다. 즐겨찾기 저장은 `favorite_save`, 읽음 기록 저장은 `reading_progress`로 나누고, 해당 이유를 `/login?intent=signup`에 전달해 안내와 Google 버튼 문구를 행동에 맞췄다. Amplitude `auth_page_viewed`·`auth_attempt_started`에는 이 범주만 넣는다. GA4·Amplitude `authenticated_session_started`는 서버가 Supabase 로그인 세션을 확인한 뒤에만 발생한다. 글 ID, 제목, 이메일, 계정 ID는 보내지 않는다. 11-06 Amplitude Live Events에는 해당 로그인 이벤트 1건이 잠시 표시됐으나 Metric Explorer 고유 사용자 집계는 0이고 GA4 주요 이벤트도 스트림 데이터가 감지되지 않았다. 환경·유입원을 확인할 수 없어 실제 Production 가입 전환으로 세지 않고 보류한다.
 
 ## 채널 우선순위와 실행
 
@@ -108,13 +108,13 @@ Velog 공개 글은 기술 선택을 면접 답변으로 정리하는 6문장 �
 - **제품명:** 테크곳간
 - **한 줄 소개:** 여러 회사의 기술 블로그 글을 주제와 발행처별로 찾아보고 원문까지 이어 읽는 공개 피드.
 - **기존 제품 페이지:** `https://disquiet.io/products/3a38bc03-d2f0-4250-a056-46f004e042e2`. 2026-11-05 확인에서 소개 문안은 기능과 맞고, 아직 연결된 포스트가 없었다. 제품을 새로 중복 등록하지 않는다.
-- **기존 방문 링크:** 기존 공개 페이지는 `utm_source=disquiet&utm_medium=product_listing&utm_campaign=disquiet_product_2026w44`를 사용했다. 2026-11-05 기존 제품 설정에서 방문 링크를 `https://www.techgotgan.co.kr/?utm_source=disquiet&utm_medium=product&utm_campaign=techgotgan_disquiet_2026q4`로 바꾸는 수정안을 제출했다. 플랫폼 검토 전까지 공개 페이지의 방문 버튼은 이전 UTM을 유지한다.
+- **현재 방문 링크:** 2026-11-06 플랫폼 검토 후 기존 공개 제품 페이지의 방문 버튼이 `https://www.techgotgan.co.kr/?utm_source=disquiet&utm_medium=product&utm_campaign=techgotgan_disquiet_2026q4`로 갱신된 것을 확인했다.
 - **Maker 포스트 제목:** 회사 기술 사례를 찾을 때 블로그 탭을 계속 늘리지 않으려고 만들었습니다.
 - **게시 내용:** 제품을 만들다 보면 특정 기술 선택의 배경이 궁금해 여러 회사의 기술 블로그를 찾아보게 됩니다. 글을 놓치거나 어디서 봤는지 다시 찾기 어려워 공개 글을 주제와 발행처별로 모아보는 테크곳간을 만들었습니다. `/topics/frontend`에서 최신 글을 살펴보고, 글 상세에서 발행처 원문으로 이어 읽어보세요. 둘러보기와 원문 읽기는 가입 없이 이용할 수 있습니다. 읽음 표시와 즐겨찾기를 계정에 저장하고 다른 기기에서도 이어서 보려면 무료 회원가입으로 기록을 남길 수 있어요. 어떤 회사 블로그나 주제가 빠졌는지, 원문까지 탐색하는 흐름이 어땠는지 피드백을 받고 싶습니다.
 - **게시된 포스트:** [회사 기술 사례를 찾을 때 블로그 탭을 계속 늘리지 않으려고 만들었습니다](https://disquiet.io/posts/BgC2zp). 기존 테크곳간 제품에 연결했다.
 - **주제 허브 링크:** `https://www.techgotgan.co.kr/topics/frontend?utm_source=disquiet&utm_medium=maker_post&utm_campaign=techgotgan_disquiet_2026q4`
 - **가입 CTA:** `https://www.techgotgan.co.kr/login?intent=signup&reason=reading_progress&utm_source=disquiet&utm_medium=maker_post_signup&utm_campaign=techgotgan_disquiet_2026q4`. 2026-11-06 Production 가입 화면은 이 링크에서 읽음 기록 저장 이유에 맞춘 안내와 Google 버튼 문구를 보여준다.
-- **상태(2026-11-05):** 승인된 Maker 포스트를 공개했고 공개 URL과 두 UTM 링크가 HTTP 200을 반환했다. 제품 방문 URL 수정은 플랫폼 관리자 검토 대기 중이다. 게시 공개 자체는 방문·가입·로그인 전환 증거가 아니므로 GA4와 Amplitude의 인증 완료 이벤트를 따로 확인한다.
+- **상태(2026-11-06):** 기존 제품 방문 링크 UTM이 새 캠페인으로 승인·공개됐고, Maker 포스트 `BgC2zp`와 CTA `reason=reading_progress` 갱신도 공개됐다. 포스트 및 주제·가입 CTA URL은 각각 HTTP 200이다. 공개·200은 방문이나 로그인 증거가 아니므로 GA4/Amplitude의 `authenticated_session_started`와 캠페인 source/medium을 별도로 확인한다.
 - **판정:** UTM 세션, `article_search_completed`, `source_article_click`, 공유, 7일 재방문을 따로 본다. 30명 미만이면 성공/실패를 단정하지 않고 표본 부족으로 둔다.
 
 ### 주제·블로그 허브 공유 루프 (2026-11-04 준비)
