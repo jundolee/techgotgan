@@ -227,6 +227,42 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
   },
 ];
 
+const PUBLIC_TECHNOLOGY_MATCH_TERMS: Record<string, string[]> = {
+  react: ["react", "리액트"],
+  nextjs: ["next.js", "nextjs", "넥스트.js"],
+  typescript: ["typescript", "타입스크립트"],
+  css: ["css", "tailwind"],
+  spring: ["spring", "스프링"],
+  kubernetes: ["kubernetes", "k8s", "쿠버네티스"],
+  docker: ["docker", "도커"],
+  llm: ["llm", "gpt", "claude", "대규모 언어 모델", "large language model"],
+  rag: ["rag", "검색 증강 생성", "retrieval augmented generation", "임베딩", "벡터 검색"],
+  agent: ["agent", "에이전트"],
+  cloud: ["cloud", "aws", "gcp", "클라우드"],
+  cicd: ["ci/cd", "cicd", "continuous integration", "continuous delivery", "지속적 통합", "지속적 배포"],
+  spark: ["spark", "스파크"],
+  sql: ["sql", "쿼리", "query"],
+  database: ["database", "데이터베이스", "db", "mysql", "postgresql", "postgres", "redis", "mongodb", "rdbms"],
+  go: ["go", "golang", "고랭"],
+  "cross-platform": ["cross-platform", "cross platform", "크로스 플랫폼", "flutter", "react native"],
+  ios: ["ios", "swift", "swiftui"],
+  android: ["android", "안드로이드", "kotlin"],
+  kafka: ["kafka", "카프카"],
+};
+
+function matchesTechnologyTermText(title: string, excerpt: string | null, termSlug: string): boolean {
+  const text = `${title} ${excerpt ?? ""}`.normalize("NFKC").toLowerCase();
+  const terms = PUBLIC_TECHNOLOGY_MATCH_TERMS[termSlug] ?? [];
+  return terms.some((rawTerm) => {
+    const term = rawTerm.normalize("NFKC").toLowerCase();
+    if (/^[a-z0-9]+$/.test(term)) {
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`).test(text);
+    }
+    return text.includes(term);
+  });
+}
+
 // 검색어가 가리키는 주제와 페이지의 실제 내용을 맞추기 위해 카테고리별 설명을 따로 둔다.
 // id는 수집 파이프라인이 저장하는 표준 category 값과 동일하다.
 export const PUBLIC_CATEGORY_META: Record<ArticleCategory, PublicCategoryMeta> = {
@@ -503,7 +539,12 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
   );
 
   const articles = rows
-    .filter((row) => row.category === term.category && row.tags?.some((tag) => tag.toLowerCase() === term.tag))
+    .filter(
+      (row) =>
+        row.category === term.category &&
+        row.tags?.some((tag) => tag.toLowerCase() === term.tag) &&
+        matchesTechnologyTermText(row.title, row.excerpt, term.slug)
+    )
     .map((row) => ({
       id: row.id,
       title: row.title,
