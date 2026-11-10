@@ -142,5 +142,6 @@
 - 네이버 D2: 오탈자나 별칭으로 검색해도 사용자가 원하는 대상을 찾을 수 있는가?
 - 모바일은 기본 공유 시트를, 데스크톱은 질문과 사례 링크 복사를 제공한다. 수집 이벤트에는 질문 문장이나 기사 제목을 넣지 않는다.
 - 수신 링크는 `utm_source=techgotgan`, `utm_medium=team_prompt`와 사례별 `problem_case_prompt_*_2026w46` 캠페인을 사용한다. `share_action_completed`의 `share_surface=case_collection`, 수신자의 UTM 방문, 기사 열기, 원문 이동을 각각 확인한다.
-- 구현 상태: 코드에서 세 질문·공유 동작을 만들고 `npm run lint`/`npm run build`를 확인했다. Production 반영 전이며 공유 지표는 아직 없다.
+- 배포: PR #221이 `42dfaec81d4382a4bec0de95056d381b7a66d842`로 병합됐다. Vercel Production 배포 `A49ME5M1GHN8rTrBtLcVt4zzF6ri`가 `Ready`이며 `/cases`는 1440px·390px에서 문제없이 표시된다.
+- 공유 QA: 각 카드의 질문과 `회의 질문 공유` 버튼을 데스크톱·모바일에서 확인했다. 브라우저가 네이티브 공유를 지원해 QA 중 공유 시트나 복사 기능은 실행하지 않았다. 공유 성과는 아직 없다.
 - 배포/성과 판정은 별도 기록한다. 공유 동작 클릭만으로 외부 도달이나 유입 성공으로 계산하지 않는다.
