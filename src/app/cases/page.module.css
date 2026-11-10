@@ -49,6 +49,51 @@
   font-size: 14px;
 }
 
+.problemPicker {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--seed-color-stroke-neutral-subtle, #e2e2e2);
+  border-radius: 16px;
+  background: #faf9f7;
+}
+
+.problemPicker h2 {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.problemOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.problemOptions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid #ddd9d4;
+  border-radius: 999px;
+  background: #fff;
+  color: #4c453f;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.problemOptions a:hover {
+  transform: translateY(-1px);
+  background: #fff3eb;
+}
+
+.problemOptions a:focus-visible {
+  outline: 3px solid #f4a477;
+  outline-offset: 3px;
+}
+
 .caseList {
   display: grid;
   gap: 16px;
