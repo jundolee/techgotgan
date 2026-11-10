@@ -30,7 +30,8 @@ export function ShareButton({
     | "blog_directory"
     | "blog_hub"
     | "audience_landing"
-    | "content_guide";
+    | "content_guide"
+    | "case_collection";
   shareCampaign?: string;
 }) {
   const [copied, setCopied] = useState(false);

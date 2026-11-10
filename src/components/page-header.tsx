@@ -25,6 +25,7 @@ export function PageHeader({
           <details className="page-header-explore">
             <summary><span>둘러보기</span><span className="page-header-explore-chevron" aria-hidden="true"><Icon svg={<IconChevronDownSmallLine />} /></span></summary>
             <nav aria-label="콘텐츠 탐색">
+              <Link href="/cases">문제 해결 사례</Link>
               <Link href="/topics">주제별 글</Link>
               <Link href="/blogs">블로그 목록</Link>
               <Link href="/digest">주간 큐레이션</Link>

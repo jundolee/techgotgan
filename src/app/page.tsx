@@ -198,6 +198,10 @@ export default async function Home({
           기업 기술 블로그별 최신 글 보기 →
         </Link>
         {" · "}
+        <Link href="/cases" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+          문제 해결 사례 보기 →
+        </Link>
+        {" · "}
         <Link href="/technologies" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
           React·TypeScript 등 기술별 최신 글 →
         </Link>

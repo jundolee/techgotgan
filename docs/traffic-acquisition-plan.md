@@ -1,5 +1,7 @@
 # 테크곳간 유입 증가 계획
 
+> **2026-11-10 최신 실험:** 개발자·취업 준비자를 우선 타겟으로 한 이전 실험과 별도로, “문제–해결–결과”가 선명한 기업 사례를 짧게 소개해 더 넓은 실무 독자에게 알리는 게시물을 Velog에 공개했다. 게시 문안·UTM·판정 기준과 14일 관찰 로그는 [문제 해결 사례 콘텐츠 실험](problem-solving-stories-experiment.md)을 따른다. 외부 공개 완료와 실제 유입 성과는 구분한다.
+
 ## 목표와 범위
 
 한국어 채널을 이용하는 **회사 엔지니어링 사례를 찾는 국내 소프트웨어 개발자**를 우선 타겟으로 둔다. 첫 하위 집단은 토스 프론트엔드 지원·조사를 준비하는 개발자이고, 다음은 특정 주제의 구현 사례를 찾는 개발자다. 한국 거주 여부를 분석 이벤트로 추정하지 않고, 한국어 콘텐츠·채널별 캠페인으로 타겟한다.
@@ -98,7 +100,10 @@ Velog 공개 글은 기술 선택을 면접 답변으로 정리하는 6문장 �
 - **2026-11-05 구현 확인:** `/for-product-teams` 랜딩, 홈·둘러보기·블로그 목록·README의 진입 링크, 공유 이벤트 분류, sitemap 항목을 추가했다. `npm run build`, TypeScript 검사, 변경 파일 ESLint가 통과했고 로컬 SSR은 HTTP 200 및 canonical·기획자/개발자 문구·검색/주제 링크를 반환했다. 로컬 환경에는 Supabase 자격 증명이 없어 추천 검색 결과 샘플은 대체 문구로 표시됐다.
 - **2026-11-05 Production 확인:** PR #190 (`2459d1375733853b8a5bb1e0849a68af7a216cb6`)을 09:33 UTC에 병합했다. Vercel Production 배포 `7570051388`은 09:33:57 UTC에 `success`가 됐다. 09:38 UTC 확인에서 랜딩, 홈, 블로그 목록, sitemap 모두 HTTP 200이었고 랜딩 canonical, 기획자·개발자 섹션, 실제 추천 결과 2건, sitemap 경로를 확인했다. 추천·검색·결제 검색 URL과 프론트엔드·백엔드·AI/ML 주제 허브도 각각 HTTP 200과 글 결과를 반환했다.
 - **유입 판정:** 페이지와 분석 경로가 공개됐지만 이 요청에 의한 Production 응답 확인은 실제 사용자 방문이 아니다. 외부 게시물은 아직 공개하지 않았으며 세션·원문 이동 성과는 계속 측정해야 한다.
-- **현 상태:** 공개 랜딩과 GitHub README 진입 링크가 활성화됐다. 대상 경로 클릭은 `audience_landing_action`으로 익명 측정하며 검색어와 기사 제목은 보내지 않는다. 다음 단계는 기획자용 Maker 포스트 한 건을 배포하고 UTM·검색·원문 이동을 관찰하는 것이다.
+- **현 상태:** 공개 랜딩, GitHub README 진입 링크, 기획자용 Maker 4편이 공개됐다. 대상 경로 클릭은 `audience_landing_action`으로 익명 측정하며 검색어와 기사 제목은 보내지 않는다.
+- **실제 캠페인 확인(2026-11-10):** GA4 `maker_ep04_product_research_2026q4`는 2026-11-06~11-10 자료에서 QA 제외 후 세션·가이드 랜딩 모두 0으로 관측됐다. `product_manager_research_techgotgan_2026q4`도 조회한 같은 기간 0세션이었다. 캠페인 UTM으로 귀속된 방문이 확인되지 않은 것이며, 개인 블로그 노출이나 외부 링크 클릭은 별도로 확인하지 않았다.
+- **Search Console 확인(2026-11-10):** `/blogs`는 2026-10-20~11-08 61노출·1클릭·CTR 1.6%·평균 순위 8.5였다. 페이지와 연결된 공개 쿼리 표에는 저노출 행만 있어 제목/설명 수정 근거로는 부족하다고 판단했다.
+- **다음 시책:** 제품의 설명만 더 반복하지 않고, 누구나 문제·해결·결과를 바로 훑을 수 있는 `/cases` 공개 모음을 만든다. 페이지 방문, 기사 요약 열기, 원문 이동, 공유 링크 유입을 분리해 평가한다.
 
 ### 디스콰이엇 제품 페이지와 Maker 포스트
 
@@ -115,6 +120,7 @@ Velog 공개 글은 기술 선택을 면접 답변으로 정리하는 6문장 �
 - **주제 허브 링크:** `https://www.techgotgan.co.kr/topics/frontend?utm_source=disquiet&utm_medium=maker_post&utm_campaign=techgotgan_disquiet_2026q4`
 - **가입 CTA:** `https://www.techgotgan.co.kr/login?intent=signup&reason=reading_progress&utm_source=disquiet&utm_medium=maker_post_signup&utm_campaign=techgotgan_disquiet_2026q4`. 2026-11-06 Production 가입 화면은 이 링크에서 읽음 기록 저장 이유에 맞춘 안내와 Google 버튼 문구를 보여준다.
 - **상태(2026-11-06):** 기존 제품 방문 링크 UTM이 새 캠페인으로 승인·공개됐고, Maker 포스트 `BgC2zp`와 CTA `reason=reading_progress` 갱신도 공개됐다. 포스트 및 주제·가입 CTA URL은 각각 HTTP 200이다. 공개·200은 방문이나 로그인 증거가 아니므로 GA4/Amplitude의 `authenticated_session_started`와 캠페인 source/medium을 별도로 확인한다.
+- **GA4 확인(2026-11-10):** `techgotgan_disquiet_2026q4`는 2026-11-06~11-10 원자료에서 1세션이 보였으나, `internalqa / screenshot`을 제외하면 0이었다. 내부 검수 세션을 외부 유입으로 계산하지 않는다. Disquiet의 게시물 도달/클릭 자료는 확인하지 못했다.
 - **판정:** UTM 세션, `article_search_completed`, `source_article_click`, 공유, 7일 재방문을 따로 본다. 30명 미만이면 성공/실패를 단정하지 않고 표본 부족으로 둔다.
 
 ### 주제·블로그 허브 공유 루프 (2026-11-04 준비)

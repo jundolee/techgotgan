@@ -65,6 +65,7 @@ export function trackShareActionCompleted(
     | "blog_hub"
     | "audience_landing"
     | "content_guide"
+    | "case_collection"
 ): void {
   if (
     process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" ||
