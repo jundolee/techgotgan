@@ -153,4 +153,6 @@
 - 선택은 고정된 `problem_kind` 값(`workflow_automation`, `quality_checks`, `search_experience`)만 Amplitude에 기록한다. 검색어, 자유 입력, 기사 제목은 보내지 않는다.
 - 방문자는 로그인 없이 해당 사례 카드와 팀 질문까지 바로 볼 수 있다.
 - 측정은 `case_problem_selected` → `article_click` → `source_article_click` 및 공유 UTM 방문으로 나눈다. 선택 수만으로 유입 성공으로 보지 않는다.
-- 현재 상태: 코드 구현과 lint/build 확인 완료, Preview 및 Production 배포는 대기 중.
+- 배포: PR #223이 `31a916aa842d304951f54ffde98d1849fb363366`로 병합됐다. Vercel Production 배포 `CDweAGNn2iPyf8sgsfsPHusckCG3`가 `Ready`다.
+- Production QA: 캐시 우회 새 탭에서 1440px·390px 모두 질문 제목 1개와 세 선택지 3개가 사례 카드 위에 표시되는 것을 확인했다. 선택을 클릭하지 않아 QA 이벤트는 만들지 않았다.
+- 현재 성과 상태: `case_problem_selected`는 Production에 배포됐지만 아직 실제 선택/UTM 유입 결과는 관찰되지 않았다.
