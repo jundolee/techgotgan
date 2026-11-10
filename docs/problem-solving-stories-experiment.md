@@ -132,3 +132,15 @@
 - 배포: PR #218이 2026-11-10에 `80f893615d6c87e89d0c9f68718f46be38cc2db2`로 병합됐다. Vercel Production 배포 `APD1tFTEYAfu1aqQpERXwG8GSeBe`가 `Ready`이며 `www.techgotgan.co.kr`에 연결됐다. apex `techgotgan.co.kr`은 www로 308 리다이렉트한다. `/cases`, 홈, `/sitemap.xml`은 HTTP 200이고 사이트맵에 `/cases`가 포함된다.
 - 검증: `npm run build` 통과, `npm run lint` 오류 없음(기존 미사용 인자 경고 1건), Preview와 Production에서 1440px/390px 브라우저 QA 및 첫 사례 요약 모달·원문 CTA 확인 완료. 두 기사 상세와 기획자 가이드 Production URL도 HTTP 200이며 요약/원문 CTA가 있다.
 - 성과 상태: 페이지 공개와 배포는 유입 성과가 아니다. `/cases` 랜딩, `article_click`, `source_article_click`, `share_action_completed` 및 공유 UTM 세션을 이후 실제 데이터에서 확인한다.
+
+### 또 다른 유통 가설: 회의 질문으로 공유
+
+사례를 읽고 끝내지 않고 기획·운영 회의에서 바로 꺼낼 질문으로 바꿔 동료에게 전달하도록 `/cases` 각 카드에 짧은 토론 질문과 공유 동작을 추가했다.
+
+- 뱅크샐러드: 우리 팀의 반복 업무 가운데 자동화해볼 수 있는 것은 무엇인가?
+- 컬리: 우리 서비스에서 변경 뒤 확인할 테스트가 빠진 화면은 어디인가?
+- 네이버 D2: 오탈자나 별칭으로 검색해도 사용자가 원하는 대상을 찾을 수 있는가?
+- 모바일은 기본 공유 시트를, 데스크톱은 질문과 사례 링크 복사를 제공한다. 수집 이벤트에는 질문 문장이나 기사 제목을 넣지 않는다.
+- 수신 링크는 `utm_source=techgotgan`, `utm_medium=team_prompt`와 사례별 `problem_case_prompt_*_2026w46` 캠페인을 사용한다. `share_action_completed`의 `share_surface=case_collection`, 수신자의 UTM 방문, 기사 열기, 원문 이동을 각각 확인한다.
+- 구현 상태: 코드에서 세 질문·공유 동작을 만들고 `npm run lint`/`npm run build`를 확인했다. Production 반영 전이며 공유 지표는 아직 없다.
+- 배포/성과 판정은 별도 기록한다. 공유 동작 클릭만으로 외부 도달이나 유입 성공으로 계산하지 않는다.

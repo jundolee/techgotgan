@@ -147,6 +147,59 @@
   line-height: 1.4;
 }
 
+.teamPrompt {
+  display: grid;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.teamPrompt > p {
+  color: var(--seed-color-fg-neutral-muted, #666);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.teamPrompt blockquote {
+  color: #30302d;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.promptShare {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.promptShare button {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--seed-color-stroke-neutral-subtle, #d8d8d6);
+  border-radius: 999px;
+  background: #fff;
+  color: #4b4b48;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.promptShare button:hover {
+  transform: translateY(-1px);
+  background: #fff7f1;
+}
+
+.promptShare button:focus-visible {
+  outline: 3px solid #f4a477;
+  outline-offset: 3px;
+}
+
+.promptShare span {
+  color: var(--seed-color-fg-neutral-muted, #666);
+  font-size: 13px;
+}
+
 .caseLink,
 .moreLink {
   display: inline-flex;
