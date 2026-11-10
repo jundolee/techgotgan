@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArticleLink } from "@/components/article-link";
+import { CasePromptShareButton } from "@/components/case-prompt-share-button";
 import { PageHeader } from "@/components/page-header";
 import { ShareButton } from "@/components/share-button";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
@@ -35,6 +36,8 @@ type CaseStory = {
   outcome: string;
   outcomeNote: string;
   linkLabel: string;
+  discussionQuestion: string;
+  shareCampaign: string;
   articleId?: string;
   sourceUrl?: string;
 };
@@ -52,6 +55,8 @@ const cases: CaseStory[] = [
     outcome: "담당자 한 명당 매일 30분~1시간 절약",
     outcomeNote: "한 달 뒤, 원문 작성팀이 공개한 결과",
     linkLabel: "기사 요약과 원문 보기",
+    discussionQuestion: "우리 팀에서 매일 반복하는 일 가운데 한 달 안에 자동화해볼 수 있는 것은 무엇일까요?",
+    shareCampaign: "problem_case_prompt_banksalad_2026w46",
   },
   {
     source: "컬리",
@@ -65,6 +70,8 @@ const cases: CaseStory[] = [
     outcome: "5일 동안 테스트 114개 추가",
     outcomeNote: "컬리 기술 블로그가 공개한 작업 기록",
     linkLabel: "기사 요약과 원문 보기",
+    discussionQuestion: "우리 서비스의 핵심 화면 중 변경 뒤 확인할 테스트가 빠진 곳은 어디일까요?",
+    shareCampaign: "problem_case_prompt_kurly_2026w46",
   },
   {
     source: "네이버 D2",
@@ -76,6 +83,8 @@ const cases: CaseStory[] = [
     outcome: "검색 커버리지 약 3% 증가",
     outcomeNote: "네이버 D2 작성팀이 해당 프로젝트에서 보고한 결과",
     linkLabel: "사례와 기획 질문 보기",
+    discussionQuestion: "사용자가 오탈자나 별칭으로 검색해도 원하는 대상을 찾을 수 있을까요?",
+    shareCampaign: "problem_case_prompt_naver_2026w46",
   },
 ];
 
@@ -149,6 +158,17 @@ export default function CasesPage() {
                 <small>{item.outcomeNote}</small>
               </div>
             </dl>
+            <div className={styles.teamPrompt}>
+              <p>팀에서 이어갈 질문</p>
+              <blockquote>{item.discussionQuestion}</blockquote>
+              <CasePromptShareButton
+                title={item.title}
+                prompt={item.discussionQuestion}
+                href={item.href}
+                campaign={item.shareCampaign}
+                className={styles.promptShare}
+              />
+            </div>
             {item.articleId && item.sourceUrl ? (
               <ArticleLink
                 articleId={item.articleId}
