@@ -9,6 +9,7 @@ import { SITE_URL } from "./seo";
 const CAREER_GUIDE_LAST_MODIFIED = "2026-10-30T01:43:53.000Z";
 const PRODUCT_TEAMS_LAST_MODIFIED = "2026-11-05T14:40:49.000Z";
 const PRODUCT_SEARCH_GUIDE_LAST_MODIFIED = "2026-11-05T14:40:49.000Z";
+const CASES_LAST_MODIFIED = "2026-11-10T05:24:14.000Z";
 const HOME_LAST_MODIFIED = "2026-11-06T03:24:18.000Z";
 const TOPICS_INDEX_LAST_MODIFIED = "2026-11-06T03:24:18.000Z";
 const TECHNOLOGY_INDEX_LAST_MODIFIED = "2026-11-06T04:30:25.000Z";
@@ -59,6 +60,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const technologyIndexLastModified = latestDate(technologies.map((technology) => technology.lastModified));
 
   return [
+    {
+      url: `${SITE_URL}/cases`,
+      lastModified: CASES_LAST_MODIFIED,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
     {
       url: `${SITE_URL}/guides/product-search-for-planners`,
       lastModified: PRODUCT_SEARCH_GUIDE_LAST_MODIFIED,
