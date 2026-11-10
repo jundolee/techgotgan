@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArticleLink } from "@/components/article-link";
+import { CaseProblemSelector } from "@/components/case-problem-selector";
 import { CasePromptShareButton } from "@/components/case-prompt-share-button";
 import { PageHeader } from "@/components/page-header";
 import { ShareButton } from "@/components/share-button";
@@ -30,6 +31,7 @@ type CaseStory = {
   source: string;
   category: string;
   title: string;
+  anchor: string;
   href: string;
   problem: string;
   change: string;
@@ -47,6 +49,7 @@ const cases: CaseStory[] = [
     source: "뱅크샐러드",
     category: "반복 업무",
     title: "망분리 환경에서도 한 달 만에 AX로 생산성을 높인 방법",
+    anchor: "banksalad-case",
     articleId: "43c7f621-aabc-4a62-a321-f986464e544a",
     href: "/articles/43c7f621-aabc-4a62-a321-f986464e544a",
     sourceUrl: "https://corp.banksalad.com/blog/tech/banksalad-ax-workflow-automation/",
@@ -62,6 +65,7 @@ const cases: CaseStory[] = [
     source: "컬리",
     category: "테스트 품질",
     title: "코드에서 화면 지도를 그리고, AI와 함께 회귀 테스트의 빈 곳을 채우다",
+    anchor: "kurly-case",
     articleId: "d142232d-1703-4984-8296-4de5f2fe7586",
     href: "/articles/d142232d-1703-4984-8296-4de5f2fe7586",
     sourceUrl: "https://helloworld.kurly.com/blog/web-e2e-coverage-map/",
@@ -77,6 +81,7 @@ const cases: CaseStory[] = [
     source: "네이버 D2",
     category: "검색 경험",
     title: "네이버 플레이스의 호텔 검색",
+    anchor: "naver-case",
     href: "/guides/product-search-for-planners",
     problem: "정확한 이름만 찾는 검색은 오탈자와 정보 누락에 취약했습니다.",
     change: "다국어 검색어와 장소 매칭, 키워드·스니펫 추출을 다뤘습니다.",
@@ -134,9 +139,18 @@ export default function CasesPage() {
         <p className={styles.note}>시간과 효과는 원문 작성팀이 공개한 내용입니다. 다른 서비스에 그대로 적용되는 목표치로 해석하지 않습니다.</p>
       </header>
 
+      <section className={styles.problemPicker} aria-labelledby="problem-picker-title">
+        <h2 id="problem-picker-title">지금 어떤 문제와 가까운가요?</h2>
+        <CaseProblemSelector className={styles.problemOptions} />
+      </section>
+
       <ol className={styles.caseList}>
         {cases.map((item, index) => (
-          <li className={styles.caseCard} key={item.href}>
+          <li
+            className={styles.caseCard}
+            id={item.anchor}
+            key={item.href}
+          >
             <div className={styles.caseTopline}>
               <span className={styles.caseNumber}>{String(index + 1).padStart(2, "0")}</span>
               <span className={styles.caseCategory}>{item.category}</span>

@@ -79,6 +79,21 @@ export function trackShareActionCompleted(
   });
 }
 
+/** Track the fixed problem category selected on the case collection, never free text. */
+export function trackCaseProblemSelected(
+  problemKind: "workflow_automation" | "quality_checks" | "search_experience"
+): void {
+  if (
+    process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "true" ||
+    !process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY
+  ) return;
+
+  queueAmplitudeEvent("case_problem_selected", {
+    problem_kind: problemKind,
+    ...getAcquisitionContext(),
+  });
+}
+
 /** Measure graph exploration without collecting article IDs, titles, or search text. */
 export function trackArticleGraphInteraction(
   action: "node_selected" | "neighbors_loaded" | "detail_opened" | "insight_shown",

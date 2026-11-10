@@ -145,3 +145,12 @@
 - 배포: PR #221이 `42dfaec81d4382a4bec0de95056d381b7a66d842`로 병합됐다. Vercel Production 배포 `A49ME5M1GHN8rTrBtLcVt4zzF6ri`가 `Ready`이며 `/cases`는 1440px·390px에서 문제없이 표시된다.
 - 공유 QA: 각 카드의 질문과 `회의 질문 공유` 버튼을 데스크톱·모바일에서 확인했다. 브라우저가 네이티브 공유를 지원해 QA 중 공유 시트나 복사 기능은 실행하지 않았다. 공유 성과는 아직 없다.
 - 배포/성과 판정은 별도 기록한다. 공유 동작 클릭만으로 외부 도달이나 유입 성공으로 계산하지 않는다.
+
+### 다음 유입 가설: 문제에서 사례 찾기
+
+‘기술 분야’를 먼저 고르게 하지 않고, 방문자가 해결하려는 일에 가까운 표현으로 사례에 바로 진입하게 한다. `/cases`에 반복 업무 줄이기·실수 줄이기·검색 결과 개선의 세 선택지를 두고 각 사례로 이동시킨다.
+
+- 선택은 고정된 `problem_kind` 값(`workflow_automation`, `quality_checks`, `search_experience`)만 Amplitude에 기록한다. 검색어, 자유 입력, 기사 제목은 보내지 않는다.
+- 방문자는 로그인 없이 해당 사례 카드와 팀 질문까지 바로 볼 수 있다.
+- 측정은 `case_problem_selected` → `article_click` → `source_article_click` 및 공유 UTM 방문으로 나눈다. 선택 수만으로 유입 성공으로 보지 않는다.
+- 현재 상태: 코드 구현과 lint/build 확인 완료, Preview 및 Production 배포는 대기 중.
