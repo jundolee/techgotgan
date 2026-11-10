@@ -129,5 +129,6 @@
 
 이 신호만으로 채널 실패나 수요 부재를 결론내릴 수는 없다. 대신 유입 뒤의 첫 가치가 이야기의 형태로 바로 보이도록 `/cases`에 문제·바꾼 점·결과를 모아 보여주는 페이지를 추가했다. 뱅크샐러드, 컬리, 네이버 D2의 공개 결과를 각 회사 작성팀의 자료로 표시하고, 원문 요약과 기획자 가이드로 이어지게 한다. 공유는 별도 `case_collection` 이벤트와 `problem_solution_case_collection_2026w46` UTM으로 구분한다.
 
-- 현재 상태: 코드 구현, `npm run lint` (기존 미사용 인자 경고 1건 외 오류 없음), `npm run build`, 1440px/390px 브라우저 확인 완료.
-- 아직 Production 배포 전이므로 공개 접근·색인·유입 성과는 미확인이다. 병합 뒤 Production 응답과 사이트맵을 확인하고, 실제 페이지뷰·기사 열기·원문 클릭을 구분해 관찰한다.
+- 배포: PR #218이 2026-11-10에 `80f893615d6c87e89d0c9f68718f46be38cc2db2`로 병합됐다. Vercel Production 배포 `APD1tFTEYAfu1aqQpERXwG8GSeBe`가 `Ready`이며 `www.techgotgan.co.kr`에 연결됐다. apex `techgotgan.co.kr`은 www로 308 리다이렉트한다. `/cases`, 홈, `/sitemap.xml`은 HTTP 200이고 사이트맵에 `/cases`가 포함된다.
+- 검증: `npm run build` 통과, `npm run lint` 오류 없음(기존 미사용 인자 경고 1건), Preview와 Production에서 1440px/390px 브라우저 QA 및 첫 사례 요약 모달·원문 CTA 확인 완료. 두 기사 상세와 기획자 가이드 Production URL도 HTTP 200이며 요약/원문 CTA가 있다.
+- 성과 상태: 페이지 공개와 배포는 유입 성과가 아니다. `/cases` 랜딩, `article_click`, `source_article_click`, `share_action_completed` 및 공유 UTM 세션을 이후 실제 데이터에서 확인한다.
