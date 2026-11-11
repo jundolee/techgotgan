@@ -177,7 +177,9 @@ Velog 공개 글은 기술 선택을 면접 답변으로 정리하는 6문장 �
 - **2026-11-11 Google `/cases` 확인:** URL Inspection은 `Discovered - currently not indexed`를 표시했고 canonical은 `/cases`였다. `/sitemap.xml`과 홈이 referring page로 보였다. 해당 URL의 색인 생성 요청은 “우선순위 크롤링 대기열에 추가”로 접수됐지만, 색인 완료는 확인되지 않았다.
 - **2026-11-11 Naver 공개 검색 관찰:** `테크곳간 기술 블로그`와 `기업 기술 블로그 모음`은 홈 및 `/blogs`, `/topics`, `/digest` 등을 결과/사이트링크로 보여줬다. `site:www.techgotgan.co.kr/cases`와 `site:www.techgotgan.co.kr/blogs`는 결과가 없었다. Naver의 `site:` 검색은 URL Inspection을 대체하지 않는다. Search Advisor는 로그인 화면으로 이동해 사이트 소유권과 sitemap 상태는 확인하지 못했다.
 - **2026-11-11 크롤러 접근:** Googlebot과 Naver Yeti 요청에서 `/cases`, `/blogs`, 기획자 가이드는 HTTP 200, 자체 canonical, `index, follow`를 반환한다. `robots.txt`는 전체 공개 경로를 허용하고 sitemap을 선언한다.
-- **2026-11-11 `/blogs` 스니펫 실험:** Google 기준선은 61노출·1클릭·CTR 1.6%·평균 순위 8.5다. 현재 title/description이 기술 개발 글 중심이어서, “기업 기술 블로그 모음” 의도를 앞에 두고 문제 해결 사례를 보조 가치로 설명하는 문안으로 수정한다. 재수집과 이후 Search Console 구간에서 CTR을 다시 비교한다.
+- **2026-11-11 `/blogs` 스니펫 실험 (PR #227):** title을 `기업 기술 블로그 모음 | 회사별 사례 찾기`로, description을 문제 해결·서비스 개선 사례를 먼저 살펴보는 문안으로 바꿨다. Google 기준선은 61노출·1클릭·CTR 1.6%·평균 순위 8.5이며, CTR 상승은 아직 확인되지 않았다.
+- **2026-11-11 Google 재수집 요청:** `/blogs` URL Inspection은 색인됨, 크롤링 허용, fetch 성공, canonical 일치로 표시됐다. title/description 변경 후 해당 URL 하나에 색인 생성 요청을 보냈고, Google은 우선 크롤링 대기열 접수를 표시했다. 실제 검색결과 반영과 CTR 변화는 나중에 확인한다.
+- **Naver Search Advisor 경계:** 공개 Naver 검색에는 홈·`/blogs`·`/topics` 등이 보였지만 새 `/cases`는 `site:` 검색에서 확인되지 않았다. Search Advisor는 NAVER 로그인 화면으로 이동해 소유권·사이트맵 상태를 확인하지 못했다. Yeti의 HTTP 200과 robots 허용은 접근 가능성만 보여주며, Naver 색인 완료를 뜻하지 않는다.
 
 ## GeekNews Show GN 비유료 유입 테스트
 
