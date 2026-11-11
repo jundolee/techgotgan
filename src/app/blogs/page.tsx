@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 export const fetchCache = "default-cache";
 
 const CANONICAL_URL = `${SITE_URL}/blogs`;
-const TITLE = "기업 기술 블로그 모음 | 회사별 최신 글과 사례";
+const TITLE = "기업 기술 블로그 모음 | 회사별 사례 찾기";
 const DESCRIPTION = "기업별 기술 블로그의 최신 글을 한곳에서 찾아보세요. 문제 해결·서비스 개선 사례를 제목과 요약으로 살펴보고, 관심 있는 글은 원문으로 이어 읽을 수 있습니다.";
 
 export const metadata: Metadata = {
