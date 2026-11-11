@@ -43,6 +43,7 @@ export interface PublicTechnologyIndexItem {
 
 const MIN_PUBLIC_TECHNOLOGY_ARTICLES = 3;
 const MAX_PUBLIC_TECHNOLOGY_ARTICLES = 20;
+const MIN_TAGGED_ARTICLES_BEFORE_TEXT_FALLBACK = 10;
 
 export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
   {
@@ -571,7 +572,10 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
       },
     } satisfies PublicHubArticle));
 
-  if (articles.length < MIN_PUBLIC_TECHNOLOGY_ARTICLES) {
+  // Three tagged matches make a term eligible for indexing, but a page with only a
+  // handful of posts is a weak landing page. Fill sparse hubs with title/excerpt
+  // search results from active sources, then apply the same term-text check below.
+  if (articles.length < MIN_TAGGED_ARTICLES_BEFORE_TEXT_FALLBACK) {
     const [searchRows, sources] = await Promise.all([
       fetchCachedRpcFromSupabase<PublicTechnologySearchRow[]>("search_articles", { search_query: term.query }, {
         revalidate: 300,
