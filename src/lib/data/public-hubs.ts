@@ -43,6 +43,7 @@ export interface PublicTechnologyIndexItem {
 
 const MIN_PUBLIC_TECHNOLOGY_ARTICLES = 3;
 const MAX_PUBLIC_TECHNOLOGY_ARTICLES = 20;
+const MAX_PUBLIC_TECHNOLOGY_CANDIDATES = 100;
 const MIN_TAGGED_ARTICLES_BEFORE_TEXT_FALLBACK = 10;
 
 export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
@@ -547,7 +548,9 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
       tags: `cs.{${term.tag}}`,
       "source.is_active": "eq.true",
       order: "published_at.desc.nullslast,discovered_at.desc",
-      limit: String(MAX_PUBLIC_TECHNOLOGY_ARTICLES),
+      // Filter after fetching: a small database-side limit lets less relevant
+      // tagged rows crowd out newer articles whose title or excerpt is a match.
+      limit: String(MAX_PUBLIC_TECHNOLOGY_CANDIDATES),
     },
     { revalidate: 300, tags: ["articles", "sources"] }
   );
@@ -602,10 +605,18 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
         },
       } satisfies PublicHubArticle));
 
-    articles = [...articles, ...textMatches]
-      .sort((a, b) => (Date.parse(b.publishedAt ?? "") || 0) - (Date.parse(a.publishedAt ?? "") || 0))
-      .slice(0, MAX_PUBLIC_TECHNOLOGY_ARTICLES);
+    articles = [...articles, ...textMatches];
   }
+
+  // Some sources do not expose publication dates. Keep those articles fresh
+  // using their discovery time without presenting that time as the publish date.
+  articles = articles
+    .sort((a, b) => {
+      const aDate = a.publishedAt ?? a.discoveredAt;
+      const bDate = b.publishedAt ?? b.discoveredAt;
+      return (Date.parse(bDate ?? "") || 0) - (Date.parse(aDate ?? "") || 0);
+    })
+    .slice(0, MAX_PUBLIC_TECHNOLOGY_ARTICLES);
 
   const lastModified = articles.reduce<string | null>((latest, article) => {
     const candidate = article.discoveredAt ?? article.publishedAt;
