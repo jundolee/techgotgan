@@ -14,8 +14,8 @@ export const runtime = "nodejs";
 export const fetchCache = "default-cache";
 
 const CANONICAL_URL = `${SITE_URL}/blogs`;
-const TITLE = "기술 블로그 모음 | 국내외 기업 최신 글";
-const DESCRIPTION = "국내외 기업의 기술 블로그를 회사별로 찾아보세요. 최신 개발 글의 제목과 요약을 살펴보고 관심 있는 글은 원문으로 이어 읽을 수 있습니다.";
+const TITLE = "기업 기술 블로그 모음 | 회사별 사례 찾기";
+const DESCRIPTION = "기업별 기술 블로그의 최신 글을 한곳에서 찾아보세요. 문제 해결·서비스 개선 사례를 제목과 요약으로 살펴보고, 관심 있는 글은 원문으로 이어 읽을 수 있습니다.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -69,7 +69,7 @@ export default async function BlogsPage() {
 
       <section aria-labelledby="directory-guide" style={{ display: "grid", gap: 8 }}>
         <Text as="h2" id="directory-guide" textStyle="t5Bold" color="fg.neutral">
-          회사별 기술 블로그와 최신 개발 글 찾기
+          회사별 기술 블로그에서 최신 글과 실제 사례 찾기
         </Text>
         <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)">
           회사 이름을 선택하면 해당 기술 블로그에서 최근 수집한 글을 볼 수 있습니다. 글 제목을 열어 요약과 태그를 살펴본 뒤 원문으로 이동하세요. 검색어가 정해져 있다면 전체 글에서 검색하고, 주제로 둘러보려면{" "}
