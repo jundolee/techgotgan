@@ -382,17 +382,28 @@ const PUBLIC_TECHNOLOGY_MATCH_TERMS: Record<string, string[]> = {
   kafka: ["kafka", "카프카"],
 };
 
-function matchesTechnologyTermText(title: string, excerpt: string | null, termSlug: string): boolean {
+export const TITLE_REQUIRED_TECHNOLOGY_TERMS = new Set(["agent", "go", "spark", "sql", "swift"]);
+
+export function matchesTechnologyTermText(title: string, excerpt: string | null, termSlug: string): boolean {
+  const normalizedTitle = title.normalize("NFKC").toLowerCase();
   const text = `${title} ${excerpt ?? ""}`.normalize("NFKC").toLowerCase();
   const terms = PUBLIC_TECHNOLOGY_MATCH_TERMS[termSlug] ?? [];
-  return terms.some((rawTerm) => {
+  const matchesTerm = (value: string) => terms.some((rawTerm) => {
     const term = rawTerm.normalize("NFKC").toLowerCase();
     if (/^[a-z0-9]+$/.test(term)) {
       const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`).test(text);
+      return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`).test(value);
     }
-    return text.includes(term);
+    return value.includes(term);
   });
+
+  // These names also occur in products, ordinary English, and article roundups.
+  // An excerpt-only mention can make an unrelated post the first result of a hub.
+  if (TITLE_REQUIRED_TECHNOLOGY_TERMS.has(termSlug)) {
+    if (termSlug === "spark" && /\b(?:muse|gemini) spark\b/.test(normalizedTitle)) return false;
+    return matchesTerm(normalizedTitle);
+  }
+  return matchesTerm(text);
 }
 
 // 검색어가 가리키는 주제와 페이지의 실제 내용을 맞추기 위해 카테고리별 설명을 따로 둔다.
