@@ -12,6 +12,7 @@ import {
   SITE_URL,
   getPublicCategoryIndex,
   getPublicCategoryHub,
+  getPublicTechnologyIndex,
   isPublicCategory,
   type PublicHubArticle,
 } from "@/lib/data/public-hubs";
@@ -106,7 +107,12 @@ export default async function TopicPage({ params }: TopicPageProps) {
   if (!hub) notFound();
 
   const canonical = topicUrl(hub.category);
-  const relatedTopics = (await getPublicCategoryIndex()).filter((item) => item.category !== hub.category);
+  const [categoryIndex, technologyIndex] = await Promise.all([
+    getPublicCategoryIndex(),
+    getPublicTechnologyIndex(),
+  ]);
+  const relatedTopics = categoryIndex.filter((item) => item.category !== hub.category);
+  const relatedTechnologies = technologyIndex.filter((item) => item.term.category === hub.category);
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -195,6 +201,28 @@ export default async function TopicPage({ params }: TopicPageProps) {
         </Text>
         <ArticleList articles={hub.articles} />
       </section>
+
+      {relatedTechnologies.length > 0 && (
+        <section aria-labelledby="related-technologies" style={{ display: "grid", gap: 12 }}>
+          <Text as="h2" id="related-technologies" textStyle="t6Bold" color="fg.neutral">
+            {hub.meta.label} 기술 용어별 글
+          </Text>
+          <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)">
+            글이 모인 기술 용어를 골라 관련 기업 기술 블로그 글을 더 찾아보세요.
+          </Text>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {relatedTechnologies.map(({ term, articleCount }) => (
+              <Link
+                key={term.slug}
+                href={`/technologies/${term.slug}`}
+                style={{ border: "1px solid var(--seed-color-stroke-neutral-subtle)", borderRadius: 999, padding: "7px 12px" }}
+              >
+                {term.label} 기술 블로그 ({articleCount})
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section aria-labelledby="related-topics">
         <Text as="h2" id="related-topics" textStyle="t6Bold" color="fg.neutral" style={{ marginBottom: 12 }}>
