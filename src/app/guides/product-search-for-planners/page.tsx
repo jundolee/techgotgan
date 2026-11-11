@@ -60,7 +60,7 @@ export default function ProductSearchForPlannersPage() {
         <ol>
           <li><Link href="/">테크곳간</Link></li>
           <li aria-hidden="true">/</li>
-          <li><Link href="/for-product-teams">기획자·개발자</Link></li>
+          <li><Link href="/guides">문제 해결 가이드</Link></li>
           <li aria-hidden="true">/</li>
           <li aria-current="page">기획자 검색 가이드</li>
         </ol>
@@ -128,6 +128,7 @@ export default function ProductSearchForPlannersPage() {
           <p>검색어로 글을 찾고 원문에서 구현 배경과 조건을 확인할 수 있습니다.</p>
         </div>
         <div className={styles.actions}>
+          <Link href="/guides" className={styles.textAction}>테스트·AI 자동화 가이드도 읽기 →</Link>
           <AudienceLandingActionLink href="/?q=%EA%B2%80%EC%83%89" action="planner_search" className={styles.primaryAction}>
             검색 사례 찾기
           </AudienceLandingActionLink>

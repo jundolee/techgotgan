@@ -4,21 +4,22 @@ import { getCachedArticleFeed } from "@/lib/data/articles";
 import { getPublicBlogIndex, getPublicCategoryIndex, getPublicTechnologyIndex } from "@/lib/data/public-hubs";
 import { listRecentDigestWeeks } from "@/lib/data/weekly-digests";
 import { SITE_URL } from "./seo";
+import { GUIDE_PUBLISHED_AT, problemGuides } from "@/lib/content/problem-guides";
 
 // Latest Production page revisions for static content changes not represented by article data.
 const CAREER_GUIDE_LAST_MODIFIED = "2026-10-30T01:43:53.000Z";
 const PRODUCT_TEAMS_LAST_MODIFIED = "2026-11-05T14:40:49.000Z";
-const PRODUCT_SEARCH_GUIDE_LAST_MODIFIED = "2026-11-05T14:40:49.000Z";
-const CASES_LAST_MODIFIED = "2026-11-10T05:24:14.000Z";
-const HOME_LAST_MODIFIED = "2026-11-11T04:37:02.000Z";
+const PRODUCT_SEARCH_GUIDE_LAST_MODIFIED = GUIDE_PUBLISHED_AT;
+const CASES_LAST_MODIFIED = GUIDE_PUBLISHED_AT;
+const HOME_LAST_MODIFIED = GUIDE_PUBLISHED_AT;
 const TOPICS_INDEX_LAST_MODIFIED = "2026-11-11T05:37:36.000Z";
 const TECHNOLOGY_INDEX_LAST_MODIFIED = "2026-11-11T05:37:36.000Z";
 const TECHNOLOGY_TERMS_LAST_MODIFIED = "2026-11-11T05:37:36.000Z";
 const STATIC_TOPIC_LAST_MODIFIED: Record<string, string> = {
-  ai_ml: "2026-11-06T02:56:15.000Z",
-  backend: "2026-11-06T02:56:15.000Z",
-  frontend: "2026-11-06T02:56:15.000Z",
-  devops: "2026-11-06T02:56:15.000Z",
+  ai_ml: GUIDE_PUBLISHED_AT,
+  backend: GUIDE_PUBLISHED_AT,
+  frontend: GUIDE_PUBLISHED_AT,
+  devops: GUIDE_PUBLISHED_AT,
   mobile: "2026-11-06T02:56:15.000Z",
   data: "2026-11-06T02:56:15.000Z",
   culture: "2026-11-06T02:56:15.000Z",
@@ -60,6 +61,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const technologyIndexLastModified = latestDate(technologies.map((technology) => technology.lastModified));
 
   return [
+    {
+      url: `${SITE_URL}/guides`,
+      lastModified: GUIDE_PUBLISHED_AT,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    ...problemGuides.map((guide) => ({
+      url: `${SITE_URL}/guides/${guide.slug}`,
+      lastModified: GUIDE_PUBLISHED_AT,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
     {
       url: `${SITE_URL}/cases`,
       lastModified: CASES_LAST_MODIFIED,
@@ -112,7 +125,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           },
           ...technologies.map((technology) => ({
             url: `${SITE_URL}/technologies/${technology.term.slug}`,
-            lastModified: latestDate([technology.lastModified, TECHNOLOGY_TERMS_LAST_MODIFIED]),
+            lastModified: latestDate([
+              technology.lastModified,
+              problemGuides.some((guide) => guide.categories.includes(technology.term.category))
+                ? GUIDE_PUBLISHED_AT : TECHNOLOGY_TERMS_LAST_MODIFIED,
+            ]),
             changeFrequency: "daily" as const,
             priority: 0.7,
           })),

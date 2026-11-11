@@ -7,6 +7,7 @@ import { ArticleLink } from "@/components/article-link";
 import { AudienceLandingActionLink } from "@/components/audience-landing-action-link";
 import { PageHeader } from "@/components/page-header";
 import { ShareButton } from "@/components/share-button";
+import { RelatedProblemGuides } from "@/components/related-problem-guides";
 import {
   SITE_URL,
   getPublicCategoryIndex,
@@ -185,6 +186,8 @@ export default async function TopicPage({ params }: TopicPageProps) {
           </AudienceLandingActionLink>
         </aside>
       )}
+
+      <RelatedProblemGuides category={hub.category} />
 
       <section aria-labelledby="latest-articles">
         <Text as="h2" id="latest-articles" textStyle="t6Bold" color="fg.neutral" style={{ marginBottom: 16 }}>

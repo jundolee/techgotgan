@@ -202,6 +202,10 @@ export default async function Home({
           문제 해결 사례 보기 →
         </Link>
         {" · "}
+        <Link href="/guides" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+          테스트·AI 자동화·검색 기획 가이드 →
+        </Link>
+        {" · "}
         <Link href="/technologies" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
           React·TypeScript 등 기술별 최신 글 →
         </Link>

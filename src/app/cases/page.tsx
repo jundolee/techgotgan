@@ -40,6 +40,7 @@ type CaseStory = {
   linkLabel: string;
   discussionQuestion: string;
   shareCampaign: string;
+  guideHref: string;
   articleId?: string;
   sourceUrl?: string;
 };
@@ -60,6 +61,7 @@ const cases: CaseStory[] = [
     linkLabel: "기사 요약과 원문 보기",
     discussionQuestion: "우리 팀에서 매일 반복하는 일 가운데 한 달 안에 자동화해볼 수 있는 것은 무엇일까요?",
     shareCampaign: "problem_case_prompt_banksalad_2026w46",
+    guideHref: "/guides/ai-workflow-automation",
   },
   {
     source: "컬리",
@@ -76,6 +78,7 @@ const cases: CaseStory[] = [
     linkLabel: "기사 요약과 원문 보기",
     discussionQuestion: "우리 서비스의 핵심 화면 중 변경 뒤 확인할 테스트가 빠진 곳은 어디일까요?",
     shareCampaign: "problem_case_prompt_kurly_2026w46",
+    guideHref: "/guides/e2e-test-coverage",
   },
   {
     source: "네이버 D2",
@@ -90,6 +93,7 @@ const cases: CaseStory[] = [
     linkLabel: "사례와 기획 질문 보기",
     discussionQuestion: "사용자가 오탈자나 별칭으로 검색해도 원하는 대상을 찾을 수 있을까요?",
     shareCampaign: "problem_case_prompt_naver_2026w46",
+    guideHref: "/guides/product-search-for-planners",
   },
 ];
 
@@ -198,6 +202,7 @@ export default function CasesPage() {
                 {item.linkLabel} <span aria-hidden="true">→</span>
               </Link>
             )}
+            <Link className={styles.caseLink} href={item.guideHref}>우리 팀의 검토 질문과 가이드 읽기 →</Link>
           </li>
         ))}
       </ol>

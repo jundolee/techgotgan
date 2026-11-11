@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import { Text } from "@seed-design/react";
 import { ArticleLink } from "@/components/article-link";
 import { PageHeader } from "@/components/page-header";
+import { RelatedProblemGuides } from "@/components/related-problem-guides";
 import { getPublicTechnologyHub, PUBLIC_CATEGORY_META, SITE_URL } from "@/lib/data/public-hubs";
 import { SITE_NAME } from "@/app/seo";
 
@@ -82,6 +83,7 @@ export default async function TechnologyPage({ params }: TechnologyPageProps) {
         <Text as="h1" textStyle="t8Bold" color="fg.neutral">{hub.term.title}</Text>
         <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">{hub.term.description}</Text>
       </header>
+      <RelatedProblemGuides category={hub.term.category} />
       <section aria-labelledby="technology-articles">
         <Text as="h2" id="technology-articles" textStyle="t6Bold" color="fg.neutral" style={{ marginBottom: 16 }}>
           {hub.term.label} 관련 최신 기술 블로그 글
