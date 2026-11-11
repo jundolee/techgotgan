@@ -201,3 +201,7 @@ GeekNews는 스폰서 광고 위치와 견적을 문의해 안내하는 방식�
 - 설명: 팀의 협업 방식과 기술 선택 이유를 원문·읽기 질문으로 살펴보는 독립 가이드입니다. 공식 채용 안내나 예상 면접 문항은 아닙니다.
 - CTA: 읽기 가이드 보기
 - 추적 URL: `https://www.techgotgan.co.kr/careers/toss-frontend?utm_source=geeknews&utm_medium=sponsor&utm_campaign=career_guide_toss_frontend_sponsor_2026q4`
+
+### 2026-11-11 문제 해결 가이드 검색 실험
+
+PR #237로 E2E 테스트 누락·AI 업무 자동화 가이드와 빈 CSV 양식, `/guides` 디렉터리를 Production에 공개했다. 기존 검색 기획 가이드와 홈·사례·관련 기술/주제 허브를 연결했다. 실제 배포·검증·Search Console의 색인 경계와 후속 측정 조건은 [검색 유입 개선 기록](search-growth-2026-11-11.md)을 따른다. 콘텐츠 공개와 Google의 요청 접수는 노출·클릭 증가 증거가 아니다.
