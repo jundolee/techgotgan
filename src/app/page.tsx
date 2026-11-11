@@ -210,6 +210,32 @@ export default async function Home({
           기획자·개발자별 활용 방법 →
         </AudienceLandingActionLink>
       </Text>
+      <Text as="p" textStyle="t2Regular" color="var(--seed-color-fg-neutral-muted)" style={{ marginTop: -12, marginBottom: 20 }}>
+        주제별 최신 기술 블로그: {" "}
+        <Link href="/topics/frontend" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+          프론트엔드 기술 블로그
+        </Link>
+        {" · "}
+        <Link href="/topics/backend" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+          백엔드 기술 블로그
+        </Link>
+        {" · "}
+        <Link href="/topics/ai_ml" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+          AI·머신러닝 기술 블로그
+        </Link>
+        {" · "}
+        <Link href="/topics/devops" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+          DevOps 기술 블로그
+        </Link>
+        {" · "}
+        <Link href="/topics/mobile" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+          모바일 기술 블로그
+        </Link>
+        {" · "}
+        <Link href="/topics" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+          모든 주제 보기 →
+        </Link>
+      </Text>
 
 
       <OnboardingModalSlot

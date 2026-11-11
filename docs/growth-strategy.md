@@ -86,6 +86,26 @@
 - 2026-10-30 이후 Links 보고서 화면에는 외부 링크 0개, 내부 링크 2,145개가 표시됐고, `/blogs`는 16개 내부 링크 페이지를 보였다. 상세 표본은 홈과 15개 블로그 허브였다. Links 보고서 자체에는 기준일이 표시되지 않으므로 이를 새 링크 하나의 효과나 검색 노출 증가로 단정하지 않는다. 기존 CSV의 Vercel 원본 67개는 현재 요약 화면에서 더 이상 표시되지 않는다.
 - GA4 세션 캠페인 보고서(2026-10-23~29)의 전체 14개 행에서 `career_guide_toss_frontend_velog_2026q4`는 보이지 않았다. 기존 `career_guide_toss_frontend`는 3세션·3참여였고, `techgotgan_2w_20261029`는 2세션·2참여, `two_week_acquisition_20261029`는 1세션·0참여였다. 새 Velog 글 게시(2026-10-29 03:26 UTC) 뒤 48시간이 채워지기 전 데이터이므로 캠페인 최종 판정으로 사용하지 않는다.
 
+### 2026-11-11 Google 검색 노출 재확인
+
+- 로그인된 Search Console 속성 `sc-domain:techgotgan.co.kr`에서 최신 제공 기간 2026-10-20~11-08을 확인했다. 전체 성과는 클릭 10회, 노출 271회, CTR 3.7%, 평균 게재순위 9.6이다. 데이터 종료일이 11월 8일이므로 11월 6일 배포 후 성과 구간은 3일뿐이다.
+- 같은 기간 `기술 블로그`, `테크 블로그`, `기술블로그`, `테크블로그` 쿼리는 표에 나타나지 않았다. 확인된 관련 검색어는 `컬리 기술블로그` 2회 노출·평균 순위 20.0, `카카오뱅크 기술블로그` 1회·11.0, `토스 기술 블로그` 1회·16.0, `개발 블로그` 1회·23.0이며 모두 클릭 0회다. 이는 일반 용어 검색 유입이 아직 확인되지 않았고 노출 표본도 매우 작다는 뜻이다.
+- `/blogs` 페이지 필터의 동일 기간 성과는 클릭 1회, 노출 61회, CTR 1.6%, 평균 게재순위 8.5였다. 쿼리 표에는 `개발 블로그` 1회 노출·평균 순위 23.0과 회사명 검색이 보였다. 기존 10월 말 기준과 다른 기간을 사용하므로 단순 증감률은 계산하지 않는다.
+- 11월 10일 URL Inspection에서 `/blogs`는 Google에 등록되어 있었지만 마지막 크롤링이 10월 30일이었다. 11월 6일 metadata 변경 이후 내용을 다시 가져오도록 색인 요청을 보냈고 Google이 접수했다. 접수는 재크롤링이나 색인 갱신 완료가 아니다.
+- 11월 10일 점검에서 `/topics`는 발견됨·미색인·크롤링 기록 없음으로 보였고, 11월 11일 현재 URL Inspection에서는 Google에 아직 알려지지 않은 URL로 표시됐다. Production 응답과 실시간 테스트는 HTTP 200, 크롤링 허용, fetch 성공, 색인 허용, 사용자 선언 canonical 자체 URL을 반환했다. 기존 URL 검사에는 색인 요청됨 상태가 표시되어 추가 요청은 보내지 않았다.
+- 동일 검증에서 `/technologies`, `/technologies/react`, `/technologies/kubernetes`는 Search Console에 등록된 것으로 확인됐었다. 현재 우선순위는 `기술 블로그`/`테크 블로그` 등 비브랜드 쿼리 노출이 실제로 증가하는지 보는 것이며, 색인 요청 수락·sitemap 발견을 검색 순위나 유입 증가로 계산하지 않는다.
+- 2026-11-11 Production에서 `/blogs`, `/cases`, `/topics`, `/technologies` 모두 HTTP 200과 자기 주소 canonical을 반환했다. `/blogs` 제목은 `기업 기술 블로그 모음 | 회사별 사례 찾기`로 갱신됐고, `/cases`에는 문제·해결·결과 및 원문 출처를 명시한 회사 사례가 공개되어 있다.
+- 11월 11일 오전 URL Inspection에서 `/cases`는 발견됨·미색인으로 보였고 재수집 요청이 접수됐지만, **12:51:57 KST** 재확인에서는 Google에 등록됨, Googlebot 스마트폰 수집 성공, 색인 허용, 자체 canonical로 바뀌어 있었다. `/blogs`도 새 제목·설명 반영 뒤 **13:06:01 KST** Googlebot 스마트폰이 재수집했고, Google이 등록한 상태와 자체 canonical을 확인했다. 크롤링된 HTML에서 새 title·description·H1 및 `index, follow`가 확인됐다. 이 확인은 색인 여부를 입증하지만 검색 순위 상승은 입증하지 않는다.
+- 11월 11일 URL Inspection에서 `/topics`는 `발견됨 - 현재 색인이 생성되지 않음`, 크롤링 기록·선택된 canonical 없음으로 표시됐다. Search Console 실시간 테스트는 13:33 KST에 URL을 가져와 색인 가능·크롤링 허용·페이지 가져오기 성공·사용자 선언 canonical 자체 URL을 반환했다. 화면에는 이미 색인 요청됨 상태가 표시되어 중복 요청은 보내지 않았다. `/topics/backend`와 `/topics/devops`도 현재 발견됨·미색인·크롤링 없음이었다. `/topics/mobile`은 URL Inspection에서 아직 Google에 알려지지 않은 URL로 표시됐지만, 같은 시점 Production sitemap에는 포함되어 있어 Search Console URL 검사와 sitemap 보고서가 일치하지 않았다.
+- 같은 Search Console Performance 화면에서 최신 제공 기간은 여전히 2026-10-20~11-08이었고 마지막 업데이트는 확인 시점 약 3.5시간 전이었다. 전체 클릭 10, 노출 271, CTR 3.7%, 평균 순위 9.6으로 직전 기준선과 같았다. 일반 기술 블로그/테크 블로그 쿼리는 계속 표에 없었으므로 신규 검색 순위 개선은 아직 입증되지 않았다.
+- Search Console sitemap 보고서는 `https://www.techgotgan.co.kr/sitemap.xml`을 2026-11-11에 성공적으로 읽었고 133개 페이지를 발견했다. URL Inspection 상세의 일부 기술 허브에 표시된 `magisa.vercel.app/sitemap.xml`/일시 오류는 과거 sitemap 참조였고 현재 도메인의 sitemap 성공 상태와 구분한다.
+- Pages 색인 보고서는 마지막 업데이트가 2026-11-06이었다. 당시 69개 색인, 1,888개 미색인이었으며, 미색인 사유는 noindex 1,764, 404 11, 대체 canonical 9, 크롤링됐지만 미색인 99, 발견됐지만 미색인 5였다. `noindex`는 의도된 기사 상세 페이지가 포함되므로 오류로 간주하지 않는다. 99개 예시의 기술 허브 4개(Spark, Cloud, LLM, Kafka)는 11월 11일 개별 URL 검사에서 이미 Google에 등록된 것으로 확인되어 이 보고서는 최신 URL 상태보다 늦었다. 5개 발견 예시는 `/digest/2026-W45`, `/topics`, `/topics/backend`, `/topics/devops`, `/topics/mobile`이었다.
+- 11월 11일에는 색인 가능·sitemap 등록인데도 Google이 방문하지 않은 주제 허브를 더 쉽게 찾도록 홈 본문에 프론트엔드·백엔드·AI·머신러닝·DevOps·모바일 주제별 기술 블로그 링크를 추가했다. sitemap의 홈 `lastmod`도 2026-11-11 04:37 UTC로 맞췄다. `npm run build`와 변경 파일 ESLint가 통과했다. 이 변경은 아직 Production 배포 전이므로 홈 렌더링·sitemap 응답과 Google 재크롤링은 배포 후 확인한다.
+- 11월 11일 Search Console의 `/technologies/spark`, `/technologies/cloud`, `/technologies/llm`, `/technologies/kafka` URL 검사는 모두 Google 색인, Googlebot 스마트폰 fetch 성공, 색인 허용, 자체 canonical을 표시했다. 이 페이지들은 11월 6일 색인 보고서에서 미색인으로 집계된 예시였으나 현재 개별 URL 검사 결과가 더 최신이므로 과거 페이지 보고서 수치와 구분한다. 기술 허브의 색인은 확인됐지만 이 쿼리의 노출·클릭 증가는 아직 확인되지 않았다.
+- 11월 11일 Pages 보고서는 마지막 업데이트가 11월 6일이고 69개 색인, 1,888개 미색인을 표시했다. 그중 1,764개는 의도된 `noindex`, 11개는 404, 9개는 대체 canonical, 99개는 크롤링 후 미색인, 5개는 발견 후 미색인이었다. 발견 후 미색인 표본에는 `/topics`, `/topics/backend`, `/topics/devops`, `/topics/mobile`, `/digest/2026-W45`가 포함됐다. 현재 개별 URL 검사에서 `/topics/backend`와 `/topics/devops`는 아직 발견됨·미색인·크롤링 기록 없음, `/topics/mobile`은 Google 미인지로 나타났으므로 오래된 보고서 수치와 최신 검사를 함께 기록한다.
+- sitemap 보고서는 2026-11-11에 `https://www.techgotgan.co.kr/sitemap.xml`을 성공적으로 읽고 133개 URL을 발견했다. 일부 URL Inspection 화면에는 과거 `magisa.vercel.app/sitemap.xml` 출처와 일시 오류가 표시됐지만, 현재 도메인 sitemap 보고서는 성공 상태다.
+- 다음 Search Console 비교에서는 11월 6일 기술 용어 허브, 11월 11일 `/blogs` 스니펫, `/cases` 색인, 홈의 직접 주제 링크를 변경별로 구분한다. 성과 기준일은 Search Console 데이터 종료일을 확인한 뒤 정하고, 색인·크롤링·요청 접수를 순위나 유입 상승으로 계산하지 않는다.
+
 - 원격 Supabase의 `source_suggestions` 테이블은 존재하며, 예상 컬럼과 RLS 활성화 상태를 확인했다.
 - `0013_tokenized_article_search.sql`과 `0014_public_hub_queries.sql`을 2026-10-19에 대상
   `magisa-reader` 프로젝트의 SQL Editor에서 적용했다. 검색 RPC는 `react typescript` 조회에서 10건을
