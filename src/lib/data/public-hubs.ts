@@ -547,9 +547,9 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
       select: "id,title,url,excerpt,published_at,discovered_at,category,tags,source:sources!inner(id,title,site_url)",
       tags: `cs.{${term.tag}}`,
       "source.is_active": "eq.true",
-      order: "published_at.desc.nullslast,discovered_at.desc",
-      // Filter after fetching: a small database-side limit lets less relevant
-      // tagged rows crowd out newer articles whose title or excerpt is a match.
+      // Choose recently discovered rows before filtering so a large backlog of
+      // dated articles cannot hide newly ingested sources with no publish date.
+      order: "discovered_at.desc",
       limit: String(MAX_PUBLIC_TECHNOLOGY_CANDIDATES),
     },
     { revalidate: 300, tags: ["articles", "sources"] }
