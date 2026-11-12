@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { connection } from "next/server";
 import { getCachedArticleFeed } from "@/lib/data/articles";
-import { getPublicBlogIndex, getPublicCategoryIndex, getPublicTechnologyIndex } from "@/lib/data/public-hubs";
+import { getPublicBlogIndex, getPublicCategoryIndex, getPublicTechnologyIndex, TITLE_REQUIRED_TECHNOLOGY_TERMS } from "@/lib/data/public-hubs";
 import { listRecentDigestWeeks } from "@/lib/data/weekly-digests";
 import { SITE_URL } from "./seo";
 import { GUIDE_PUBLISHED_AT, problemGuides } from "@/lib/content/problem-guides";
@@ -16,6 +16,7 @@ const TOPIC_TECHNOLOGY_LINKS_LAST_MODIFIED = "2026-11-11T07:02:32.000Z";
 const TOPICS_INDEX_LAST_MODIFIED = TOPIC_TECHNOLOGY_LINKS_LAST_MODIFIED;
 const TECHNOLOGY_INDEX_LAST_MODIFIED = "2026-11-11T07:10:43.000Z";
 const TECHNOLOGY_TERMS_LAST_MODIFIED = TOPIC_TECHNOLOGY_LINKS_LAST_MODIFIED;
+const TECHNOLOGY_TEXT_MATCH_LAST_MODIFIED = "2026-11-11T07:10:21.000Z";
 const STATIC_TOPIC_LAST_MODIFIED: Record<string, string> = {
   ai_ml: TOPIC_TECHNOLOGY_LINKS_LAST_MODIFIED,
   backend: TOPIC_TECHNOLOGY_LINKS_LAST_MODIFIED,
@@ -130,6 +131,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
               technology.lastModified,
               problemGuides.some((guide) => guide.categories.includes(technology.term.category))
                 ? GUIDE_PUBLISHED_AT : TECHNOLOGY_TERMS_LAST_MODIFIED,
+              TITLE_REQUIRED_TECHNOLOGY_TERMS.has(technology.term.slug)
+                ? TECHNOLOGY_TEXT_MATCH_LAST_MODIFIED : null,
             ]),
             changeFrequency: "daily" as const,
             priority: 0.7,
