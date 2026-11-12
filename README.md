@@ -2,7 +2,7 @@
 
 **여러 회사 기술 블로그를 한국어로 검색하고, 주제와 블로그별로 다시 찾아 읽는 공개 아카이브입니다.**
 
-[테크곳간 바로 사용하기](https://www.techgotgan.co.kr/?utm_source=github&utm_medium=readme&utm_campaign=developer_discovery_2026q4) · [기술 용어별 최신 글](https://www.techgotgan.co.kr/technologies?utm_source=github&utm_medium=readme&utm_campaign=technology_terms_2026q4) · [회사별 기술 블로그](https://www.techgotgan.co.kr/blogs?utm_source=github&utm_medium=readme&utm_campaign=technology_directory_2026q4) · [주간 큐레이션](https://www.techgotgan.co.kr/digest) · [RSS 피드](https://www.techgotgan.co.kr/feed.xml)
+[테크곳간 바로 사용하기](https://www.techgotgan.co.kr/?utm_source=github&utm_medium=readme&utm_campaign=developer_discovery_2026q4) · [기술별 테크 블로그 최신 글](https://www.techgotgan.co.kr/technologies?utm_source=github&utm_medium=readme&utm_campaign=technology_terms_2026q4) · [회사별 기술 블로그](https://www.techgotgan.co.kr/blogs?utm_source=github&utm_medium=readme&utm_campaign=technology_directory_2026q4) · [주간 큐레이션](https://www.techgotgan.co.kr/digest) · [RSS 피드](https://www.techgotgan.co.kr/feed.xml)
 
 회사마다 흩어진 기술 블로그를 하나씩 확인하는 대신, 한곳에서 새 글을 검색하고 관심 있는 주제와 발행처를 살펴볼 수 있습니다. 검색과 글 열람은 가입 없이 바로 이용할 수 있습니다.
 
