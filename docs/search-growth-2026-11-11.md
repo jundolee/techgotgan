@@ -86,3 +86,4 @@ Go·Swift·Spark·AI 에이전트·SQL처럼 넓게 쓰이는 기술명은 기�
 ## `ly tech blog` 검색 결과 설명 점검
 
 2026-11-12 Search Console에서 `ly tech blog`는 노출 9회·클릭 0회·평균 순위 7.2였다. 클릭 표본은 작지만, 실제 랜딩의 제목 `LY Corporation Tech Blog 기술 블로그 최신 글`은 공식 발행처 결과와 구분되지 않는 표현이었다. 제목을 `LY Tech Blog 최신 글 모아보기`로 바꾸고, 설명에 제목·요약 탐색과 LY Corporation 원문으로 이어지는 테크곳간 페이지임을 적었다. GSC 보고서가 11월 9일까지이므로 CTR 변화는 새 날짜가 반영된 뒤 판단한다.
+- PR #257의 새 LY 허브 제목·설명은 11월 12일 Preview와 Production에서 H1/title/description/canonical이 일치함을 확인했다. Google URL Inspection에서 페이지는 기존 색인 상태였고, 새 제목 반영을 위해 11월 12일 재수집을 요청한 뒤 우선 크롤링 대기열 접수를 확인했다. 11월 9일까지의 Performance 보고서에는 이 변경 이후 데이터가 없으므로 클릭률 효과는 미확정이다.
