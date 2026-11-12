@@ -94,3 +94,10 @@ Go·Swift·Spark·AI 에이전트·SQL처럼 넓게 쓰이는 기술명은 기�
 - `https://www.techgotgan.co.kr/blogs/ly-corporation-tech-blog-techblog-lycorp-co-jp`는 Google 색인 상태다. 기존 색인 HTML의 마지막 크롤링은 2026-10-22이고 제목은 수정 전 `LY Corporation Tech Blog 최신 글`이었다.
 - 같은 URL의 2026-11-12 실시간 URL 테스트는 현재 Production의 `LY Tech Blog 최신 글 모아보기`, 새 설명, 자체 canonical 및 `index,follow`를 확인해 색인 가능으로 반환했다. 기존 색인본이 오래돼 새 제목은 SERP 반영 전 상태다. 색인 요청은 접수됐지만 재크롤링은 미확인이다.
 - AI 자동화 가이드의 내용 수정 URL 요청은 2026-11-12 Search Console에서 `일일 할당량을 초과하여 이 요청을 처리할 수 없습니다`로 거절됐다. 반복 요청하지 않고 사이트맵의 다음 수집 주기를 기다린다. 제출 sitemap은 11월 12일 마지막 읽음·성공·228 URL 상태다.
+
+## 2026-11-12 sitemap 재제출 후속
+
+- Production sitemap은 LY 허브 `lastmod=2026-11-12T02:13:01Z`, 업데이트된 두 가이드 `lastmod=2026-11-12T02:29:21Z`를 포함한다.
+- 11월 12일 GSC URL Inspection에서 LY 허브는 색인됨으로 남아 있었고 저장된 버전의 최종 크롤링은 2026-10-22였다. Search Console의 실제 URL 테스트는 새 제목·설명, 자체 canonical, `index,follow`를 반환했다. 새 메타데이터가 검색결과에 적용됐다는 확인은 아니다.
+- 페이지별 URL 색인 요청은 일일 한도에 도달해 오늘 추가 요청이 거절됐다. 한도 우회나 반복 요청을 하지 않았다. 최신 `sitemap.xml`을 다시 제출했고 Google의 접수 메시지를 확인했다. 보고서 표시는 아직 11월 12일 마지막 읽음·성공·228 URL이므로, 이번 제출 버전을 새로 읽었다는 증거는 없다.
+- Performance 보고서는 2026-10-20~11-09로 유지됐다. LY 허브 메타 변경 뒤의 CTR·순위 변화는 아직 측정되지 않았다.
