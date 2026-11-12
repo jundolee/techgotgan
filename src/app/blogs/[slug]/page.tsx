@@ -207,6 +207,25 @@ export default async function BlogPage({ params }: BlogPageProps) {
           </div>
         </section>
       )}
+
+      {hub.relatedTechnologies.length > 0 && (
+        <section aria-labelledby="related-technologies">
+          <Text as="h2" id="related-technologies" textStyle="t6Bold" color="fg.neutral" style={{ marginBottom: 12 }}>
+            이 블로그에서 자주 다룬 기술
+          </Text>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {hub.relatedTechnologies.map(({ term, articleCount }) => (
+              <Link
+                key={term.slug}
+                href={`/technologies/${term.slug}`}
+                style={{ border: "1px solid var(--seed-color-stroke-neutral-subtle)", borderRadius: 999, padding: "7px 12px" }}
+              >
+                {term.label} ({articleCount})
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
