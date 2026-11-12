@@ -87,3 +87,10 @@ Go·Swift·Spark·AI 에이전트·SQL처럼 넓게 쓰이는 기술명은 기�
 
 2026-11-12 Search Console에서 `ly tech blog`는 노출 9회·클릭 0회·평균 순위 7.2였다. 클릭 표본은 작지만, 실제 랜딩의 제목 `LY Corporation Tech Blog 기술 블로그 최신 글`은 공식 발행처 결과와 구분되지 않는 표현이었다. 제목을 `LY Tech Blog 최신 글 모아보기`로 바꾸고, 설명에 제목·요약 탐색과 LY Corporation 원문으로 이어지는 테크곳간 페이지임을 적었다. GSC 보고서가 11월 9일까지이므로 CTR 변화는 새 날짜가 반영된 뒤 판단한다.
 - PR #257의 새 LY 허브 제목·설명은 11월 12일 Preview와 Production에서 H1/title/description/canonical이 일치함을 확인했다. Google URL Inspection에서 페이지는 기존 색인 상태였고, 새 제목 반영을 위해 11월 12일 재수집을 요청한 뒤 우선 크롤링 대기열 접수를 확인했다. 11월 9일까지의 Performance 보고서에는 이 변경 이후 데이터가 없으므로 클릭률 효과는 미확정이다.
+
+## LY Tech Blog 수정 뒤 URL Inspection 후속 확인
+
+- GSC Performance는 최종 갱신 표시 4시간 전, 데이터 종료일은 2026-11-09로 유지됐다. 도메인 전체 11클릭·303노출·CTR 3.6%·평균 순위 10.2였다. `ly tech blog`는 9노출·0클릭·평균 순위 7.2로, 새 제목을 바꾼 뒤의 데이터는 아직 없다.
+- `https://www.techgotgan.co.kr/blogs/ly-corporation-tech-blog-techblog-lycorp-co-jp`는 Google 색인 상태다. 기존 색인 HTML의 마지막 크롤링은 2026-10-22이고 제목은 수정 전 `LY Corporation Tech Blog 최신 글`이었다.
+- 같은 URL의 2026-11-12 실시간 URL 테스트는 현재 Production의 `LY Tech Blog 최신 글 모아보기`, 새 설명, 자체 canonical 및 `index,follow`를 확인해 색인 가능으로 반환했다. 기존 색인본이 오래돼 새 제목은 SERP 반영 전 상태다. 색인 요청은 접수됐지만 재크롤링은 미확인이다.
+- AI 자동화 가이드의 내용 수정 URL 요청은 2026-11-12 Search Console에서 `일일 할당량을 초과하여 이 요청을 처리할 수 없습니다`로 거절됐다. 반복 요청하지 않고 사이트맵의 다음 수집 주기를 기다린다. 제출 sitemap은 11월 12일 마지막 읽음·성공·228 URL 상태다.
