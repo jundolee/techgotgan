@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Text } from "@seed-design/react";
@@ -7,7 +8,14 @@ import { DigestBreadcrumbs } from "@/components/weekly-digest/digest-breadcrumbs
 import { DigestDistributionList } from "@/components/weekly-digest/digest-distribution-list";
 import { DigestHeader } from "@/components/weekly-digest/digest-header";
 import { DigestJsonLd } from "@/components/weekly-digest/digest-json-ld";
-import { getWeeklyDigest, isValidDigestWeek } from "@/lib/data/weekly-digests";
+import { getWeeklyDigest, isValidDigestWeek, type DigestArticle } from "@/lib/data/weekly-digests";
+import {
+  getPublicTechnologyHub,
+  matchesTechnologyTermText,
+  MIN_PUBLIC_TECHNOLOGY_INDEX_ARTICLES,
+  PUBLIC_TECHNOLOGY_TERMS,
+  type PublicTechnologyIndexItem,
+} from "@/lib/data/public-hubs";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
 
 type PageProps = {
@@ -16,6 +24,31 @@ type PageProps = {
 
 function getPageDescription(label: string, dateRangeLabel: string, articleCount: number): string {
   return `${dateRangeLabel}에 새로 발행된 테크 블로그 글 ${articleCount}개를 ${label} 큐레이션으로 정리했습니다.`;
+}
+
+async function getRelatedTechnologies(articles: DigestArticle[]): Promise<PublicTechnologyIndexItem[]> {
+  const candidates = PUBLIC_TECHNOLOGY_TERMS
+    .map((term) => ({
+      term,
+      articleCount: articles.filter((article) => matchesTechnologyTermText(article.title, article.excerpt, term.slug)).length,
+    }))
+    .filter((technology) => technology.articleCount >= 2)
+    .sort((a, b) => b.articleCount - a.articleCount || a.term.label.localeCompare(b.term.label, "ko"));
+
+  const related: PublicTechnologyIndexItem[] = [];
+  // Validate only repeated terms from this digest; sparse or noindex hubs stay unlinked.
+  for (let offset = 0; offset < candidates.length && related.length < 5; offset += 8) {
+    const batch = candidates.slice(offset, offset + 8);
+    const hubs = await Promise.all(batch.map(({ term }) => getPublicTechnologyHub(term.slug)));
+    batch.forEach(({ term }, index) => {
+      const hub = hubs[index];
+      if (hub && hub.articles.length >= MIN_PUBLIC_TECHNOLOGY_INDEX_ARTICLES) {
+        related.push({ term, articleCount: hub.articles.length, lastModified: hub.lastModified });
+      }
+    });
+  }
+
+  return related.slice(0, 5);
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -66,6 +99,7 @@ export default async function WeeklyDigestPage({ params }: PageProps) {
 
   const canonicalUrl = `${SITE_URL}/digest/${digest.week}`;
   const description = getPageDescription(digest.label, digest.dateRangeLabel, digest.articleCount);
+  const relatedTechnologies = await getRelatedTechnologies(digest.latestArticles);
 
   return (
     <main style={{ display: "flex", flexDirection: "column", gap: 32 }}>
@@ -121,6 +155,28 @@ export default async function WeeklyDigestPage({ params }: PageProps) {
         <DigestDistributionList id="category-distribution" title="카테고리 분포" items={digest.categoryDistribution} />
         <DigestDistributionList id="source-distribution" title="소스 분포" items={digest.sourceDistribution} />
       </div>
+      {relatedTechnologies.length > 0 && (
+        <section aria-labelledby="related-technology-hubs" style={{ display: "grid", gap: 10 }}>
+          <Text as="h2" id="related-technology-hubs" textStyle="t6Bold" color="fg.neutral">
+            이번 주 함께 다룬 기술
+          </Text>
+          <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)">
+            같은 기술을 다룬 기업 블로그의 최신 글도 이어서 살펴보세요.
+          </Text>
+          <ul style={{ display: "flex", gap: 8, flexWrap: "wrap", listStyle: "none" }}>
+            {relatedTechnologies.map(({ term }) => (
+              <li key={term.slug}>
+                <Link
+                  href={`/technologies/${term.slug}`}
+                  style={{ display: "inline-flex", border: "1px solid var(--seed-color-stroke-neutral-subtle)", borderRadius: 999, padding: "6px 10px" }}
+                >
+                  {term.label} 기술 블로그
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <DigestArticleList articles={digest.latestArticles} totalCount={digest.articleCount} />
     </main>
   );
