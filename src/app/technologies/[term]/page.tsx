@@ -31,11 +31,11 @@ export async function generateMetadata({ params }: TechnologyPageProps): Promise
   const { term } = await params;
   const hub = await getPublicTechnologyHub(term);
   if (!hub) return { robots: { index: false, follow: false } };
+  const canonical = technologyUrl(hub.term.slug);
   if (hub.articles.length < MIN_PUBLIC_TECHNOLOGY_INDEX_ARTICLES) {
-    return { robots: { index: false, follow: true } };
+    return { robots: { index: false, follow: true }, alternates: { canonical } };
   }
 
-  const canonical = technologyUrl(hub.term.slug);
   return {
     title: hub.term.title,
     description: hub.term.description,
