@@ -41,7 +41,7 @@ export interface PublicTechnologyIndexItem {
   lastModified: string | null;
 }
 
-const MIN_PUBLIC_TECHNOLOGY_ARTICLES = 3;
+export const MIN_PUBLIC_TECHNOLOGY_INDEX_ARTICLES = 8;
 const MAX_PUBLIC_TECHNOLOGY_ARTICLES = 20;
 const MAX_PUBLIC_TECHNOLOGY_CANDIDATES = 100;
 const MIN_TAGGED_ARTICLES_BEFORE_TEXT_FALLBACK = 10;
@@ -318,6 +318,15 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     description: "Flutter와 React Native 등 여러 모바일 플랫폼을 함께 지원하는 앱 개발 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
+    slug: "flutter",
+    label: "Flutter",
+    tag: "flutter",
+    query: "flutter",
+    category: "mobile",
+    title: "Flutter 기술 블로그 최신 글",
+    description: "Flutter와 Dart를 활용한 크로스 플랫폼 앱 개발, 상태 관리와 배포 사례를 다룬 회사 기술 블로그 글입니다.",
+  },
+  {
     slug: "ios",
     label: "iOS",
     tag: "ios",
@@ -377,6 +386,7 @@ const PUBLIC_TECHNOLOGY_MATCH_TERMS: Record<string, string[]> = {
   mlops: ["mlops", "machine learning operations", "머신러닝 운영"],
   go: ["go", "golang", "고랭"],
   "cross-platform": ["cross-platform", "cross platform", "크로스 플랫폼", "flutter", "react native"],
+  flutter: ["flutter", "플러터", "dart"],
   ios: ["ios", "swift", "swiftui"],
   android: ["android", "안드로이드", "kotlin"],
   kafka: ["kafka", "카프카"],
@@ -770,7 +780,7 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
 export async function getPublicTechnologyIndex(): Promise<PublicTechnologyIndexItem[]> {
   const hubs = await Promise.all(PUBLIC_TECHNOLOGY_TERMS.map((term) => getPublicTechnologyHub(term.slug)));
   return hubs.flatMap((hub) =>
-    hub && hub.articles.length >= MIN_PUBLIC_TECHNOLOGY_ARTICLES
+    hub && hub.articles.length >= MIN_PUBLIC_TECHNOLOGY_INDEX_ARTICLES
       ? [{ term: hub.term, articleCount: hub.articles.length, lastModified: hub.lastModified }]
       : []
   );
