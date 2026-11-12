@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: guide.title,
     description: guide.description,
     alternates: { canonical: url },
-    openGraph: { title: guide.title, description: guide.description, url, type: "article", locale: "ko_KR", siteName: SITE_NAME, publishedTime: GUIDE_PUBLISHED_AT },
+    openGraph: { title: guide.title, description: guide.description, url, type: "article", locale: "ko_KR", siteName: SITE_NAME, publishedTime: GUIDE_PUBLISHED_AT, modifiedTime: guide.updatedAt },
     twitter: { card: "summary", title: guide.title, description: guide.description },
   };
 }
@@ -39,7 +39,7 @@ export default async function ProblemGuidePage({ params }: Props) {
       "@context": "https://schema.org", "@type": "Article",
       headline: guide.title, description: guide.description, url,
       mainEntityOfPage: url, inLanguage: "ko-KR",
-      datePublished: GUIDE_PUBLISHED_AT, dateModified: GUIDE_PUBLISHED_AT,
+      datePublished: GUIDE_PUBLISHED_AT, dateModified: guide.updatedAt,
       author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
       publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
       citation: [guide.source.url, guide.documentation.url],
@@ -70,7 +70,7 @@ export default async function ProblemGuidePage({ params }: Props) {
           <ShareButton title={guide.title} url={url} size="small" variant="neutralWeak" shareSurface="content_guide" shareCampaign={`problem_guide_${guide.slug.replaceAll("-", "_")}_2026w46`} />
         </header>
         <nav aria-label="이 글의 목차" className={styles.contents}>
-          <a href="#source-case">기업 사례</a><a href="#steps">검토 순서</a><a href="#worksheet">작성 양식</a><a href="#review">판단할 때 주의할 점</a>
+          <a href="#source-case">기업 사례</a><a href="#case-lessons">사례에서 발견한 조건</a><a href="#steps">검토 순서</a><a href="#worksheet">작성 양식</a><a href="#review">판단할 때 주의할 점</a>
         </nav>
         <section id="source-case" className={styles.section}>
           <p className={styles.kicker}>{guide.source.publisher}의 공개 사례</p>
@@ -78,6 +78,17 @@ export default async function ProblemGuidePage({ params }: Props) {
           <p>{guide.source.summary}</p>
           <p className={styles.note}>{guide.source.limit}</p>
           <SourceArticleLink href={guide.source.url} surface="editorial_guide" className={styles.textLink}>기업 원문 읽기 →</SourceArticleLink>
+        </section>
+        <section id="case-lessons" className={styles.section}>
+          <h2>원문 사례에서 발견한 실행 조건</h2>
+          <p>아래 결과와 과정은 각 기업 원문에서 확인했습니다. 적용 제안은 테크곳간이 따로 정리한 팀 검토 질문입니다.</p>
+          <ol className={styles.steps}>
+            {guide.caseLessons.map((lesson) => <li key={lesson.title}>
+              <h3>{lesson.title}</h3>
+              <p>{lesson.evidence}</p>
+              <p><strong>팀에서 확인할 점:</strong> {lesson.application}</p>
+            </li>)}
+          </ol>
         </section>
         <section id="steps" className={styles.section}>
           <h2>우리 팀에서 검토할 순서</h2>
