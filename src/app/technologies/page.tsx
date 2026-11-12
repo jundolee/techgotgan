@@ -6,8 +6,8 @@ import { PageHeader } from "@/components/page-header";
 import { getPublicTechnologyIndex } from "@/lib/data/public-hubs";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
 
-const TITLE = "기술 용어별 최신 기술 블로그 글";
-const DESCRIPTION = "React·Python·JavaScript·Kotlin·Swift·Rust·AWS·Kubernetes·MySQL·Redis·MLOps 등 기술 용어로 기업 기술 블로그 최신 글을 찾고 원문까지 이어 읽어보세요.";
+const TITLE = "기술 블로그·테크 블로그를 기술별로 모아보기";
+const DESCRIPTION = "React·Python·JavaScript·Kotlin·Swift·Rust·AWS·Kubernetes·MySQL·Redis·MLOps 등 기술 용어별로 기업 기술 블로그(테크 블로그)의 최신 글을 찾아 원문까지 읽어보세요.";
 const CANONICAL = `${SITE_URL}/technologies`;
 
 export async function generateMetadata(): Promise<Metadata> {
