@@ -53,3 +53,11 @@ Search Console의 “크롤링됨 - 현재 색인이 생성되지 않음” 예�
 Go·Swift·Spark·AI 에이전트·SQL처럼 넓게 쓰이는 기술명은 기사 제목에서도 그 주제가 드러나야 해당 허브에 넣는다. Spark 이름을 쓰는 Muse·Gemini 제품 소식은 제외한다. 나머지 기술은 본문 발췌 매칭을 유지해 DaaS·클라우드 전환처럼 제목만으로 설명하기 어려운 구현 글을 지우지 않는다. 변경한 허브와 기술 디렉터리의 sitemap `lastmod`를 실제 수정 시각으로 갱신한다.
 
 배포 전, 공개되어 있던 첫 20건에 새 규칙을 대입한 표본에서 Spark 10/16, Go 10/20, Swift 9/14, AI 에이전트 16/20, SQL 8/20건이 남았다. 모두 인덱싱 최소 기준 3건 이상이었다. 이 표본은 전체 후보 풀이 아니므로, Preview/Production에서 실제 렌더링·개수·관련성을 다시 확인한다. Google의 재크롤링과 색인 결정은 이후 별도 관찰한다.
+
+## 2026-11-12 기술 허브 색인 후속 확인
+
+- PR #238·#239에서 Python, JavaScript, Node.js, Java, AWS, PostgreSQL, MySQL, Redis, Kotlin, Swift, Rust, Terraform, MLOps 허브를 추가했다. `/technologies`는 33개 허브 링크를 반환하고, 신규 허브는 8~20개 글을 표시한다. 모든 신규 경로에서 HTTP 200, 자체 canonical, `index,follow`를 확인했고, 현재 sitemap은 150개 URL을 포함한다.
+- PR #241은 기술 인덱스 description에 실제 제공하는 용어를 반영했다. PR #243·#244에서는 인덱스·주제·세부 허브의 sitemap `lastmod`가 정적 페이지 변경 시각을 뒤로 남기지 않도록 수정했다. Production sitemap에서 `/technologies`는 2026-11-11 22:59 UTC, 신규 term hub는 최소 2026-11-11 07:02 UTC를 표시한다. 더 최근인 콘텐츠 발견 시각이 있으면 그 날짜를 사용한다.
+- Search Console 성과 보고서의 표시 갱신은 4.5시간 전, 실제 날짜 범위는 2026-10-20~11-09였다. 도메인 전체는 클릭 11회, 노출 303회, CTR 3.6%, 평균 순위 10.2였다. 이전 확인 구간은 10-20~11-08이므로 기간이 다르고, 신규 term hub 배포는 11월 11일 이후라 이번 성과에 귀속할 수 없다. 24개 표시 쿼리에서 `기술 블로그`와 `테크 블로그`는 나타나지 않았다. `개발 블로그`, `apache spark`는 각각 노출 1회·클릭 0회였다.
+- 11월 12일 URL Inspection에서 `/technologies/python`은 `발견됨 - 현재 색인이 생성되지 않음`, 최근 크롤링 없음으로 표시됐다. 화면은 과거 `magisa.vercel.app/sitemap.xml`을 참조하고 현재 도메인 sitemap은 감지하지 못했다. 별도 실시간 테스트에서는 색인 가능한 상태와 유효한 탐색경로 1개를 확인했고, 해당 URL의 색인 요청은 우선 크롤링 대기열에 접수됐다. 접수와 색인은 구분한다.
+- Search Console sitemap은 11월 12일 현재 URL로 재제출했다. 즉시 갱신된 보고서는 마지막 읽음 11월 11일·발견 133개로 남아 있어, Google이 새 150-URL sitemap을 다시 읽는 것은 아직 확인되지 않았다.
