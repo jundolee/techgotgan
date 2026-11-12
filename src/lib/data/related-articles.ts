@@ -30,18 +30,121 @@ export interface ArticlePreview {
   summary: { lead: string; keyPoints: string[] } | null;
   summaryBasis: "full_article" | "partial_article" | "excerpt" | null;
   summaryStatus: "pending" | "processing" | "ready" | "unavailable" | "failed" | null;
+  summaryGeneratedAt: string | null;
 }
 
-/** Public SEO experiment: only summaries grounded in a fully extracted source are indexable. */
+interface ArticleSummaryJobRow {
+  article_id?: string;
+  status: string;
+  lead: string | null;
+  key_points: string[] | null;
+  extraction_status: string | null;
+  prompt_version: string;
+  generated_at: string | null;
+}
+
+interface ArticleSummaryState {
+  summary: ArticlePreview["summary"];
+  summaryBasis: ArticlePreview["summaryBasis"];
+  summaryStatus: ArticlePreview["summaryStatus"];
+  summaryGeneratedAt: string | null;
+}
+
+function resolveArticleSummary(rows: ArticleSummaryJobRow[]): ArticleSummaryState {
+  const current = rows.find((row) => row.prompt_version === ARTICLE_SUMMARY_PROMPT_VERSION);
+  const legacyV1 = rows.find((row) => row.prompt_version === LEGACY_ARTICLE_SUMMARY_PROMPT_VERSION);
+  const earliest = rows.find((row) => row.prompt_version === EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION);
+  const isReady = (row: ArticleSummaryJobRow | undefined) => row?.status === "ready" && Array.isArray(row.key_points);
+  const selected = isReady(current) ? current : isReady(legacyV1) ? legacyV1 : isReady(earliest) ? earliest : current;
+  if (!selected) return { summary: null, summaryBasis: null, summaryStatus: null, summaryGeneratedAt: null };
+
+  const allowedStatuses = ["pending", "processing", "ready", "unavailable", "failed"] as const;
+  const summaryStatus = allowedStatuses.includes(selected.status as typeof allowedStatuses[number])
+    ? selected.status as ArticlePreview["summaryStatus"]
+    : null;
+  if (summaryStatus !== "ready" || !Array.isArray(selected.key_points)) {
+    return { summary: null, summaryBasis: null, summaryStatus, summaryGeneratedAt: selected.generated_at };
+  }
+
+  return {
+    summary: {
+      lead: selected.lead ?? "",
+      keyPoints: selected.key_points.filter((point): point is string => typeof point === "string"),
+    },
+    summaryBasis: selected.prompt_version === EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION
+      ? "excerpt"
+      : selected.extraction_status === "partial" ? "partial_article" : "full_article",
+    summaryStatus,
+    summaryGeneratedAt: selected.generated_at,
+  };
+}
+
+interface IndexableArticleRow {
+  id: string;
+  title: string;
+  url: string;
+  excerpt: string | null;
+  published_at: string | null;
+  category: string | null;
+  tags: string[] | null;
+  source: { title: string | null } | { title: string | null }[] | null;
+}
+
+/** Public SEO experiment: batch eligible summaries to keep sitemap fetches bounded. */
 export async function getIndexableArticlePreviews(limit = 200): Promise<ArticlePreview[]> {
   const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 200);
-  const { data, error } = await createServiceClient()
+  const client = createServiceClient();
+  const { data: articles, error } = await client
     .from("articles")
-    .select("id")
+    .select("id,title,url,excerpt,published_at,category,tags,source:sources(title)")
     .order("published_at", { ascending: false, nullsFirst: false })
     .limit(safeLimit);
   if (error) throw error;
-  const previews = await Promise.all((data ?? []).map(({ id }) => getArticlePreview(id, { includeSummary: true })));
+
+  const articleRows = (articles ?? []) as IndexableArticleRow[];
+  if (articleRows.length === 0) return [];
+  const promptVersions = [
+    ARTICLE_SUMMARY_PROMPT_VERSION,
+    LEGACY_ARTICLE_SUMMARY_PROMPT_VERSION,
+    EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION,
+  ];
+  const { data: jobs, error: summaryError } = await client
+    .from("article_summary_jobs")
+    .select("article_id,status,lead,key_points,extraction_status,prompt_version,generated_at")
+    .in("article_id", articleRows.map((article) => article.id))
+    .in("prompt_version", promptVersions);
+  if (summaryError) {
+    if (summaryError.code === "42P01") {
+      console.warn("article_summary_jobs table is not installed yet; no article summary is available.");
+    } else {
+      console.error("Failed to read article summaries for sitemap:", summaryError.message);
+    }
+    return [];
+  }
+
+  const jobsByArticleId = new Map<string, ArticleSummaryJobRow[]>();
+  for (const job of (jobs ?? []) as ArticleSummaryJobRow[]) {
+    if (!job.article_id) continue;
+    const current = jobsByArticleId.get(job.article_id) ?? [];
+    current.push(job);
+    jobsByArticleId.set(job.article_id, current);
+  }
+
+  const previews = articleRows.map((article) => {
+    const source = Array.isArray(article.source) ? article.source[0] : article.source;
+    const summaryState = resolveArticleSummary(jobsByArticleId.get(article.id) ?? []);
+    return {
+      id: article.id,
+      title: article.title,
+      url: article.url,
+      excerpt: article.excerpt,
+      publishedAt: article.published_at,
+      category: article.category ?? "general",
+      tags: article.tags ?? [],
+      sourceTitle: source?.title ?? null,
+      ...summaryState,
+    } satisfies ArticlePreview;
+  });
   return previews.filter((article): article is ArticlePreview =>
     Boolean(article?.summary && article.summaryBasis === "full_article" && article.title.trim().length >= 12 && (article.excerpt?.trim().length ?? 0) >= 40)
   );
@@ -78,7 +181,7 @@ export async function getArticlePreview(
   const summaryPromise = options.includeSummary
     ? supabase
       .from("article_summary_jobs")
-      .select("status,lead,key_points,extraction_status,prompt_version")
+      .select("status,lead,key_points,extraction_status,prompt_version,generated_at")
       .eq("article_id", articleId)
       .in("prompt_version", [
         ARTICLE_SUMMARY_PROMPT_VERSION,
@@ -94,9 +197,7 @@ export async function getArticlePreview(
   if (!data) return null;
 
   const source = Array.isArray(data.source) ? data.source[0] : data.source;
-  let summary: ArticlePreview["summary"] = null;
-  let summaryBasis: ArticlePreview["summaryBasis"] = null;
-  let summaryStatus: ArticlePreview["summaryStatus"] = null;
+  let summaryState: ArticleSummaryState = { summary: null, summaryBasis: null, summaryStatus: null, summaryGeneratedAt: null };
   if (summaryResult?.error) {
     if (summaryResult.error.code === "42P01") {
       console.warn("article_summary_jobs table is not installed yet; no article summary is available.");
@@ -104,29 +205,7 @@ export async function getArticlePreview(
       console.error("Failed to read article summary:", summaryResult.error.message);
     }
   } else {
-    const current = summaryResult?.data?.find((row) => row.prompt_version === ARTICLE_SUMMARY_PROMPT_VERSION);
-    const legacyV1 = summaryResult?.data?.find((row) => row.prompt_version === LEGACY_ARTICLE_SUMMARY_PROMPT_VERSION);
-    const earliest = summaryResult?.data?.find((row) => row.prompt_version === EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION);
-    const currentReady = current?.status === "ready" && Array.isArray(current.key_points);
-    const legacyV1Ready = legacyV1?.status === "ready" && Array.isArray(legacyV1.key_points);
-    const earliestReady = earliest?.status === "ready" && Array.isArray(earliest.key_points);
-    const selected = currentReady ? current : legacyV1Ready ? legacyV1 : earliestReady ? earliest : current;
-
-    if (selected) {
-      const allowedStatuses = ["pending", "processing", "ready", "unavailable", "failed"] as const;
-      if (allowedStatuses.includes(selected.status as typeof allowedStatuses[number])) {
-        summaryStatus = selected.status as ArticlePreview["summaryStatus"];
-      }
-      if (summaryStatus === "ready" && Array.isArray(selected.key_points)) {
-        summary = {
-          lead: selected.lead,
-          keyPoints: selected.key_points.filter((point): point is string => typeof point === "string"),
-        };
-        summaryBasis = selected.prompt_version === EARLIEST_ARTICLE_SUMMARY_PROMPT_VERSION
-          ? "excerpt"
-          : selected.extraction_status === "partial" ? "partial_article" : "full_article";
-      }
-    }
+    summaryState = resolveArticleSummary((summaryResult?.data ?? []) as ArticleSummaryJobRow[]);
   }
 
   return {
@@ -138,9 +217,7 @@ export async function getArticlePreview(
     category: data.category ?? "general",
     tags: data.tags ?? [],
     sourceTitle: source?.title ?? null,
-    summary,
-    summaryBasis,
-    summaryStatus,
+    ...summaryState,
   };
 }
 
