@@ -205,3 +205,9 @@ GeekNews는 스폰서 광고 위치와 견적을 문의해 안내하는 방식�
 ### 2026-11-11 문제 해결 가이드 검색 실험
 
 PR #237로 E2E 테스트 누락·AI 업무 자동화 가이드와 빈 CSV 양식, `/guides` 디렉터리를 Production에 공개했다. 기존 검색 기획 가이드와 홈·사례·관련 기술/주제 허브를 연결했다. 실제 배포·검증·Search Console의 색인 경계와 후속 측정 조건은 [검색 유입 개선 기록](search-growth-2026-11-11.md)을 따른다. 콘텐츠 공개와 Google의 요청 접수는 노출·클릭 증가 증거가 아니다.
+
+### 2026-11-12 기술별 허브 검색어 문안
+
+- PR #272에서 `/technologies` 제목을 `기술 블로그·테크 블로그를 기술별로 모아보기`로, 설명에는 기술 용어별 기업 기술 블로그(테크 블로그) 문구를 반영했다. Production에서 HTTP 200, 새 title/description, 자체 canonical과 `index,follow`를 확인했다. sitemap의 `/technologies` `lastmod`는 2026-11-12T03:35:12Z다.
+- PR #273에서 공개 GitHub README의 기술 인덱스 링크 앵커를 `기술별 테크 블로그 최신 글`로 바꾸고 기존 GitHub UTM을 유지했다. README가 `origin/main`에 반영됐고 대상 URL은 HTTP 200이다.
+- 공개 검색 도구는 확인 시점에 이전 `/technologies` 제목을 계속 보여줬고 해당 결과는 3일 전 수집 상태였다. 이는 새 제목이 Google 결과에 반영됐다는 증거가 아니다. Search Console 성과 기록은 2026-11-09 종료 데이터이므로 이 변경의 노출·순위·CTR 효과는 아직 측정되지 않았다.
