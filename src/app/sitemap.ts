@@ -169,7 +169,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     ...indexableArticles.map((article) => ({
       url: `${SITE_URL}/articles/${encodeURIComponent(article.id)}`,
-      lastModified: article.publishedAt ?? undefined,
+      lastModified: latestDate([article.publishedAt, article.summaryGeneratedAt]),
       changeFrequency: "monthly" as const,
       priority: 0.5,
     })),
