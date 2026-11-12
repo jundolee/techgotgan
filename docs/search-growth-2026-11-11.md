@@ -81,3 +81,4 @@ Go·Swift·Spark·AI 에이전트·SQL처럼 넓게 쓰이는 기술명은 기�
 - 최신 날짜가 11월 9일이므로 이후 허브·가이드 수정의 성과를 이 보고서로 판단할 수 없다. 지표를 PR 배포 효과로 귀속하지 않는다.
 - URL Inspection에서 `/guides/e2e-test-coverage`, `/guides/ai-workflow-automation`, `/guides`, `/technologies/spark`가 모두 Google에 등록된 상태임을 확인했다. 페이지 색인 보고서의 마지막 갱신 표시는 여전히 11월 6일이라 aggregate 색인 수는 최신 세부 확인으로 보지 않았다.
 - Production sitemap은 HTTP 200과 228개 URL을 반환한다. 제출 sitemap의 마지막 읽음·성공·발견 228개와 일치한다. 여기에는 문제 해결 가이드 3개와 원문 요약 기사 80개가 있고, noindex인 Flutter·CI/CD 허브는 없다.
+- 2026-11-12 URL Inspection에서 PR #247 요약 기사 `/articles/0f059dca-fd11-4f04-a65e-6d8fb5fe5182`가 `Google에 등록됨`으로 확인됐다. Googlebot 요청도 HTTP 200, 자체 canonical, `index,follow`, 원문 전체를 바탕으로 한 서버 렌더링 요약을 반환했다. 이는 URL 한 건의 색인 증거이며, 다른 요약 기사나 자연검색 클릭 증가로 확대 해석하지 않는다.
