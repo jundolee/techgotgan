@@ -9,7 +9,13 @@ import { ArticleSummaryCopy } from "@/components/article-summary-copy";
 import { ShareButton } from "@/components/share-button";
 import { SourceArticleLink } from "@/components/source-article-link";
 import { getArticlePreview, getRelatedArticles, type ArticlePreview } from "@/lib/data/related-articles";
-import { getPublicTechnologyIndex, matchesTechnologyTermText } from "@/lib/data/public-hubs";
+import {
+  getPublicTechnologyHub,
+  matchesTechnologyTermText,
+  MIN_PUBLIC_TECHNOLOGY_INDEX_ARTICLES,
+  PUBLIC_TECHNOLOGY_TERMS,
+  type PublicTechnologyIndexItem,
+} from "@/lib/data/public-hubs";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
 
@@ -30,6 +36,26 @@ async function getArticle(id: string, options: { includeSummary?: boolean } = {}
 
 function isIndexableArticle(article: ArticlePreview | null): article is ArticlePreview {
   return Boolean(article?.summary && article.summaryBasis === "full_article" && article.title.trim().length >= 12 && (article.excerpt?.trim().length ?? 0) >= 40);
+}
+
+async function getRelatedTechnologies(title: string, summary: string): Promise<PublicTechnologyIndexItem[]> {
+  const candidates = PUBLIC_TECHNOLOGY_TERMS.filter((term) => matchesTechnologyTermText(title, summary, term.slug));
+  const related: PublicTechnologyIndexItem[] = [];
+
+  // Validate matched terms in batches and stop once the page can render its
+  // five related-hub links instead of loading every technology hub.
+  for (let offset = 0; offset < candidates.length && related.length < 5; offset += 8) {
+    const batch = candidates.slice(offset, offset + 8);
+    const hubs = await Promise.all(batch.map((term) => getPublicTechnologyHub(term.slug)));
+    batch.forEach((term, index) => {
+      const hub = hubs[index];
+      if (hub && hub.articles.length >= MIN_PUBLIC_TECHNOLOGY_INDEX_ARTICLES) {
+        related.push({ term, articleCount: hub.articles.length, lastModified: hub.lastModified });
+      }
+    });
+  }
+
+  return related.slice(0, 5);
 }
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
@@ -80,20 +106,15 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     }
   }
 
-  const [related, technologyIndex] = await Promise.all([
-    initialRelated.length > 0
-      ? Promise.resolve(initialRelated)
-      : getRelatedArticles(article.id, article.category, article.tags),
-    isIndexableArticle(article) ? getPublicTechnologyIndex() : Promise.resolve([]),
-  ]);
-  // Stored tags and long excerpts can mention a technology incidentally. Match
-  // only the title and the full-source summary that this page actually renders.
   const articleSummaryText = article.summary
     ? `${article.summary.lead} ${article.summary.keyPoints.join(" ")}`
     : "";
-  const relatedTechnologies = technologyIndex
-    .filter(({ term }) => matchesTechnologyTermText(article.title, articleSummaryText, term.slug))
-    .slice(0, 5);
+  const [related, relatedTechnologies] = await Promise.all([
+    initialRelated.length > 0
+      ? Promise.resolve(initialRelated)
+      : getRelatedArticles(article.id, article.category, article.tags),
+    isIndexableArticle(article) ? getRelatedTechnologies(article.title, articleSummaryText) : Promise.resolve([]),
+  ]);
 
   return (
     <main style={{ maxWidth: 760, margin: "0 auto", padding: "24px 0 56px" }}>
