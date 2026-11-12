@@ -90,7 +90,29 @@ export default async function TechnologyPage({ params }: TechnologyPageProps) {
       <header style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <Text as="h1" textStyle="t8Bold" color="fg.neutral">{hub.term.title}</Text>
         <Text as="p" textStyle="t4Regular" color="var(--seed-color-fg-neutral-muted)">{hub.term.description}</Text>
+        <Text as="p" textStyle="t2Regular" color="var(--seed-color-fg-neutral-muted)">
+          {hub.articles.length}개 관련 글 · {hub.sourceCount}개 회사 기술 블로그
+        </Text>
       </header>
+      {hub.relatedTags.length > 0 && (
+        <section aria-labelledby="technology-related-tags" style={{ display: "grid", gap: 10 }}>
+          <Text as="h2" id="technology-related-tags" textStyle="t5Bold" color="fg.neutral">
+            함께 다룬 기술과 주제
+          </Text>
+          <ul style={{ display: "flex", gap: 8, flexWrap: "wrap", listStyle: "none" }}>
+            {hub.relatedTags.map(({ label, articleCount }) => (
+              <li
+                key={label}
+                style={{ border: "1px solid var(--seed-color-stroke-neutral-subtle)", borderRadius: 999, padding: "6px 10px" }}
+              >
+                <Text as="span" textStyle="t2Regular" color="fg.neutral">
+                  {label} · {articleCount}개 글
+                </Text>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <RelatedProblemGuides category={hub.term.category} />
       <section aria-labelledby="technology-articles">
         <Text as="h2" id="technology-articles" textStyle="t6Bold" color="fg.neutral" style={{ marginBottom: 16 }}>

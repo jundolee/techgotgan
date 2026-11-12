@@ -32,7 +32,14 @@ export interface PublicTechnologyTermMeta {
 export interface PublicTechnologyHub {
   term: PublicTechnologyTermMeta;
   articles: PublicHubArticle[];
+  sourceCount: number;
+  relatedTags: PublicTechnologyTagSummary[];
   lastModified: string | null;
+}
+
+export interface PublicTechnologyTagSummary {
+  label: string;
+  articleCount: number;
 }
 
 export interface PublicTechnologyIndexItem {
@@ -469,6 +476,7 @@ export interface PublicHubArticle {
   publishedAt: string | null;
   discoveredAt: string | null;
   category: ArticleCategory;
+  tags?: string[];
   source: {
     title: string;
     slug: string;
@@ -684,6 +692,30 @@ interface PublicTechnologySearchRow {
   source_site_url: string;
 }
 
+const GENERIC_PUBLIC_ARTICLE_TAGS = new Set([
+  "ai_ml", "backend", "culture", "data", "devops", "frontend", "general", "mobile",
+  "blog", "development", "engineering", "tech", "technology", "개발", "기술", "기술블로그",
+]);
+
+function summarizePublicTechnologyTags(articles: PublicHubArticle[], termSlug: string): PublicTechnologyTagSummary[] {
+  const counts = new Map<string, { label: string; articleCount: number }>();
+  for (const article of articles) {
+    const articleTags = new Set(article.tags ?? []);
+    for (const rawTag of articleTags) {
+      const label = rawTag.normalize("NFKC").trim();
+      const key = label.toLowerCase();
+      if (!key || GENERIC_PUBLIC_ARTICLE_TAGS.has(key) || matchesTechnologyTermText(label, null, termSlug)) continue;
+      const current = counts.get(key);
+      counts.set(key, { label: current?.label ?? label, articleCount: (current?.articleCount ?? 0) + 1 });
+    }
+  }
+
+  return [...counts.values()]
+    .filter((item) => item.articleCount >= 2)
+    .sort((a, b) => b.articleCount - a.articleCount || a.label.localeCompare(b.label, "ko"))
+    .slice(0, 8);
+}
+
 export function isPublicTechnologyTerm(value: string): boolean {
   return PUBLIC_TECHNOLOGY_TERMS.some((term) => term.slug === value);
 }
@@ -720,6 +752,7 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
       publishedAt: row.published_at,
       discoveredAt: row.discovered_at,
       category: isPublicCategory(row.category) ? row.category : "general",
+      tags: row.tags ?? [],
       source: {
         title: publicSourceDisplayName(row.source),
         slug: getPublicSourceSlug(row.source),
@@ -750,6 +783,7 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
         publishedAt: row.published_at,
         discoveredAt: null,
         category: isPublicCategory(row.category) ? row.category : "general",
+        tags: row.tags ?? [],
         source: {
           title: publicSourceDisplayName({ title: row.source_title, site_url: row.source_site_url }),
           slug: getPublicSourceSlug({ title: row.source_title, site_url: row.source_site_url }),
@@ -774,7 +808,13 @@ export async function getPublicTechnologyHub(slug: string): Promise<PublicTechno
     return candidate && (!latest || Date.parse(candidate) > Date.parse(latest)) ? candidate : latest;
   }, null);
 
-  return { term, articles, lastModified };
+  return {
+    term,
+    articles,
+    sourceCount: new Set(articles.map((article) => article.source?.slug).filter(Boolean)).size,
+    relatedTags: summarizePublicTechnologyTags(articles, term.slug),
+    lastModified,
+  };
 }
 
 export async function getPublicTechnologyIndex(): Promise<PublicTechnologyIndexItem[]> {
