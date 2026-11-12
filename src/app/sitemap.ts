@@ -129,8 +129,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             url: `${SITE_URL}/technologies/${technology.term.slug}`,
             lastModified: latestDate([
               technology.lastModified,
+              TECHNOLOGY_TERMS_LAST_MODIFIED,
               problemGuides.some((guide) => guide.categories.includes(technology.term.category))
-                ? GUIDE_PUBLISHED_AT : TECHNOLOGY_TERMS_LAST_MODIFIED,
+                ? GUIDE_PUBLISHED_AT : null,
               TITLE_REQUIRED_TECHNOLOGY_TERMS.has(technology.term.slug)
                 ? TECHNOLOGY_TEXT_MATCH_LAST_MODIFIED : null,
             ]),
