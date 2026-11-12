@@ -6,11 +6,16 @@ import { Text } from "@seed-design/react";
 import { ArticleLink } from "@/components/article-link";
 import { PageHeader } from "@/components/page-header";
 import { RelatedProblemGuides } from "@/components/related-problem-guides";
-import { getPublicTechnologyHub, PUBLIC_CATEGORY_META, SITE_URL } from "@/lib/data/public-hubs";
+import {
+  getPublicTechnologyHub,
+  MIN_PUBLIC_TECHNOLOGY_INDEX_ARTICLES,
+  PUBLIC_CATEGORY_META,
+  SITE_URL,
+} from "@/lib/data/public-hubs";
 import { SITE_NAME } from "@/app/seo";
 
 type TechnologyPageProps = { params: Promise<{ term: string }> };
-const MIN_INDEXABLE_ARTICLES = 3;
+const MIN_RENDERABLE_ARTICLES = 3;
 
 function technologyUrl(term: string): string {
   return `${SITE_URL}/technologies/${encodeURIComponent(term)}`;
@@ -24,7 +29,10 @@ export async function generateMetadata({ params }: TechnologyPageProps): Promise
   await connection();
   const { term } = await params;
   const hub = await getPublicTechnologyHub(term);
-  if (!hub || hub.articles.length < MIN_INDEXABLE_ARTICLES) return { robots: { index: false, follow: false } };
+  if (!hub) return { robots: { index: false, follow: false } };
+  if (hub.articles.length < MIN_PUBLIC_TECHNOLOGY_INDEX_ARTICLES) {
+    return { robots: { index: false, follow: true } };
+  }
 
   const canonical = technologyUrl(hub.term.slug);
   return {
@@ -43,7 +51,7 @@ export default async function TechnologyPage({ params }: TechnologyPageProps) {
   await connection();
   const { term } = await params;
   const hub = await getPublicTechnologyHub(term);
-  if (!hub || hub.articles.length < MIN_INDEXABLE_ARTICLES) notFound();
+  if (!hub || hub.articles.length < MIN_RENDERABLE_ARTICLES) notFound();
 
   const canonical = technologyUrl(hub.term.slug);
   const jsonLd = [
