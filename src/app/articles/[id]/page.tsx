@@ -86,10 +86,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       : getRelatedArticles(article.id, article.category, article.tags),
     isIndexableArticle(article) ? getPublicTechnologyIndex() : Promise.resolve([]),
   ]);
-  // Stored tags can mention a technology incidentally; use the same visible-text
-  // relevance check as technology hubs before creating a crawl link.
+  // Stored tags and long excerpts can mention a technology incidentally. Match
+  // only the title and the full-source summary that this page actually renders.
+  const articleSummaryText = article.summary
+    ? `${article.summary.lead} ${article.summary.keyPoints.join(" ")}`
+    : "";
   const relatedTechnologies = technologyIndex
-    .filter(({ term }) => matchesTechnologyTermText(article.title, article.excerpt, term.slug))
+    .filter(({ term }) => matchesTechnologyTermText(article.title, articleSummaryText, term.slug))
     .slice(0, 5);
 
   return (
