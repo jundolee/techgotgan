@@ -101,6 +101,7 @@ const websiteJsonLd = {
       url: SITE_URL,
       description: SITE_DESCRIPTION,
       inLanguage: "ko-KR",
+      publisher: { "@id": `${SITE_URL}/#organization` },
       mainEntity: { "@id": `${SITE_URL}/#webpage` },
     },
     {
@@ -124,6 +125,10 @@ const websiteJsonLd = {
       name: SITE_NAME,
       url: SITE_URL,
       logo: `${SITE_URL}/brand/techgotgan-icon.svg`,
+      sameAs: [
+        "https://github.com/jundolee/techgotgan",
+        "https://disquiet.io/products/3a38bc03-d2f0-4250-a056-46f004e042e2",
+      ],
     },
   ],
 };
