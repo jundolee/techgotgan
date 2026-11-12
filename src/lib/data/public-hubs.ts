@@ -399,7 +399,7 @@ const PUBLIC_TECHNOLOGY_MATCH_TERMS: Record<string, string[]> = {
   kafka: ["kafka", "카프카"],
 };
 
-export const TITLE_REQUIRED_TECHNOLOGY_TERMS = new Set(["agent", "go", "spark", "sql", "swift"]);
+export const TITLE_REQUIRED_TECHNOLOGY_TERMS = new Set(["agent", "flutter", "go", "spark", "sql", "swift"]);
 
 export function matchesTechnologyTermText(title: string, excerpt: string | null, termSlug: string): boolean {
   const normalizedTitle = title.normalize("NFKC").toLowerCase();

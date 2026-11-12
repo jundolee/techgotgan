@@ -15,7 +15,8 @@ import {
 import { SITE_NAME } from "@/app/seo";
 
 type TechnologyPageProps = { params: Promise<{ term: string }> };
-const MIN_RENDERABLE_ARTICLES = 3;
+// Keep sparse, noindex hubs readable when they still have a couple of precise matches.
+const MIN_RENDERABLE_ARTICLES = 2;
 
 function technologyUrl(term: string): string {
   return `${SITE_URL}/technologies/${encodeURIComponent(term)}`;
