@@ -61,3 +61,12 @@ Go·Swift·Spark·AI 에이전트·SQL처럼 넓게 쓰이는 기술명은 기�
 - Search Console 성과 보고서의 표시 갱신은 4.5시간 전, 실제 날짜 범위는 2026-10-20~11-09였다. 도메인 전체는 클릭 11회, 노출 303회, CTR 3.6%, 평균 순위 10.2였다. 이전 확인 구간은 10-20~11-08이므로 기간이 다르고, 신규 term hub 배포는 11월 11일 이후라 이번 성과에 귀속할 수 없다. 24개 표시 쿼리에서 `기술 블로그`와 `테크 블로그`는 나타나지 않았다. `개발 블로그`, `apache spark`는 각각 노출 1회·클릭 0회였다.
 - 11월 12일 URL Inspection에서 `/technologies/python`은 `발견됨 - 현재 색인이 생성되지 않음`, 최근 크롤링 없음으로 표시됐다. 화면은 과거 `magisa.vercel.app/sitemap.xml`을 참조하고 현재 도메인 sitemap은 감지하지 못했다. 별도 실시간 테스트에서는 색인 가능한 상태와 유효한 탐색경로 1개를 확인했고, 해당 URL의 색인 요청은 우선 크롤링 대기열에 접수됐다. 접수와 색인은 구분한다.
 - Search Console sitemap은 11월 12일 현재 URL로 재제출했다. 즉시 갱신된 보고서는 마지막 읽음 11월 11일·발견 133개로 남아 있어, Google이 새 150-URL sitemap을 다시 읽는 것은 아직 확인되지 않았다.
+
+## 2026-11-12 재수집 후속 확인
+
+- PR #246은 기술 허브 색인 기준을 관련 글 8개로 높였다. Production `/technologies`에는 32개 indexable 허브가 연결된다. CI/CD(5개)와 크로스 플랫폼(3개)은 직접 열 수 있는 `noindex,follow` 페이지로 남기고 목록·sitemap에서는 제외했다. 새 Flutter 허브는 12개 글, 자체 canonical, `index,follow`로 제공된다.
+- PR #247은 전체 원문 추출을 바탕으로 만든 요약이 준비된 글 상세 80개를 sitemap에 추가했다. 현재 sitemap은 229 URL(기술 허브 32, 발행처 허브 85, 글 상세 80)을 반환하고, 표본 기사 페이지 5개는 HTTP 200, 자체 canonical, `index,follow`, 서버 렌더링 요약을 제공했다.
+- PR #243·#244 뒤 sitemap의 150 URL 버전을 Google이 11월 12일 다시 읽은 다음, PR #247 기사 URL 80개가 추가되어 229 URL이 됐다. 최신 sitemap을 다시 제출했고, Search Console은 마지막 읽음 11월 12일·상태 성공·발견 229개를 표시한다.
+- `/technologies/python`은 URL Inspection에서 Google 등록됨으로 바뀌었다. Googlebot 스마트폰이 2026-11-12 10:04:48 KST에 크롤링했고, 현재 도메인 sitemap을 감지했으며, 탐색경로 항목 1개가 유효하다. 발견 전에는 `magisa.vercel.app/sitemap.xml` 참조가 표시됐지만, 이번 색인 결과에는 현재 도메인 sitemap이 나타난다.
+- `/technologies`는 Google 등록 상태지만 마지막 색인 크롤링은 11월 11일 15:43 KST로 새 description·32개 허브 링크 배포 전이다. 11월 12일 실시간 URL 테스트는 색인 가능, 재수집 요청은 우선 크롤링 대기열 접수로 확인됐다. Flutter는 Google 미인지·미크롤링 상태였고, 실시간 테스트는 색인 가능 및 유효한 탐색경로 1개를 확인했다. Flutter URL도 우선 크롤링 대기열에 접수됐으나 색인은 미확인이다.
+- Search Console Performance는 4.5시간 전 갱신, 2026-10-20~11-09 기간에 클릭 11회, 노출 303회, CTR 3.6%, 평균 게재순위 10.2였다. 24개 표시 쿼리에 `기술 블로그`·`테크 블로그`는 없었다. 기간 종료가 11월 9일이라 이후 허브 변경의 검색 순위 효과는 측정되지 않는다.
