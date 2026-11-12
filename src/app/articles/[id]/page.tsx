@@ -86,15 +86,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       : getRelatedArticles(article.id, article.category, article.tags),
     isIndexableArticle(article) ? getPublicTechnologyIndex() : Promise.resolve([]),
   ]);
-  const articleTags = new Set(article.tags.map((tag) => tag.toLowerCase()));
-  const tagMatchedTechnologies = technologyIndex.filter(({ term }) => articleTags.has(term.tag.toLowerCase()));
-  const matchedTechnologySlugs = new Set(tagMatchedTechnologies.map(({ term }) => term.slug));
-  const relatedTechnologies = [
-    ...tagMatchedTechnologies,
-    ...technologyIndex.filter(({ term }) =>
-      !matchedTechnologySlugs.has(term.slug) && matchesTechnologyTermText(article.title, null, term.slug)
-    ),
-  ].slice(0, 5);
+  // Stored tags can mention a technology incidentally; use the same visible-text
+  // relevance check as technology hubs before creating a crawl link.
+  const relatedTechnologies = technologyIndex
+    .filter(({ term }) => matchesTechnologyTermText(article.title, article.excerpt, term.slug))
+    .slice(0, 5);
 
   return (
     <main style={{ maxWidth: 760, margin: "0 auto", padding: "24px 0 56px" }}>
