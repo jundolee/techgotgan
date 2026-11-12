@@ -73,3 +73,11 @@ Go·Swift·Spark·AI 에이전트·SQL처럼 넓게 쓰이는 기술명은 기�
 - PR #250 적용 뒤 현재 Production sitemap은 228 URL(기사 80, 발행처 85, 기술 허브 31)이며 Flutter·CI/CD·크로스 플랫폼은 포함하지 않는다. Search Console에는 마지막 성공 처리 결과 229개가 남아 있어 228 URL 버전을 다시 제출했다. 새 버전의 처리 결과는 아직 확인하지 않았다.
 - Search Console Performance는 4.5시간 전 갱신, 2026-10-20~11-09 기간에 클릭 11회, 노출 303회, CTR 3.6%, 평균 게재순위 10.2였다. 24개 표시 쿼리에 `기술 블로그`·`테크 블로그`는 없었다. 기간 종료가 11월 9일이라 이후 허브 변경의 검색 순위 효과는 측정되지 않는다.
 - sitemap에 포함된 기사 요약 URL `https://www.techgotgan.co.kr/articles/0f059dca-fd11-4f04-a65e-6d8fb5fe5182`(망분리 환경 Agent Platform 설계기)은 Google에 아직 알려지지 않은 URL로 표시됐다. Production에서 200, 자체 canonical, `index,follow`, 서버 렌더링 요약과 sitemap 포함을 확인했다. 실시간 URL 테스트에서 색인 가능으로 통과했고 2026-11-12 10:48 KST 색인 요청이 대기열에 접수됐으나 실제 색인은 미확인이다.
+
+## 2026-11-12 Search Console 후속 확인
+
+- Search Console Performance의 최종 갱신은 확인 시각 기준 3.5시간 전이었고, 보고서 날짜는 2026-10-20~11-09였다. 전체 클릭 11·노출 303·CTR 3.6%·평균 순위 10.2, 한국 필터는 클릭 11·노출 222·CTR 5.0%·평균 순위 10.7이었다.
+- 한국 필터 쿼리 19개 행은 주로 회사·발행처명이다. `개발 블로그`와 `apache spark`가 각각 1노출·0클릭이고, `기술 블로그`, `테크 블로그` 행은 보이지 않았다. 검색어 행이 적은 키워드 수요나 존재를 확정하지 않는다.
+- 최신 날짜가 11월 9일이므로 이후 허브·가이드 수정의 성과를 이 보고서로 판단할 수 없다. 지표를 PR 배포 효과로 귀속하지 않는다.
+- URL Inspection에서 `/guides/e2e-test-coverage`, `/guides/ai-workflow-automation`, `/guides`, `/technologies/spark`가 모두 Google에 등록된 상태임을 확인했다. 페이지 색인 보고서의 마지막 갱신 표시는 여전히 11월 6일이라 aggregate 색인 수는 최신 세부 확인으로 보지 않았다.
+- Production sitemap은 HTTP 200과 228개 URL을 반환한다. 제출 sitemap의 마지막 읽음·성공·발견 228개와 일치한다. 여기에는 문제 해결 가이드 3개와 원문 요약 기사 80개가 있고, noindex인 Flutter·CI/CD 허브는 없다.
