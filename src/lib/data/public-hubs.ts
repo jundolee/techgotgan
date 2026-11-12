@@ -64,6 +64,24 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
     description: "React(리액트) 컴포넌트, 렌더링, 상태 관리와 제품 적용 사례를 다룬 회사 기술 블로그 글입니다.",
   },
   {
+    slug: "vue",
+    label: "Vue.js",
+    tag: "vue",
+    query: "vue",
+    category: "frontend",
+    title: "Vue.js 기술 블로그 최신 글",
+    description: "Vue.js와 Nuxt를 활용한 프론트엔드 구성, 렌더링과 제품 개발 사례를 기업 기술 블로그에서 모았습니다.",
+  },
+  {
+    slug: "angular",
+    label: "Angular",
+    tag: "angular",
+    query: "angular",
+    category: "frontend",
+    title: "Angular 기술 블로그 최신 글",
+    description: "Angular 애플리케이션, 컴포넌트 설계와 웹 서비스 운영 사례를 기업 기술 블로그에서 모았습니다.",
+  },
+  {
     slug: "nextjs",
     label: "Next.js",
     tag: "nextjs",
@@ -364,6 +382,8 @@ export const PUBLIC_TECHNOLOGY_TERMS: PublicTechnologyTermMeta[] = [
 
 const PUBLIC_TECHNOLOGY_MATCH_TERMS: Record<string, string[]> = {
   react: ["react", "리액트"],
+  vue: ["vue", "vue.js", "vuejs", "뷰", "뷰.js"],
+  angular: ["angular", "앵귤러"],
   nextjs: ["next.js", "nextjs", "넥스트.js"],
   typescript: ["typescript", "타입스크립트"],
   javascript: ["javascript", "자바스크립트", "ecmascript"],
