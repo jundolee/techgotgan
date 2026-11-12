@@ -25,6 +25,7 @@ function blogUrl(slug: string): string {
 function blogTitle(host: string, displayName: string): string {
   if (host === "yozm.wishket.com") return "요즘IT 최신 글 모아보기";
   if (host === "toss.tech") return "토스 테크(Toss Tech) 기술 블로그 최신 글";
+  if (host === "techblog.lycorp.co.jp") return "LY Tech Blog 최신 글 모아보기";
   return `${displayName} 기술 블로그 최신 글`;
 }
 
@@ -39,6 +40,9 @@ function blogDescription(host: string, displayName: string): string {
   }
   if (host === "toss.tech") {
     return "Toss Tech(toss.tech)에서 발행한 기술 블로그 글을 최신순으로 모았습니다. 요약을 살펴보고 관심 있는 글은 원문으로 이어 읽어보세요.";
+  }
+  if (host === "techblog.lycorp.co.jp") {
+    return "LY Tech Blog의 한국어 기술 글을 제목과 요약으로 모아봅니다. 관심 있는 글은 LY Corporation이 발행한 원문으로 이어 읽어보세요.";
   }
   return `${displayName}(${host}) 기술 블로그의 최신 개발 글을 ${SITE_NAME}에서 모아 봅니다.`;
 }
