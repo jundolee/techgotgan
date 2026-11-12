@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { Text } from "@seed-design/react";
@@ -13,6 +14,7 @@ import { DeferredArticleList } from "@/components/deferred-article-list";
 import { ArticleListStaticPreview } from "@/components/article-list-static-preview";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { CATEGORY_MAP, type CategoryId } from "@/lib/categories";
+import discoveryStyles from "./home-discovery.module.css";
 import {
   ARTICLE_PAGE_SIZE_OPTIONS,
   ARTICLE_VIEW_COOKIE,
@@ -191,6 +193,29 @@ export default async function Home({
       <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)" style={{ marginBottom: 20 }}>
         여러 기술 블로그의 새 글을 제목·요약·태그로 검색하고 주제별·블로그별로 살펴볼 수 있어요. 글 상세와 원문은 로그인 없이 볼 수 있고, 로그인하면 읽음 표시와 즐겨찾기를 동기화하고 개인 노트를 저장할 수 있어요.
       </Text>
+      <nav className={discoveryStyles.discovery} aria-label="빠른 탐색">
+        <div className={discoveryStyles.primary}>
+          <span className={discoveryStyles.label}>빠른 탐색</span>
+          <div className={discoveryStyles.links}>
+            <Link className={discoveryStyles.featured} href="/blogs">기업 블로그</Link>
+            <Link href="/cases">문제 해결 사례</Link>
+            <Link href="/guides">실무 가이드</Link>
+            <Link href="/technologies">기술별 최신 글</Link>
+            <Link href="/for-product-teams">직무별 활용법</Link>
+          </div>
+        </div>
+        <div className={discoveryStyles.topics}>
+          <span className={discoveryStyles.label}>주제별 최신 글</span>
+          <div className={discoveryStyles.topicLinks}>
+            <Link href="/topics/frontend">프론트엔드</Link>
+            <Link href="/topics/backend">백엔드</Link>
+            <Link href="/topics/ai_ml">AI·머신러닝</Link>
+            <Link href="/topics/devops">DevOps</Link>
+            <Link href="/topics/mobile">모바일</Link>
+            <Link className={discoveryStyles.allTopics} href="/topics">모든 주제 보기 <span aria-hidden="true">→</span></Link>
+          </div>
+        </div>
+      </nav>
 
 
       <OnboardingModalSlot

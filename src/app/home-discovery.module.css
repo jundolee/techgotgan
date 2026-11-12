@@ -1,0 +1,148 @@
+.discovery {
+  display: grid;
+  gap: 10px;
+  margin: 2px 0 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--seed-color-stroke-neutral-subtle, #ececec);
+  border-radius: 12px;
+  background: var(--seed-color-bg-layer-default, #fff);
+}
+
+.primary,
+.topics {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.primary {
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--seed-color-stroke-neutral-subtle, #eeeeee);
+}
+
+.label {
+  flex: 0 0 auto;
+  padding-top: 5px;
+  color: var(--seed-color-fg-neutral-muted, #737983);
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.links,
+.topicLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.links a {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  padding: 4px 9px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--seed-color-fg-neutral, #34383e);
+  font-size: 13px;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.links a:hover,
+.topicLinks a:hover {
+  background: var(--seed-color-bg-layer-default-hover, #f5f5f5);
+}
+
+.links a.featured {
+  border-color: #f0d7c7;
+  background: #fff8f3;
+  color: var(--seed-color-fg-brand, #c84d00);
+  font-weight: 650;
+}
+
+.topics {
+  align-items: flex-start;
+}
+
+.topicLinks {
+  gap: 4px 14px;
+}
+
+.topicLinks a {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  color: var(--seed-color-fg-neutral-muted, #68707e);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.topicLinks a:hover,
+.topicLinks .allTopics {
+  color: var(--seed-color-fg-brand, #c84d00);
+}
+
+.allTopics span {
+  margin-left: 4px;
+}
+
+.links a:focus-visible,
+.topicLinks a:focus-visible {
+  outline: 2px solid var(--seed-color-stroke-focus-ring, #3984ff);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .discovery {
+    gap: 9px;
+    margin-bottom: 16px;
+    padding: 12px;
+  }
+
+  .primary,
+  .topics {
+    display: block;
+  }
+
+  .primary {
+    padding-bottom: 9px;
+  }
+
+  .label {
+    display: block;
+    margin-bottom: 5px;
+    padding-top: 0;
+  }
+
+  .links {
+    gap: 4px;
+  }
+
+  .links a {
+    min-height: 30px;
+    padding-inline: 7px;
+    font-size: 12px;
+  }
+
+  .topicLinks {
+    gap: 2px 12px;
+  }
+
+  .topicLinks a {
+    min-height: 28px;
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .links a {
+    transition: none;
+  }
+}
