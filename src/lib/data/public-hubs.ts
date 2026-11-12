@@ -504,6 +504,7 @@ export interface PublicBlogHub {
   displayName: string;
   articles: PublicHubArticle[];
   categories: ArticleCategory[];
+  relatedTechnologies: Array<{ term: PublicTechnologyTermMeta; articleCount: number }>;
 }
 
 export interface PublicBlogIndexItem {
@@ -881,18 +882,31 @@ export async function getPublicBlogHub(slug: string): Promise<PublicBlogHub | nu
   const source = sources.find((item) => matchesPublicSourceSlug(item, slug));
   if (!source) return null;
 
-  const sourceArticles = await getCachedArticlesForSource(source.id, MAX_HUB_ARTICLES);
+  const [sourceArticles, technologyIndex] = await Promise.all([
+    getCachedArticlesForSource(source.id, MAX_HUB_ARTICLES),
+    getPublicTechnologyIndex(),
+  ]);
   const sourceSlugs = new Map(sources.map((item) => [item.id, getPublicSourceSlug(item)]));
+  const articles = sourceArticles.slice(0, MAX_HUB_ARTICLES).map((article) => toPublicArticle(article, sourceSlugs));
   const categories = Array.from(
     new Set(sourceArticles.map((article) => (isPublicCategory(article.category) ? article.category : "general")))
   );
+  const relatedTechnologies = technologyIndex
+    .map(({ term }) => ({
+      term,
+      articleCount: articles.filter((article) => matchesTechnologyTermText(article.title, article.excerpt, term.slug)).length,
+    }))
+    .filter((technology) => technology.articleCount >= 2)
+    .sort((a, b) => b.articleCount - a.articleCount || a.term.label.localeCompare(b.term.label, "ko"))
+    .slice(0, 8);
 
   return {
     source,
     slug: getPublicSourceSlug(source),
     host: hostFromUrl(source.site_url),
     displayName: publicSourceDisplayName(source),
-    articles: sourceArticles.slice(0, MAX_HUB_ARTICLES).map((article) => toPublicArticle(article, sourceSlugs)),
+    articles,
     categories,
+    relatedTechnologies,
   };
 }
