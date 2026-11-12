@@ -15,6 +15,7 @@ import { DeferredArticleList } from "@/components/deferred-article-list";
 import { ArticleListStaticPreview } from "@/components/article-list-static-preview";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { CATEGORY_MAP, type CategoryId } from "@/lib/categories";
+import discoveryStyles from "./home-discovery.module.css";
 import {
   ARTICLE_PAGE_SIZE_OPTIONS,
   ARTICLE_VIEW_COOKIE,
@@ -193,53 +194,29 @@ export default async function Home({
       <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)" style={{ marginBottom: 20 }}>
         국내외 기업의 테크 블로그 새 글을 제목·요약·태그로 검색하고, 프론트엔드·백엔드·AI 같은 주제나 발행처별로 살펴보세요. 글 상세와 원문은 로그인 없이 읽을 수 있습니다.
       </Text>
-      <Text as="p" textStyle="t2Regular" color="var(--seed-color-fg-neutral-muted)" style={{ marginTop: -12, marginBottom: 20 }}>
-        <Link href="/blogs" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          기업 기술 블로그별 최신 글 보기 →
-        </Link>
-        {" · "}
-        <Link href="/cases" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          문제 해결 사례 보기 →
-        </Link>
-        {" · "}
-        <Link href="/guides" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          테스트·AI 자동화·검색 기획 가이드 →
-        </Link>
-        {" · "}
-        <Link href="/technologies" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          React·TypeScript 등 기술별 테크 블로그 최신 글 →
-        </Link>
-        {" · "}
-        <AudienceLandingActionLink href="/for-product-teams" action="home_entry" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          기획자·개발자별 활용 방법 →
-        </AudienceLandingActionLink>
-      </Text>
-      <Text as="p" textStyle="t2Regular" color="var(--seed-color-fg-neutral-muted)" style={{ marginTop: -12, marginBottom: 20 }}>
-        주제별 최신 기술 블로그: {" "}
-        <Link href="/topics/frontend" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          프론트엔드 기술 블로그
-        </Link>
-        {" · "}
-        <Link href="/topics/backend" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          백엔드 기술 블로그
-        </Link>
-        {" · "}
-        <Link href="/topics/ai_ml" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          AI·머신러닝 기술 블로그
-        </Link>
-        {" · "}
-        <Link href="/topics/devops" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          DevOps 기술 블로그
-        </Link>
-        {" · "}
-        <Link href="/topics/mobile" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          모바일 기술 블로그
-        </Link>
-        {" · "}
-        <Link href="/topics" style={{ color: "var(--seed-color-fg-brand)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-          모든 주제 보기 →
-        </Link>
-      </Text>
+      <nav className={discoveryStyles.discovery} aria-label="빠른 탐색">
+        <div className={discoveryStyles.primary}>
+          <span className={discoveryStyles.label}>빠른 탐색</span>
+          <div className={discoveryStyles.links}>
+            <Link className={discoveryStyles.featured} href="/blogs">기업 블로그</Link>
+            <Link href="/cases">문제 해결 사례</Link>
+            <Link href="/guides">실무 가이드</Link>
+            <Link href="/technologies">기술별 최신 글</Link>
+            <AudienceLandingActionLink href="/for-product-teams" action="home_entry">직무별 활용법</AudienceLandingActionLink>
+          </div>
+        </div>
+        <div className={discoveryStyles.topics}>
+          <span className={discoveryStyles.label}>주제별 최신 글</span>
+          <div className={discoveryStyles.topicLinks}>
+            <Link href="/topics/frontend">프론트엔드</Link>
+            <Link href="/topics/backend">백엔드</Link>
+            <Link href="/topics/ai_ml">AI·머신러닝</Link>
+            <Link href="/topics/devops">DevOps</Link>
+            <Link href="/topics/mobile">모바일</Link>
+            <Link className={discoveryStyles.allTopics} href="/topics">모든 주제 보기 <span aria-hidden="true">→</span></Link>
+          </div>
+        </div>
+      </nav>
 
 
       <OnboardingModalSlot
