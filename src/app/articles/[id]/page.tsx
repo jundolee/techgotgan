@@ -8,7 +8,8 @@ import { markArticleRead } from "@/lib/data/articles";
 import { ArticleSummaryCopy } from "@/components/article-summary-copy";
 import { ShareButton } from "@/components/share-button";
 import { SourceArticleLink } from "@/components/source-article-link";
-import { getArticlePreview, getRelatedArticles } from "@/lib/data/related-articles";
+import { getArticlePreview, getRelatedArticles, type ArticlePreview } from "@/lib/data/related-articles";
+import { getPublicTechnologyIndex, matchesTechnologyTermText } from "@/lib/data/public-hubs";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
 
@@ -27,12 +28,16 @@ async function getArticle(id: string, options: { includeSummary?: boolean } = {}
   return getArticlePreview(id, options);
 }
 
+function isIndexableArticle(article: ArticlePreview | null): article is ArticlePreview {
+  return Boolean(article?.summary && article.summaryBasis === "full_article" && article.title.trim().length >= 12 && (article.excerpt?.trim().length ?? 0) >= 40);
+}
+
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   await connection();
   const { id } = await params;
   const article = await getArticle(id, { includeSummary: true });
   if (!article) return { robots: { index: false, follow: false } };
-  const indexable = Boolean(article.summary && article.summaryBasis === "full_article" && article.title.trim().length >= 12 && (article.excerpt?.trim().length ?? 0) >= 40);
+  const indexable = isIndexableArticle(article);
   const description = article.excerpt?.slice(0, 160) ?? `원문 발행처에서 확인할 수 있는 글입니다. ${SITE_NAME}`;
   const url = `${SITE_URL}/articles/${encodeURIComponent(article.id)}`;
   return {
@@ -75,9 +80,21 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     }
   }
 
-  const related = initialRelated.length > 0
-    ? initialRelated
-    : await getRelatedArticles(article.id, article.category, article.tags);
+  const [related, technologyIndex] = await Promise.all([
+    initialRelated.length > 0
+      ? Promise.resolve(initialRelated)
+      : getRelatedArticles(article.id, article.category, article.tags),
+    isIndexableArticle(article) ? getPublicTechnologyIndex() : Promise.resolve([]),
+  ]);
+  const articleTags = new Set(article.tags.map((tag) => tag.toLowerCase()));
+  const tagMatchedTechnologies = technologyIndex.filter(({ term }) => articleTags.has(term.tag.toLowerCase()));
+  const matchedTechnologySlugs = new Set(tagMatchedTechnologies.map(({ term }) => term.slug));
+  const relatedTechnologies = [
+    ...tagMatchedTechnologies,
+    ...technologyIndex.filter(({ term }) =>
+      !matchedTechnologySlugs.has(term.slug) && matchesTechnologyTermText(article.title, null, term.slug)
+    ),
+  ].slice(0, 5);
 
   return (
     <main style={{ maxWidth: 760, margin: "0 auto", padding: "24px 0 56px" }}>
@@ -120,6 +137,29 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           </div>
       </section>}
       <SourceArticleLink href={article.url} surface="article_detail" style={{ display: "flex", justifyContent: "center", marginTop: 18, padding: 16, borderRadius: 14, background: "var(--seed-color-bg-brand-solid, #eb641c)", color: "white", textDecoration: "none", fontWeight: 700 }}>원문 읽기 ↗</SourceArticleLink>
+      {relatedTechnologies.length > 0 && (
+        <section aria-labelledby="related-technology-hubs" style={{ display: "grid", gap: 10, marginTop: 20 }}>
+          <Text as="h2" id="related-technology-hubs" textStyle="t5Bold" color="fg.neutral">
+            관련 기술 허브
+          </Text>
+          <Text as="p" textStyle="t3Regular" color="var(--seed-color-fg-neutral-muted)">
+            같은 기술을 다룬 다른 회사 글도 찾아보세요.
+          </Text>
+          <ul style={{ display: "flex", gap: 8, flexWrap: "wrap", listStyle: "none" }}>
+            {relatedTechnologies.map(({ term, articleCount }) => (
+              <li key={term.slug}>
+                <Link
+                  href={`/technologies/${term.slug}`}
+                  style={{ display: "inline-flex", gap: 6, alignItems: "center", border: "1px solid var(--seed-color-stroke-neutral-subtle)", borderRadius: 999, padding: "6px 10px" }}
+                >
+                  {term.label} 기술 블로그
+                  <Text as="span" textStyle="t2Regular" color="var(--seed-color-fg-neutral-muted)">{articleCount}</Text>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <div style={{ marginTop: 28 }}>
         <RelatedArticleList articleId={article.id} items={related.map((item) => ({ ...item, href: `/articles/${encodeURIComponent(item.id)}` }))} />
       </div>
