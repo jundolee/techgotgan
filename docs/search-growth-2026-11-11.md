@@ -82,3 +82,7 @@ Go·Swift·Spark·AI 에이전트·SQL처럼 넓게 쓰이는 기술명은 기�
 - URL Inspection에서 `/guides/e2e-test-coverage`, `/guides/ai-workflow-automation`, `/guides`, `/technologies/spark`가 모두 Google에 등록된 상태임을 확인했다. 페이지 색인 보고서의 마지막 갱신 표시는 여전히 11월 6일이라 aggregate 색인 수는 최신 세부 확인으로 보지 않았다.
 - Production sitemap은 HTTP 200과 228개 URL을 반환한다. 제출 sitemap의 마지막 읽음·성공·발견 228개와 일치한다. 여기에는 문제 해결 가이드 3개와 원문 요약 기사 80개가 있고, noindex인 Flutter·CI/CD 허브는 없다.
 - 2026-11-12 URL Inspection에서 PR #247 요약 기사 `/articles/0f059dca-fd11-4f04-a65e-6d8fb5fe5182`가 `Google에 등록됨`으로 확인됐다. Googlebot 요청도 HTTP 200, 자체 canonical, `index,follow`, 원문 전체를 바탕으로 한 서버 렌더링 요약을 반환했다. 이는 URL 한 건의 색인 증거이며, 다른 요약 기사나 자연검색 클릭 증가로 확대 해석하지 않는다.
+
+## `ly tech blog` 검색 결과 설명 점검
+
+2026-11-12 Search Console에서 `ly tech blog`는 노출 9회·클릭 0회·평균 순위 7.2였다. 클릭 표본은 작지만, 실제 랜딩의 제목 `LY Corporation Tech Blog 기술 블로그 최신 글`은 공식 발행처 결과와 구분되지 않는 표현이었다. 제목을 `LY Tech Blog 최신 글 모아보기`로 바꾸고, 설명에 제목·요약 탐색과 LY Corporation 원문으로 이어지는 테크곳간 페이지임을 적었다. GSC 보고서가 11월 9일까지이므로 CTR 변화는 새 날짜가 반영된 뒤 판단한다.
