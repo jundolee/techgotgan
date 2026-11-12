@@ -11,7 +11,6 @@ import { SourceArticleLink } from "@/components/source-article-link";
 import { getArticlePreview, getRelatedArticles } from "@/lib/data/related-articles";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
-import { canViewArticleSummary } from "@/lib/article-summary-access";
 
 export const runtime = "nodejs";
 
@@ -31,8 +30,9 @@ async function getArticle(id: string, options: { includeSummary?: boolean } = {}
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   await connection();
   const { id } = await params;
-  const article = await getArticle(id);
+  const article = await getArticle(id, { includeSummary: true });
   if (!article) return { robots: { index: false, follow: false } };
+  const indexable = Boolean(article.summary && article.summaryBasis === "full_article" && article.title.trim().length >= 12 && (article.excerpt?.trim().length ?? 0) >= 40);
   const description = article.excerpt?.slice(0, 160) ?? `원문 발행처에서 확인할 수 있는 글입니다. ${SITE_NAME}`;
   const url = `${SITE_URL}/articles/${encodeURIComponent(article.id)}`;
   return {
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
       title: article.title,
       description,
     },
-    robots: { index: false, follow: true },
+    robots: { index: indexable, follow: true },
   };
 }
 
@@ -61,9 +61,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const { id } = await params;
 
   const userPromise = getCurrentUser();
-  const articlePromise = userPromise.then((user) =>
-    getArticle(id, { includeSummary: canViewArticleSummary(user?.email) })
-  );
+  const articlePromise = getArticle(id, { includeSummary: true });
   const relatedPromise = getRelatedArticles(id);
   const [article, initialRelated, user] = await Promise.all([articlePromise, relatedPromise, userPromise]);
   if (!article) notFound();
@@ -96,14 +94,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           variant="neutralWeak"
         />
       </div>
-      {canViewArticleSummary(user?.email) && <section aria-labelledby="ai-summary-heading" style={{ marginTop: 28, border: `1px solid ${article.summary ? "#fbd8bc" : "var(--seed-color-stroke-neutral-subtle)"}`, borderRadius: 20, padding: "24px 28px", background: article.summary ? "linear-gradient(180deg, #fffaf5 0%, #ffffff 100%)" : undefined }}>
+      {article.summary && <section aria-labelledby="ai-summary-heading" style={{ marginTop: 28, border: `1px solid #fbd8bc`, borderRadius: 20, padding: "24px 28px", background: "linear-gradient(180deg, #fffaf5 0%, #ffffff 100%)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span aria-hidden="true" style={{ fontSize: 16 }}>✨</span>
             <Text as="h2" id="ai-summary-heading" textStyle="t5Bold" color="fg.neutral">AI 엔지니어링 브리핑</Text>
           </div>
         </div>
-        {article.summary ? <>
           <div style={{ borderLeft: "3px solid var(--seed-color-bg-brand-solid, #eb641c)", paddingLeft: 14, marginBottom: 18 }}>
             <ArticleSummaryCopy text={article.summary.lead} className="article-summary-lead" />
           </div>
@@ -121,13 +118,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               );
             })}
           </div>
-        </> : <Text as="p" textStyle="t2Regular" color="var(--seed-color-fg-neutral-muted)" style={{ marginTop: 6 }}>
-          {article.summaryStatus === "pending" ? "요약 작업을 기다리고 있습니다." :
-            article.summaryStatus === "processing" ? "AI 요약을 만들고 있습니다." :
-              article.summaryStatus === "failed" ? "AI 요약 생성에 실패했습니다. 잠시 후 다시 시도합니다." :
-              article.summaryStatus === "unavailable" ? "요약할 내용을 확보할 수 없어 제공하지 않습니다. 원문에서 확인해 주세요." :
-                  "등록된 AI 요약이 없습니다. 원문에서 확인해 주세요."}
-        </Text>}
       </section>}
       <SourceArticleLink href={article.url} surface="article_detail" style={{ display: "flex", justifyContent: "center", marginTop: 18, padding: 16, borderRadius: 14, background: "var(--seed-color-bg-brand-solid, #eb641c)", color: "white", textDecoration: "none", fontWeight: 700 }}>원문 읽기 ↗</SourceArticleLink>
       <div style={{ marginTop: 28 }}>

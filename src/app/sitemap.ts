@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { connection } from "next/server";
 import { getCachedArticleFeed } from "@/lib/data/articles";
+import { getIndexableArticlePreviews } from "@/lib/data/related-articles";
 import { getPublicBlogIndex, getPublicCategoryIndex, getPublicTechnologyIndex, TITLE_REQUIRED_TECHNOLOGY_TERMS } from "@/lib/data/public-hubs";
 import { listRecentDigestWeeks } from "@/lib/data/weekly-digests";
 import { SITE_URL } from "./seo";
@@ -51,12 +52,13 @@ function latestDate(values: Array<string | null>): string | undefined {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 공개 데이터와 실제 수집 시각을 사용해 페이지별 lastmod를 계산한다.
   await connection();
-  const [digestWeeks, feed, blogs, topics, technologies] = await Promise.all([
+  const [digestWeeks, feed, blogs, topics, technologies, indexableArticles] = await Promise.all([
     listRecentDigestWeeks(),
     getCachedArticleFeed(),
     getPublicBlogIndex(),
     getPublicCategoryIndex(),
     getPublicTechnologyIndex(),
+    getIndexableArticlePreviews(200),
   ]);
   const blogIndexLastModified = latestDate(blogs.map((blog) => blog.lastModified));
   const topicsIndexLastModified = latestDate(topics.map((topic) => topic.lastModified));
@@ -163,6 +165,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: digest.lastModified,
       changeFrequency: "weekly" as const,
       priority: 0.7,
+    })),
+    ...indexableArticles.map((article) => ({
+      url: `${SITE_URL}/articles/${encodeURIComponent(article.id)}`,
+      lastModified: article.publishedAt ?? undefined,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
     })),
   ];
 }

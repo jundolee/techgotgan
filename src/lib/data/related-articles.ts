@@ -32,6 +32,21 @@ export interface ArticlePreview {
   summaryStatus: "pending" | "processing" | "ready" | "unavailable" | "failed" | null;
 }
 
+/** Public SEO experiment: only summaries grounded in a fully extracted source are indexable. */
+export async function getIndexableArticlePreviews(limit = 200): Promise<ArticlePreview[]> {
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 200);
+  const { data, error } = await createServiceClient()
+    .from("articles")
+    .select("id")
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(safeLimit);
+  if (error) throw error;
+  const previews = await Promise.all((data ?? []).map(({ id }) => getArticlePreview(id, { includeSummary: true })));
+  return previews.filter((article): article is ArticlePreview =>
+    Boolean(article?.summary && article.summaryBasis === "full_article" && article.title.trim().length >= 12 && (article.excerpt?.trim().length ?? 0) >= 40)
+  );
+}
+
 interface RelatedArticleRow {
   id: string;
   title: string;
