@@ -1,7 +1,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/service";
 import { ingestSource, type SourceRow } from "@/lib/ingestion/ingest-source";
-import { kstDayStart, sourceShard } from "@/lib/ingestion/cron-sharding";
+import { kstDayStart } from "@/lib/ingestion/cron-sharding";
 
 type SourceWithCheck = SourceRow & { last_success_at: string | null };
 type Client = ReturnType<typeof createServiceClient>;
@@ -68,6 +68,7 @@ export async function runCronShard(shard: number, sweep: "first" | "retry"): Pro
     const { data, error } = await client.from("sources")
       .select("id, site_url, feed_url, feed_type, scrape_config, last_success_at")
       .eq("is_active", true)
+      .eq("cron_shard", shard)
       .order("id", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
     if (error) {
@@ -76,8 +77,7 @@ export async function runCronShard(shard: number, sweep: "first" | "retry"): Pro
     }
     const page = (data ?? []) as SourceWithCheck[];
     candidates.push(...page.filter((source) =>
-      sourceShard(source.id) === shard &&
-      (!source.last_success_at || source.last_success_at < todayStart)
+      !source.last_success_at || source.last_success_at < todayStart
     ));
     if (page.length < PAGE_SIZE) break;
   }

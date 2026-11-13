@@ -13,6 +13,26 @@ import {
 import { summarizeArticlesDirect } from "./run-summary-jobs";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
+const ARTICLE_CONCURRENCY = 4;
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const workerCount = Math.min(concurrency, items.length);
+
+  await Promise.all(Array.from({ length: workerCount }, async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex++;
+      results[index] = await mapper(items[index], index);
+    }
+  }));
+
+  return results;
+}
 
 export interface SourceRow {
   id: string;
@@ -43,8 +63,8 @@ export async function fetchArticlesForSource(source: SourceRow): Promise<Normali
  * 순차 처리했다 — 새 글이 많은 소스 하나가 배치(hop) 안에 섞이면 그 소스만으로 크론의 60초
  * 제한(maxDuration)을 넘겨 FUNCTION_INVOCATION_TIMEOUT으로 통째로 죽고, 그러면 다음 홉을 잇는
  * after() 콜백 자체가 실행될 기회조차 없어 self-chaining이 조용히 끊기는 문제가 있었다(실제
- * 배포본에서 504로 재현·확인, docs/decisions.md 2026-08-14 참고). 소스 간 병렬 처리와 같은
- * 이유로(서로 다른 사이트를 두드리는 독립적인 작업) 글 단위 후처리도 Promise.all로 병렬화한다.
+ * 배포본에서 504로 재현·확인, docs/decisions.md 2026-08-14 참고). 새 글 누락을 막기 위해 피드의
+ * 모든 글을 처리하되, DB/이미지 요청은 작은 동시성 상한을 두어 CPU와 외부 요청 피크를 제한한다.
  */
 export async function ingestSource(
   supabase: SupabaseClient,
@@ -55,8 +75,10 @@ export async function ingestSource(
     return { found: 0, inserted: 0, duplicates: 0 };
   }
 
-  const insertResults = await Promise.all(
-    articles.map(async (a, index) => {
+  const insertResults = await mapWithConcurrency(
+    articles,
+    ARTICLE_CONCURRENCY,
+    async (a, index) => {
       let canonicalUrl: string;
       try {
         canonicalUrl = canonicalizeUrl(a.url);
@@ -91,7 +113,7 @@ export async function ingestSource(
         throw error;
       }
       return { duplicate: false as const, articleId: insertedRow.id, thumbnailUrl, index };
-    })
+    }
   );
 
   const newlyInserted = insertResults.filter(
@@ -107,30 +129,32 @@ export async function ingestSource(
   // 겹쳐 타임아웃의 실제 원인 중 하나였다(docs/decisions.md 참고). 새 글만 대상으로 하면 평소(중복만
   // 있는 날)엔 이 블록이 API 호출 없이 즉시 끝난다.
   await Promise.all([
-    Promise.all(
-      newlyInserted
-        .filter((r) => r.thumbnailUrl)
-        .map(async (r) => {
-          const mirroredUrl = await mirrorThumbnail(supabase, r.thumbnailUrl!, r.articleId);
-          if (mirroredUrl) {
-            await supabase.from("articles").update({ thumbnail_url: mirroredUrl }).eq("id", r.articleId);
-          }
-        })
+    mapWithConcurrency(
+      newlyInserted.filter((r) => r.thumbnailUrl),
+      ARTICLE_CONCURRENCY,
+      async (r) => {
+        const mirroredUrl = await mirrorThumbnail(supabase, r.thumbnailUrl!, r.articleId);
+        if (mirroredUrl) {
+          await supabase.from("articles").update({ thumbnail_url: mirroredUrl }).eq("id", r.articleId);
+        }
+      }
     ),
     (async () => {
       if (newlyInserted.length === 0) return;
       const classifications = await classifyArticlesBatch(
         newlyInserted.map((r) => ({ title: articles[r.index].title, excerpt: articles[r.index].excerpt }))
       );
-      await Promise.all(
-        newlyInserted.map((r, i) => {
+      await mapWithConcurrency(
+        newlyInserted,
+        ARTICLE_CONCURRENCY,
+        async (r, i) => {
           const classification = classifications[i];
-          if (!classification) return null;
-          return supabase
+          if (!classification) return;
+          await supabase
             .from("articles")
             .update({ category: classification.category, tags: classification.tags })
             .eq("id", r.articleId);
-        })
+        }
       );
     })(),
     (async () => {

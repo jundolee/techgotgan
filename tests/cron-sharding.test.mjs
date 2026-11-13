@@ -30,10 +30,10 @@ test("every first and retry shard has one daily Vercel cron", () => {
     ? [{ path: "/api/cron/indexnow", schedule: "30 0 * * *" }]
     : []);
   assert.equal(crons.length, CRON_SHARD_COUNT * 2 + 5 + indexNowCrons.length);
-  for (const [sweep, schedule] of [["first", "0 22 * * *"], ["retry", "0 23 * * *"]]) {
+  for (const [sweep, hour, minuteInterval] of [["first", 22, 3], ["retry", 23, 1]]) {
     for (let shard = 0; shard < CRON_SHARD_COUNT; shard++) {
       assert.deepEqual(crons.filter((cron) => cron.path === `/api/cron/ingest/${sweep}/${shard}`),
-        [{ path: `/api/cron/ingest/${sweep}/${shard}`, schedule }]);
+        [{ path: `/api/cron/ingest/${sweep}/${shard}`, schedule: `${shard * minuteInterval} ${hour} * * *` }]);
     }
   }
   assert.deepEqual(crons.filter((cron) => cron.path === "/api/cron/embeddings"), [
