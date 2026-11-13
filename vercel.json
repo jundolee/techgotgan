@@ -30,63 +30,63 @@
     },
     {
       "path": "/api/cron/ingest/first/1",
-      "schedule": "0 22 * * *"
+      "schedule": "3 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/2",
-      "schedule": "0 22 * * *"
+      "schedule": "6 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/3",
-      "schedule": "0 22 * * *"
+      "schedule": "9 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/4",
-      "schedule": "0 22 * * *"
+      "schedule": "12 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/5",
-      "schedule": "0 22 * * *"
+      "schedule": "15 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/6",
-      "schedule": "0 22 * * *"
+      "schedule": "18 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/7",
-      "schedule": "0 22 * * *"
+      "schedule": "21 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/8",
-      "schedule": "0 22 * * *"
+      "schedule": "24 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/9",
-      "schedule": "0 22 * * *"
+      "schedule": "27 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/10",
-      "schedule": "0 22 * * *"
+      "schedule": "30 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/11",
-      "schedule": "0 22 * * *"
+      "schedule": "33 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/12",
-      "schedule": "0 22 * * *"
+      "schedule": "36 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/13",
-      "schedule": "0 22 * * *"
+      "schedule": "39 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/14",
-      "schedule": "0 22 * * *"
+      "schedule": "42 22 * * *"
     },
     {
       "path": "/api/cron/ingest/first/15",
-      "schedule": "0 22 * * *"
+      "schedule": "45 22 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/0",
@@ -94,63 +94,63 @@
     },
     {
       "path": "/api/cron/ingest/retry/1",
-      "schedule": "0 23 * * *"
+      "schedule": "1 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/2",
-      "schedule": "0 23 * * *"
+      "schedule": "2 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/3",
-      "schedule": "0 23 * * *"
+      "schedule": "3 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/4",
-      "schedule": "0 23 * * *"
+      "schedule": "4 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/5",
-      "schedule": "0 23 * * *"
+      "schedule": "5 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/6",
-      "schedule": "0 23 * * *"
+      "schedule": "6 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/7",
-      "schedule": "0 23 * * *"
+      "schedule": "7 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/8",
-      "schedule": "0 23 * * *"
+      "schedule": "8 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/9",
-      "schedule": "0 23 * * *"
+      "schedule": "9 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/10",
-      "schedule": "0 23 * * *"
+      "schedule": "10 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/11",
-      "schedule": "0 23 * * *"
+      "schedule": "11 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/12",
-      "schedule": "0 23 * * *"
+      "schedule": "12 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/13",
-      "schedule": "0 23 * * *"
+      "schedule": "13 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/14",
-      "schedule": "0 23 * * *"
+      "schedule": "14 23 * * *"
     },
     {
       "path": "/api/cron/ingest/retry/15",
-      "schedule": "0 23 * * *"
+      "schedule": "15 23 * * *"
     }
   ]
 }
