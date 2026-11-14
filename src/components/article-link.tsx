@@ -133,9 +133,9 @@ export function ArticleLink({ articleId, articleTitle, href, sourceUrl, children
       <Link
         href={href}
         ref={linkRef}
-        // Dynamic article routes only need their prefetched loading shell. Forcing the full route
-        // rendered every visible article preview in the background and competed with real clicks.
-        prefetch="auto"
+        // The full article page is cached after first access; avoid rendering every visible article
+        // before the user opens it. The intercepting preview already paints its own pending shell.
+        prefetch={false}
         data-article-link="true"
         data-article-source-url={sourceUrl}
         style={style}
