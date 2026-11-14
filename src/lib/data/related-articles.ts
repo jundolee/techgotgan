@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/service";
 import { fetchCachedRpcFromSupabase } from "@/lib/supabase/cached-rest";
 import {
@@ -340,58 +341,69 @@ async function getCategoryFallbackArticles(
   limit: number,
   excludeIds: Set<string>
 ): Promise<RelatedArticle[]> {
-  const supabase = createServiceClient();
-  const currentTags = new Set((tags ?? []).filter((tag) => tag.length > 0));
-  const candidates: RelatedArticleRow[] = [];
+  const normalizedTags = [...new Set((tags ?? []).filter((tag) => tag.length > 0))].sort();
+  const excludedIds = [...excludeIds].sort();
+  const load = unstable_cache(
+    async () => {
+      const supabase = createServiceClient();
+      const currentTags = new Set(normalizedTags);
+      const excluded = new Set(excludedIds);
+      const candidates: RelatedArticleRow[] = [];
 
-  if (currentTags.size > 0) {
-    const { data, error } = await supabase
-      .from("articles")
-      .select(RELATED_ARTICLE_SELECT)
-      .eq("category", category)
-      .neq("id", articleId)
-      .overlaps("tags", [...currentTags])
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .order("id", { ascending: true })
-      .limit(TAG_OVERLAP_CANDIDATE_LIMIT);
+      if (currentTags.size > 0) {
+        const { data, error } = await supabase
+          .from("articles")
+          .select(RELATED_ARTICLE_SELECT)
+          .eq("category", category)
+          .neq("id", articleId)
+          .overlaps("tags", [...currentTags])
+          .order("published_at", { ascending: false, nullsFirst: false })
+          .order("id", { ascending: true })
+          .limit(TAG_OVERLAP_CANDIDATE_LIMIT);
 
-    if (error) throw error;
-    for (const row of (data ?? []) as unknown as RelatedArticleRow[]) {
-      if (!excludeIds.has(row.id)) candidates.push(row);
-    }
-  }
+        if (error) throw error;
+        for (const row of (data ?? []) as unknown as RelatedArticleRow[]) {
+          if (!excluded.has(row.id)) candidates.push(row);
+        }
+      }
 
-  if (candidates.length < limit) {
-    const { data, error } = await supabase
-      .from("articles")
-      .select(RELATED_ARTICLE_SELECT)
-      .eq("category", category)
-      .neq("id", articleId)
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .order("id", { ascending: true })
-      .limit(limit + excludeIds.size);
+      if (candidates.length < limit) {
+        const { data, error } = await supabase
+          .from("articles")
+          .select(RELATED_ARTICLE_SELECT)
+          .eq("category", category)
+          .neq("id", articleId)
+          .order("published_at", { ascending: false, nullsFirst: false })
+          .order("id", { ascending: true })
+          .limit(limit + excluded.size);
 
-    if (error) throw error;
-    const candidateIds = new Set(candidates.map((candidate) => candidate.id));
-    for (const row of (data ?? []) as unknown as RelatedArticleRow[]) {
-      if (!excludeIds.has(row.id) && !candidateIds.has(row.id)) candidates.push(row);
-    }
-  }
+        if (error) throw error;
+        const candidateIds = new Set(candidates.map((candidate) => candidate.id));
+        for (const row of (data ?? []) as unknown as RelatedArticleRow[]) {
+          if (!excluded.has(row.id) && !candidateIds.has(row.id)) candidates.push(row);
+        }
+      }
 
-  candidates.sort((left, right) => {
-    const overlapDifference =
-      getTagOverlapCount(right.tags, currentTags) - getTagOverlapCount(left.tags, currentTags);
-    if (overlapDifference !== 0) return overlapDifference;
+      candidates.sort((left, right) => {
+        const overlapDifference =
+          getTagOverlapCount(right.tags, currentTags) - getTagOverlapCount(left.tags, currentTags);
+        if (overlapDifference !== 0) return overlapDifference;
 
-    const dateDifference = comparePublishedAtDescending(left.published_at, right.published_at);
-    if (dateDifference !== 0) return dateDifference;
-    if (left.id < right.id) return -1;
-    if (left.id > right.id) return 1;
-    return 0;
-  });
+        const dateDifference = comparePublishedAtDescending(left.published_at, right.published_at);
+        if (dateDifference !== 0) return dateDifference;
+        if (left.id < right.id) return -1;
+        if (left.id > right.id) return 1;
+        return 0;
+      });
 
-  return candidates.slice(0, limit).map((row) => ({
-    ...toRelatedArticle(row),
-    isSemanticMatch: false,
-  }));
+      return candidates.slice(0, limit).map((row) => ({
+        ...toRelatedArticle(row),
+        isSemanticMatch: false,
+      }));
+    },
+    ["related-article-category-fallback-v1", articleId, category, JSON.stringify(normalizedTags), String(limit), JSON.stringify(excludedIds)],
+    { revalidate: 300, tags: ["articles", "article-related-candidates"] }
+  );
+
+  return load();
 }

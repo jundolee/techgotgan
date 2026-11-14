@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import { Text } from "@seed-design/react";
 import { RelatedArticleList } from "@/components/related-article-list";
-import { markArticleRead } from "@/lib/data/articles";
+import { ArticleReadTracker } from "@/components/article-read-tracker";
 import { ArticleSummaryCopy } from "@/components/article-summary-copy";
 import { ShareButton } from "@/components/share-button";
 import { SourceArticleLink } from "@/components/source-article-link";
@@ -16,7 +17,6 @@ import {
   PUBLIC_TECHNOLOGY_TERMS,
   type PublicTechnologyIndexItem,
 } from "@/lib/data/public-hubs";
-import { getCurrentUser } from "@/lib/supabase/current-user";
 import { SITE_NAME, SITE_URL } from "@/app/seo";
 
 export const runtime = "nodejs";
@@ -29,10 +29,22 @@ const ENGINEERING_BOX_METAS = [
 
 type ArticlePageProps = { params: Promise<{ id: string }> };
 
-async function getArticle(id: string, options: { includeSummary?: boolean } = {}) {
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
-  return getArticlePreview(id, options);
+export const revalidate = 300;
+
+// Defer article paths to the first visit, then reuse the public page for five minutes.
+export async function generateStaticParams(): Promise<{ id: string }[]> {
+  return [];
 }
+
+const getArticle = cache(async (id: string) => {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
+  const load = unstable_cache(
+    () => getArticlePreview(id, { includeSummary: true }),
+    ["article-detail-preview-v1", id],
+    { revalidate: 60, tags: ["articles"] }
+  );
+  return load();
+});
 
 function isIndexableArticle(article: ArticlePreview | null): article is ArticlePreview {
   return Boolean(article?.summary && article.summaryBasis === "full_article" && article.title.trim().length >= 12 && (article.excerpt?.trim().length ?? 0) >= 40);
@@ -59,9 +71,8 @@ async function getRelatedTechnologies(title: string, summary: string): Promise<P
 }
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
-  await connection();
   const { id } = await params;
-  const article = await getArticle(id, { includeSummary: true });
+  const article = await getArticle(id);
   if (!article) return { robots: { index: false, follow: false } };
   const indexable = isIndexableArticle(article);
   const description = article.excerpt?.slice(0, 160) ?? `원문 발행처에서 확인할 수 있는 글입니다. ${SITE_NAME}`;
@@ -88,23 +99,12 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
-  await connection();
   const { id } = await params;
 
-  const userPromise = getCurrentUser();
-  const articlePromise = getArticle(id, { includeSummary: true });
+  const articlePromise = getArticle(id);
   const relatedPromise = getRelatedArticles(id);
-  const [article, initialRelated, user] = await Promise.all([articlePromise, relatedPromise, userPromise]);
+  const [article, initialRelated] = await Promise.all([articlePromise, relatedPromise]);
   if (!article) notFound();
-
-  if (user) {
-    try {
-      // A hard reload can cancel the client-side click action; mark the opened page read here too.
-      await markArticleRead(user.id, article.id);
-    } catch (error) {
-      console.error("Failed to persist article read state during page render:", error);
-    }
-  }
 
   const articleSummaryText = article.summary
     ? `${article.summary.lead} ${article.summary.keyPoints.join(" ")}`
@@ -118,6 +118,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   return (
     <main style={{ maxWidth: 760, margin: "0 auto", padding: "24px 0 56px" }}>
+      <ArticleReadTracker articleId={article.id} />
       <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>← {SITE_NAME} 목록으로</Link>
       <Text as="p" textStyle="t2Medium" color="var(--seed-color-fg-neutral-muted)" style={{ marginTop: 28 }}>
         {article.sourceTitle ?? "출처 미상"}{article.publishedAt ? ` · ${new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(article.publishedAt))}` : ""}

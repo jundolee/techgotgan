@@ -14,6 +14,13 @@ import { summarizeArticlesDirect } from "./run-summary-jobs";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
 const ARTICLE_CONCURRENCY = 4;
+const ARTICLE_LOOKUP_BATCH_SIZE = 100;
+
+interface ArticleCandidate {
+  article: NormalizedArticle;
+  index: number;
+  canonicalUrl: string;
+}
 
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -75,17 +82,64 @@ export async function ingestSource(
     return { found: 0, inserted: 0, duplicates: 0 };
   }
 
-  const insertResults = await mapWithConcurrency(
-    articles,
-    ARTICLE_CONCURRENCY,
-    async (a, index) => {
-      let canonicalUrl: string;
-      try {
-        canonicalUrl = canonicalizeUrl(a.url);
-      } catch {
-        canonicalUrl = a.url;
-      }
+  const candidates: ArticleCandidate[] = articles.map((article, index) => {
+    let canonicalUrl: string;
+    try {
+      canonicalUrl = canonicalizeUrl(article.url);
+    } catch {
+      canonicalUrl = article.url;
+    }
+    return { article, index, canonicalUrl };
+  });
+  const existingDedupKeys = new Set<string>();
+  const existingCanonicalUrls = new Set<string>();
+  const candidateBatches = Array.from(
+    { length: Math.ceil(candidates.length / ARTICLE_LOOKUP_BATCH_SIZE) },
+    (_, batchIndex) => candidates.slice(
+      batchIndex * ARTICLE_LOOKUP_BATCH_SIZE,
+      (batchIndex + 1) * ARTICLE_LOOKUP_BATCH_SIZE
+    )
+  );
 
+  // Check both unique keys before requesting og:image or inserting. Repeated feed entries
+  // are common, so avoid fetching each old article's page just to discover a 23505 afterward.
+  await mapWithConcurrency(candidateBatches, 2, async (batch) => {
+    const [dedupResult, canonicalResult] = await Promise.all([
+      supabase.from("articles")
+        .select("dedup_key")
+        .eq("source_id", source.id)
+        .in("dedup_key", batch.map(({ article }) => article.dedupKey)),
+      supabase.from("articles")
+        .select("canonical_url")
+        .in("canonical_url", batch.map(({ canonicalUrl }) => canonicalUrl)),
+    ]);
+
+    if (dedupResult.error) throw dedupResult.error;
+    if (canonicalResult.error) throw canonicalResult.error;
+    for (const row of dedupResult.data ?? []) existingDedupKeys.add(row.dedup_key);
+    for (const row of canonicalResult.data ?? []) existingCanonicalUrls.add(row.canonical_url);
+  });
+
+  const seenDedupKeys = new Set<string>();
+  const seenCanonicalUrls = new Set<string>();
+  const newCandidates = candidates.filter((candidate) => {
+    const isDuplicate = existingDedupKeys.has(candidate.article.dedupKey) ||
+      existingCanonicalUrls.has(candidate.canonicalUrl) ||
+      seenDedupKeys.has(candidate.article.dedupKey) ||
+      seenCanonicalUrls.has(candidate.canonicalUrl);
+    seenDedupKeys.add(candidate.article.dedupKey);
+    seenCanonicalUrls.add(candidate.canonicalUrl);
+    return !isDuplicate;
+  });
+
+  if (newCandidates.length === 0) {
+    return { found: articles.length, inserted: 0, duplicates: articles.length };
+  }
+
+  const insertResults = await mapWithConcurrency(
+    newCandidates,
+    ARTICLE_CONCURRENCY,
+    async ({ article: a, index, canonicalUrl }) => {
       // RSS 필드/thumbnailSelector로 못 찾았을 때만 원문 페이지의 og:image를 한 번 더 시도한다 —
       // 소스마다 thumbnailSelector를 신경 쓰지 않아도 대부분의 사이트가 공유하는 메타 태그로 커버된다.
       const thumbnailUrl = a.thumbnailUrl ?? (await fetchOgImage(a.url));
@@ -116,10 +170,10 @@ export async function ingestSource(
     }
   );
 
-  const newlyInserted = insertResults.filter(
+  const insertedRows = insertResults.filter(
     (r): r is { duplicate: false; articleId: string; thumbnailUrl: string | null; index: number } => !r.duplicate
   );
-  const duplicates = insertResults.length - newlyInserted.length;
+  const duplicates = articles.length - insertedRows.length;
 
   // 새로 들어온 글만(중복 제외) (1) 썸네일을 우리 스토리지로 미러링하고 (2) AI로 카테고리/태그를
   // 분류한다 — 둘 다 새 글에만 필요한 후처리이고 서로 독립적이라 병렬로 진행한다.
@@ -130,7 +184,7 @@ export async function ingestSource(
   // 있는 날)엔 이 블록이 API 호출 없이 즉시 끝난다.
   await Promise.all([
     mapWithConcurrency(
-      newlyInserted.filter((r) => r.thumbnailUrl),
+      insertedRows.filter((r) => r.thumbnailUrl),
       ARTICLE_CONCURRENCY,
       async (r) => {
         const mirroredUrl = await mirrorThumbnail(supabase, r.thumbnailUrl!, r.articleId);
@@ -140,12 +194,12 @@ export async function ingestSource(
       }
     ),
     (async () => {
-      if (newlyInserted.length === 0) return;
+      if (insertedRows.length === 0) return;
       const classifications = await classifyArticlesBatch(
-        newlyInserted.map((r) => ({ title: articles[r.index].title, excerpt: articles[r.index].excerpt }))
+        insertedRows.map((r) => ({ title: articles[r.index].title, excerpt: articles[r.index].excerpt }))
       );
       await mapWithConcurrency(
-        newlyInserted,
+        insertedRows,
         ARTICLE_CONCURRENCY,
         async (r, i) => {
           const classification = classifications[i];
@@ -158,8 +212,8 @@ export async function ingestSource(
       );
     })(),
     (async () => {
-      if (!isArticleSummaryEnabled() || newlyInserted.length === 0) return;
-      const targetIds = newlyInserted.map((r) => r.articleId);
+      if (!isArticleSummaryEnabled() || insertedRows.length === 0) return;
+      const targetIds = insertedRows.map((r) => r.articleId);
       // 곳간 목록에 노출되기 전 새로 등록된 글의 본문 추출 및 AI 요약을 즉시 생성
       try {
         await summarizeArticlesDirect(targetIds, supabase);
@@ -174,5 +228,5 @@ export async function ingestSource(
     })(),
   ]);
 
-  return { found: articles.length, inserted: newlyInserted.length, duplicates };
+  return { found: articles.length, inserted: insertedRows.length, duplicates };
 }

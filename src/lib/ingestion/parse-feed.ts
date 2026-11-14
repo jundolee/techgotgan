@@ -38,7 +38,7 @@ function resolveUrl(raw: string, base: string): string | null {
  * Gatsby 등 일부 사이트는 이 <img src>가 도메인 없는 상대경로라(예: oliveyoung.tech),
  * 글 URL을 기준으로 절대 URL로 변환해야 우리 사이트에서 깨지지 않는다.
  */
-function extractThumbnail(item: Record<string, unknown>, articleUrl: string): string | null {
+function extractExplicitThumbnail(item: Record<string, unknown>, articleUrl: string): string | null {
   const enclosure = item.enclosure as { url?: string; type?: string } | undefined;
   if (enclosure?.url && enclosure.type?.startsWith("image")) {
     return resolveUrl(enclosure.url, articleUrl);
@@ -48,52 +48,102 @@ function extractThumbnail(item: Record<string, unknown>, articleUrl: string): st
   const mediaThumbnail = item["media:thumbnail"] as { $?: { url?: string } } | undefined;
   if (mediaThumbnail?.$?.url) return resolveUrl(mediaThumbnail.$.url, articleUrl);
 
-  // rss-parser는 item.content를 <description>에 매핑하고, 실제 본문 HTML은 원래 태그명인
-  // "content:encoded"로 남겨둔다 (둘 다 없으면 content로 폴백).
-  const content = (item["content:encoded"] as string | undefined) ?? (item.content as string | undefined);
-  if (content) {
-    const $ = cheerio.load(content);
-    // 워드프레스 이모지(<img class="wp-smiley" src=".../s.w.org/...">) 등 아이콘을 제외하고 실제 본문 이미지를 선택
-    const imgSrc = $("img:not(.wp-smiley)")
-      .toArray()
-      .map((el) => $(el).attr("src"))
-      .find((src) => src && !src.includes("s.w.org"));
-    if (imgSrc) return resolveUrl(imgSrc, articleUrl);
-    const preloadHref = $('link[rel="preload"][as="image"]').first().attr("href");
-    if (preloadHref) return resolveUrl(preloadHref, articleUrl);
-  }
-
   return null;
 }
 
-export function extractFeedExcerpt(item: Record<string, unknown>): string | null {
+function extractThumbnailFromHtml($: cheerio.CheerioAPI, articleUrl: string): string | null {
+  // 워드프레스 이모지(<img class="wp-smiley" src=".../s.w.org/...">) 등 아이콘을 제외하고 실제 본문 이미지를 선택
+  const imgSrc = $("img:not(.wp-smiley)")
+    .toArray()
+    .map((el) => $(el).attr("src"))
+    .find((src) => src && !src.includes("s.w.org"));
+  if (imgSrc) return resolveUrl(imgSrc, articleUrl);
+  const preloadHref = $('link[rel="preload"][as="image"]').first().attr("href");
+  return preloadHref ? resolveUrl(preloadHref, articleUrl) : null;
+}
+
+function getThumbnailHtml(item: Record<string, unknown>): string | null {
+  return (item["content:encoded"] as string | undefined) ?? (item.content as string | undefined) ?? null;
+}
+
+function getExcerptHtml(item: Record<string, unknown>): string | null {
+  return (item["content:encoded"] as string | undefined) ??
+    (item.content as string | undefined) ??
+    (item.description as string | undefined) ??
+    null;
+}
+
+function getDirectExcerpt(item: Record<string, unknown>): string | null {
   const directSnippet = typeof item.contentSnippet === "string" ? item.contentSnippet.trim() : "";
   if (directSnippet && directSnippet.length >= 80) {
     return directSnippet.replace(/\s+/g, " ").slice(0, 2000);
   }
 
-  const encodedSnippet = typeof item["content:encodedSnippet"] === "string" ? (item["content:encodedSnippet"] as string).trim() : "";
+  const encodedSnippet = typeof item["content:encodedSnippet"] === "string"
+    ? (item["content:encodedSnippet"] as string).trim()
+    : "";
   if (encodedSnippet && encodedSnippet.length >= 80) {
     return encodedSnippet.replace(/\s+/g, " ").slice(0, 2000);
   }
 
-  const html = (typeof item["content:encoded"] === "string" ? item["content:encoded"] : null) ??
-    (typeof item.content === "string" ? item.content : null) ??
-    (typeof item.description === "string" ? item.description : null);
+  return null;
+}
 
-  if (html) {
-    try {
-      const $ = cheerio.load(html);
-      $("script,style,noscript,svg,iframe,nav,footer,header,form,button").remove();
-      const text = $("body").text().replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
-      if (text.length >= 40) {
-        return text.slice(0, 2000);
-      }
-    } catch {}
-  }
-
+function getFallbackExcerpt(item: Record<string, unknown>): string | null {
+  const directSnippet = typeof item.contentSnippet === "string" ? item.contentSnippet.trim() : "";
+  const encodedSnippet = typeof item["content:encodedSnippet"] === "string"
+    ? (item["content:encodedSnippet"] as string).trim()
+    : "";
   const fallback = directSnippet || encodedSnippet || null;
   return fallback ? fallback.slice(0, 2000) : null;
+}
+
+function extractExcerptFromHtml($: cheerio.CheerioAPI): string | null {
+  $("script,style,noscript,svg,iframe,nav,footer,header,form,button").remove();
+  const text = $("body").text().replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+  return text.length >= 40 ? text.slice(0, 2000) : null;
+}
+
+function extractFeedItemDetails(
+  item: Record<string, unknown>,
+  articleUrl: string
+): { excerpt: string | null; thumbnailUrl: string | null } {
+  const directExcerpt = getDirectExcerpt(item);
+  const explicitThumbnail = extractExplicitThumbnail(item, articleUrl);
+  const excerptHtml = directExcerpt ? null : getExcerptHtml(item);
+  const thumbnailHtml = explicitThumbnail ? null : getThumbnailHtml(item);
+
+  let excerpt: string | null = directExcerpt;
+  let thumbnailUrl = explicitThumbnail;
+  let excerptDocument: cheerio.CheerioAPI | null = null;
+  let thumbnailDocument: cheerio.CheerioAPI | null = null;
+
+  if (excerptHtml && thumbnailHtml && excerptHtml === thumbnailHtml) {
+    excerptDocument = cheerio.load(excerptHtml);
+    thumbnailDocument = excerptDocument;
+  } else {
+    if (excerptHtml) excerptDocument = cheerio.load(excerptHtml);
+    if (thumbnailHtml) thumbnailDocument = cheerio.load(thumbnailHtml);
+  }
+
+  if (!thumbnailUrl && thumbnailDocument) thumbnailUrl = extractThumbnailFromHtml(thumbnailDocument, articleUrl);
+  if (!excerpt && excerptDocument) excerpt = extractExcerptFromHtml(excerptDocument);
+  if (!excerpt) excerpt = getFallbackExcerpt(item);
+
+  return { excerpt, thumbnailUrl };
+}
+
+export function extractFeedExcerpt(item: Record<string, unknown>): string | null {
+  const directExcerpt = getDirectExcerpt(item);
+  if (directExcerpt) return directExcerpt;
+  const html = getExcerptHtml(item);
+  if (html) {
+    try {
+      const excerpt = extractExcerptFromHtml(cheerio.load(html));
+      if (excerpt) return excerpt;
+    } catch {}
+  }
+  return getFallbackExcerpt(item);
 }
 
 export interface ParsedFeed {
@@ -162,14 +212,14 @@ export async function parseFeed(feedUrl: string): Promise<ParsedFeed> {
       const url = item.link as string;
       const title = item.title as string;
       const publishedAt = item.isoDate ?? (item.pubDate ? new Date(item.pubDate).toISOString() : null);
-      const excerpt = extractFeedExcerpt(item as Record<string, unknown>);
+      const { excerpt, thumbnailUrl } = extractFeedItemDetails(item as Record<string, unknown>, url);
       const guid = (item.guid as string | undefined) ?? (item as Record<string, unknown>).id;
 
       return {
         title,
         url,
         excerpt,
-        thumbnailUrl: extractThumbnail(item as Record<string, unknown>, url),
+        thumbnailUrl,
         publishedAt: publishedAt ?? null,
         dedupKey: computeDedupKey({ guid: (guid as string) ?? null, url, title }),
       } satisfies NormalizedArticle;
