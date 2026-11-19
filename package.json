@@ -14,6 +14,7 @@
     "cron:ingest": "tsx --conditions react-server scripts/run-ingestion-sweep.ts",
     "cron:summaries": "tsx --conditions react-server scripts/run-summary-worker.ts",
     "cron:embeddings": "tsx --conditions react-server scripts/run-embedding-worker.ts",
+    "diagnose:ingestion-sources": "tsx --conditions react-server scripts/inspect-ingestion-sources.ts",
     "cleanup:orphan-thumbnails": "tsx --conditions react-server scripts/cleanup-orphan-thumbnails.ts",
     "backfill:categories": "npx tsx scripts/backfill-categories.ts",
     "retry:summaries": "npx tsx --conditions react-server scripts/retry-summaries.ts"
