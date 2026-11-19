@@ -54,7 +54,9 @@ test("GitHub Actions schedules every ingestion shard and keeps the retry sweep",
   assert.match(workflow, /cleanup-thumbnails/);
   assert.match(workflow, /cleanup-thumbnails-audit/);
   assert.match(workflow, /inspect-source-errors/);
+  assert.match(workflow, /repair-d2-source/);
   assert.match(workflow, /SOURCE_DIAGNOSTIC_IDS: "d489e2a3-d227-4bf0-ab1d-894cb8eac51a/);
+  assert.match(workflow, /SOURCE_REPAIR_APPROVED: "true"/);
   assert.match(workflow, /ORPHAN_THUMBNAIL_EXPECTED_COUNT: "214"/);
   assert.match(workflow, /ORPHAN_THUMBNAIL_EXPECTED_DIGEST: \$\{\{ vars\.ORPHAN_THUMBNAIL_EXPECTED_DIGEST \}\}/);
   assert.match(workflow, /ORPHAN_THUMBNAIL_EXPECTED_INVENTORY_DIGEST: \$\{\{ vars\.ORPHAN_THUMBNAIL_EXPECTED_INVENTORY_DIGEST \}\}/);

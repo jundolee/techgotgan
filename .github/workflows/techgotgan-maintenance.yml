@@ -22,6 +22,7 @@ on:
           - embeddings
           - indexnow
           - inspect-source-errors
+          - repair-d2-source
           - cleanup-thumbnails-audit
           - cleanup-thumbnails
         default: ingest-first
@@ -134,6 +135,13 @@ jobs:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           SOURCE_DIAGNOSTIC_IDS: "d489e2a3-d227-4bf0-ab1d-894cb8eac51a,ac45bdbc-c131-435f-8a84-d77baf96ea70,36bb1622-50a9-4dd1-8524-192c11716224,d7cedc18-30c3-4c37-98ce-4997972093eb"
         run: npm run diagnose:ingestion-sources
+      - name: Repair NAVER D2 feed with verified scrape selectors
+        if: ${{ steps.select-task.outputs.task == 'repair-d2-source' }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SOURCE_REPAIR_APPROVED: "true"
+        run: npm run repair:d2-source
       - name: Remove approved unreferenced thumbnails
         if: ${{ steps.select-task.outputs.task == 'cleanup-thumbnails-audit' }}
         env:
