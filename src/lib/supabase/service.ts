@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseServiceKey } from "./service-key";
+import { createSupabaseServiceFetch } from "./service-key-headers";
 
 // 서버 사이드 전용 클라이언트 (service role 키 사용, RLS 우회).
 // 클라이언트 컴포넌트에서 절대 import하지 않는다 — "server-only"가 실수로 그럴 경우 빌드 타임에 에러를 낸다.
@@ -14,12 +15,13 @@ export function createServiceClient() {
     );
   }
 
+  const serviceFetch = createSupabaseServiceFetch(serviceKey);
   return createClient(url, serviceKey, {
     auth: { persistSession: false },
     // Per-user state such as read_status must reflect a write from the previous request.
     // Keep these Supabase REST reads outside the Next.js Data Cache.
     global: {
-      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+      fetch: (input, init) => serviceFetch(input, { ...init, cache: "no-store" }),
     },
   });
 }

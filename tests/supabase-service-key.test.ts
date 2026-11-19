@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { getSupabaseServiceHeaders, getSupabaseServiceKey } from "../src/lib/supabase/service-key";
+import { createSupabaseServiceFetch } from "../src/lib/supabase/service-key-headers";
 
 test("new Supabase secret keys are sent only in the apikey header", () => {
   assert.deepEqual(getSupabaseServiceHeaders("sb_secret_test-key"), {
@@ -14,6 +15,38 @@ test("legacy service-role JWTs retain bearer authorization compatibility", () =>
     apikey: key,
     authorization: `Bearer ${key}`,
   });
+});
+
+test("supabase-js transport strips the bearer header for new secret keys", async () => {
+  const receivedHeaders: Headers[] = [];
+  const mockFetch: typeof fetch = async (_input, init) => {
+    receivedHeaders.push(new Headers(init?.headers));
+    return new Response(null, { status: 204 });
+  };
+  const key = "sb_secret_test-key";
+  const serviceFetch = createSupabaseServiceFetch(key, mockFetch);
+
+  await serviceFetch("https://project.supabase.co/rest/v1/articles", {
+    headers: { apikey: "stale-key", authorization: `Bearer ${key}` },
+  });
+
+  assert.equal(receivedHeaders[0].get("apikey"), key);
+  assert.equal(receivedHeaders[0].has("authorization"), false);
+});
+
+test("supabase-js transport preserves legacy service-role bearer authorization", async () => {
+  const receivedHeaders: Headers[] = [];
+  const mockFetch: typeof fetch = async (_input, init) => {
+    receivedHeaders.push(new Headers(init?.headers));
+    return new Response(null, { status: 204 });
+  };
+  const key = "legacy-service-role";
+  await createSupabaseServiceFetch(key, mockFetch)("https://project.supabase.co/rest/v1/articles", {
+    headers: { apikey: "stale-key", authorization: `Bearer ${key}` },
+  });
+
+  assert.equal(receivedHeaders[0].get("apikey"), key);
+  assert.equal(receivedHeaders[0].get("authorization"), `Bearer ${key}`);
 });
 
 test("new secret key takes precedence while legacy service-role remains a fallback", () => {

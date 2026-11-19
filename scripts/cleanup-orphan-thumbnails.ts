@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import type { FileObject } from "@supabase/storage-js";
+import { createSupabaseServiceFetch } from "../src/lib/supabase/service-key-headers";
 
 const BUCKET = "thumbnails";
 const PAGE_SIZE = 1_000;
@@ -14,6 +15,13 @@ type ValidThumbnailObject = SizedFileObject & {
   created_at: string;
   updated_at: string;
 };
+
+function createCleanupClient(url: string, key: string) {
+  return createClient(url, key, {
+    auth: { persistSession: false },
+    global: { fetch: createSupabaseServiceFetch(key) },
+  });
+}
 
 function isExplicitFolderEntry(object: SizedFileObject): boolean {
   return object.id === null && object.metadata === null && object.created_at === null && object.updated_at === null;
@@ -144,7 +152,7 @@ async function listArticleThumbnailUrls(): Promise<string[]> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
   if (!supabaseUrl || !secretKey) throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY are required");
-  const supabase = createClient(supabaseUrl, secretKey, { auth: { persistSession: false } });
+  const supabase = createCleanupClient(supabaseUrl, secretKey);
   const rows = await readAllByKeyset(async (afterId, limit) => {
     let query = supabase.from("articles")
       .select("id,thumbnail_url")
@@ -163,7 +171,7 @@ async function listThumbnailObjects(): Promise<SizedFileObject[]> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
   if (!supabaseUrl || !secretKey) throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY are required");
-  const supabase = createClient(supabaseUrl, secretKey, { auth: { persistSession: false } });
+  const supabase = createCleanupClient(supabaseUrl, secretKey);
   return readAllByOffset(async (offset, limit) => {
     const { data, error } = await supabase.storage.from(BUCKET).list("", {
       limit,
@@ -233,7 +241,7 @@ async function main() {
     throw new Error("Refusing to delete: the approved inventory or article references changed before deletion");
   }
 
-  const supabase = createClient(supabaseUrl, secretKey, { auth: { persistSession: false } });
+  const supabase = createCleanupClient(supabaseUrl, secretKey);
   const { data: removed, error } = await supabase.storage.from(BUCKET).remove(latestCandidates.map(({ name }) => name));
   if (error) throw new Error(`Storage API refused the approved orphan cleanup: ${error.message}`);
   if ((removed?.length ?? 0) !== expectedCount) {
