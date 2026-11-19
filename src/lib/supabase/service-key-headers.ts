@@ -8,9 +8,12 @@ export function createSupabaseServiceFetch(
   fetchImplementation: typeof fetch = fetch,
 ): typeof fetch {
   return (input, init) => {
-    const headers = new Headers(init?.headers);
+    const requestHeaders = input instanceof Request ? input.headers : undefined;
+    const headers = new Headers(init?.headers ?? requestHeaders);
     headers.set("apikey", key);
-    if (key.startsWith("sb_secret_")) headers.delete("authorization");
+    if (key.startsWith("sb_secret_") && headers.get("authorization") === `Bearer ${key}`) {
+      headers.delete("authorization");
+    }
     return fetchImplementation(input, { ...init, headers });
   };
 }

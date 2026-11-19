@@ -49,6 +49,29 @@ test("supabase-js transport preserves legacy service-role bearer authorization",
   assert.equal(receivedHeaders[0].get("authorization"), `Bearer ${key}`);
 });
 
+test("secret-key transport preserves headers on Request inputs and unrelated bearer tokens", async () => {
+  const receivedHeaders: Headers[] = [];
+  const mockFetch: typeof fetch = async (_input, init) => {
+    receivedHeaders.push(new Headers(init?.headers));
+    return new Response(null, { status: 204 });
+  };
+  const key = "sb_secret_test-key";
+  const request = new Request("https://project.supabase.co/rest/v1/articles", {
+    headers: {
+      authorization: "Bearer delegated-user-token",
+      "content-type": "application/json",
+      prefer: "return=representation",
+    },
+  });
+
+  await createSupabaseServiceFetch(key, mockFetch)(request);
+
+  assert.equal(receivedHeaders[0].get("apikey"), key);
+  assert.equal(receivedHeaders[0].get("authorization"), "Bearer delegated-user-token");
+  assert.equal(receivedHeaders[0].get("content-type"), "application/json");
+  assert.equal(receivedHeaders[0].get("prefer"), "return=representation");
+});
+
 test("new secret key takes precedence while legacy service-role remains a fallback", () => {
   const previousSecret = process.env.SUPABASE_SECRET_KEY;
   const previousLegacy = process.env.SUPABASE_SERVICE_ROLE_KEY;
