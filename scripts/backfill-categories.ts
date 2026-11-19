@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
+import { createSupabaseServiceFetch } from "../src/lib/supabase/service-key-headers";
 
 // .env.local 로드 (무의존성)
 const envPath = resolve(process.cwd(), ".env.local");
@@ -29,7 +30,10 @@ if (!supabaseUrl || !serviceRoleKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, serviceRoleKey);
+const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  auth: { persistSession: false },
+  global: { fetch: createSupabaseServiceFetch(serviceRoleKey) },
+});
 
 const MODEL = "gpt-5-nano";
 const BATCH_SIZE = 20;
