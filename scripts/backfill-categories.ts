@@ -21,11 +21,11 @@ if (existsSync(envPath)) {
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serviceRoleKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const apiKey = process.env.OPENAI_API_KEY;
 
 if (!supabaseUrl || !serviceRoleKey) {
-  console.error("오류: NEXT_PUBLIC_SUPABASE_URL 및 SUPABASE_SERVICE_ROLE_KEY 환경변수가 필요합니다.");
+  console.error("오류: NEXT_PUBLIC_SUPABASE_URL 및 SUPABASE_SECRET_KEY (또는 legacy SUPABASE_SERVICE_ROLE_KEY) 환경변수가 필요합니다.");
   process.exit(1);
 }
 

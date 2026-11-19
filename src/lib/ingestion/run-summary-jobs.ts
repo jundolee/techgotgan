@@ -184,11 +184,14 @@ export async function summarizeArticlesDirect(
   };
 }
 
-export async function runSummaryJobs(limit = 24): Promise<{ claimed: number; ready: number; unavailable: number; failed: number }> {
+export async function runSummaryJobs(
+  limit = 24,
+  clientOverride?: ServiceClient,
+): Promise<{ claimed: number; ready: number; unavailable: number; failed: number }> {
   if (!isArticleSummaryEnabled()) {
     return { claimed: 0, ready: 0, unavailable: 0, failed: 0 };
   }
-  const client = createServiceClient();
+  const client = clientOverride ?? createServiceClient();
   const targetLimit = Math.min(Math.max(Math.trunc(limit), 1), 32);
 
   // 추출 실패로 이전에 unavailable 처리된 현재 버전 작업들을 재시도할 수 있도록 pending 상태로 복구

@@ -7,6 +7,7 @@ import { getArticlePreview, getRelatedArticles } from "@/lib/data/related-articl
 import { getPublicGraphArticle } from "@/lib/data/dev-article-graph";
 import { ArticleGraphView, type ArticleGraphEdge, type ArticleGraphNode } from "@/components/article-graph-view";
 import { isConnectionInsightEnabled } from "@/lib/ingestion/article-connection-insight";
+import { hasSupabaseServiceCredentials } from "@/lib/supabase/service-key";
 
 export const runtime = "nodejs";
 export const metadata: Metadata = { title: "글 연결 지도", robots: { index: false, follow: false } };
@@ -25,7 +26,7 @@ export default async function ArticleConnectionsPage({ params, searchParams }: {
   await connection();
   const { trail } = await searchParams;
   const previousIds = typeof trail === "string" ? trail.split(",").filter((value) => UUID.test(value) && value !== id).slice(-LIMIT) : [];
-  const databaseConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY.includes("[SENSITIVE]"));
+  const databaseConfigured = hasSupabaseServiceCredentials();
 
   async function load(id: string) {
     // Only public metadata is needed; owner-only AI summaries are never requested.

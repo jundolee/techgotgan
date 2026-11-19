@@ -1,0 +1,8 @@
+
+*.ait
+dist/
+.taste-skill/
+.env
+.env.local
+
+*.ait

@@ -1,0 +1,144 @@
+name: Techgotgan data maintenance
+
+on:
+  schedule:
+    - cron: "15 22 * * *"
+    - cron: "15 23 * * *"
+    - cron: "45 23 * * *"
+    - cron: "45 5 * * *"
+    - cron: "45 11 * * *"
+    - cron: "45 17 * * *"
+    - cron: "15 0 * * *"
+    - cron: "30 0 * * *"
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Job to run manually
+        type: choice
+        options:
+          - ingest-first
+          - ingest-retry
+          - summaries
+          - embeddings
+          - indexnow
+          - cleanup-thumbnails-audit
+          - cleanup-thumbnails
+        default: ingest-first
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: techgotgan-maintenance-${{ github.event.schedule || inputs.task || 'manual' }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Select maintenance task
+        id: select-task
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          MANUAL_TASK: ${{ inputs.task }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            task="$MANUAL_TASK"
+          else
+            case "$EVENT_SCHEDULE" in
+              "15 22 * * *") task="ingest-first" ;;
+              "15 23 * * *") task="ingest-retry" ;;
+              "15 0 * * *") task="embeddings" ;;
+              "30 0 * * *") task="indexnow" ;;
+              *) task="summaries" ;;
+            esac
+          fi
+          echo "task=$task" >> "$GITHUB_OUTPUT"
+      - name: Run first ingestion sweep
+        if: ${{ steps.select-task.outputs.task == 'ingest-first' }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          RSS_PROXY_URL: ${{ secrets.RSS_PROXY_URL }}
+          OPENAI_SUMMARY_ENABLED: ${{ vars.OPENAI_SUMMARY_ENABLED || 'false' }}
+          MIRROR_THUMBNAILS_ENABLED: "false"
+        run: npm run cron:ingest -- first
+      - name: Run ingestion retry sweep
+        if: ${{ steps.select-task.outputs.task == 'ingest-retry' }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          RSS_PROXY_URL: ${{ secrets.RSS_PROXY_URL }}
+          OPENAI_SUMMARY_ENABLED: ${{ vars.OPENAI_SUMMARY_ENABLED || 'false' }}
+          MIRROR_THUMBNAILS_ENABLED: "false"
+        run: npm run cron:ingest -- retry
+      - name: Run summary worker
+        if: ${{ steps.select-task.outputs.task == 'summaries' && vars.OPENAI_SUMMARY_ENABLED == 'true' }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_SUMMARY_ENABLED: "true"
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "AI summaries are enabled but OPENAI_API_KEY is missing." >&2
+            exit 1
+          fi
+          npm run cron:summaries
+      - name: Skip summary worker when disabled
+        if: ${{ steps.select-task.outputs.task == 'summaries' && vars.OPENAI_SUMMARY_ENABLED != 'true' }}
+        run: echo "AI summaries are disabled; skipping."
+      - name: Run embedding worker
+        if: ${{ steps.select-task.outputs.task == 'embeddings' && vars.ENABLE_EMBEDDING_JOBS == 'true' }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          ENABLE_EMBEDDING_JOBS: "true"
+          PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+          PINECONE_INDEX_HOST: ${{ secrets.PINECONE_INDEX_HOST }}
+        run: npm run cron:embeddings
+      - name: Skip embedding worker when disabled
+        if: ${{ steps.select-task.outputs.task == 'embeddings' && vars.ENABLE_EMBEDDING_JOBS != 'true' }}
+        run: echo "Embedding jobs are disabled; skipping."
+      - name: Submit recently changed pages to IndexNow
+        if: ${{ steps.select-task.outputs.task == 'indexnow' && vars.INDEXNOW_ENABLED == 'true' }}
+        env:
+          INDEXNOW_API_URL: ${{ vars.INDEXNOW_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$INDEXNOW_API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "IndexNow is enabled but its URL or CRON_SECRET is missing." >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --output /dev/null --write-out 'HTTP %{http_code}\n' \
+            --max-time 30 --proto '=https' --proto-redir '=https' \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$INDEXNOW_API_URL"
+      - name: Skip IndexNow while the public site is unavailable
+        if: ${{ steps.select-task.outputs.task == 'indexnow' && vars.INDEXNOW_ENABLED != 'true' }}
+        run: echo "IndexNow is disabled until a reachable public sitemap host is configured."
+      - name: Remove approved unreferenced thumbnails
+        if: ${{ steps.select-task.outputs.task == 'cleanup-thumbnails-audit' }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          ORPHAN_THUMBNAIL_DRY_RUN: "true"
+        run: npm run cleanup:orphan-thumbnails
+      - name: Remove approved unreferenced thumbnails
+        if: ${{ steps.select-task.outputs.task == 'cleanup-thumbnails' }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          ORPHAN_THUMBNAIL_EXPECTED_COUNT: "214"
+          ORPHAN_THUMBNAIL_EXPECTED_DIGEST: ${{ vars.ORPHAN_THUMBNAIL_EXPECTED_DIGEST }}
+          ORPHAN_THUMBNAIL_EXPECTED_INVENTORY_DIGEST: ${{ vars.ORPHAN_THUMBNAIL_EXPECTED_INVENTORY_DIGEST }}
+        run: npm run cleanup:orphan-thumbnails

@@ -49,3 +49,13 @@ npm run dev
 ```
 
 개발 서버는 기본적으로 `http://localhost:3000`에서 실행됩니다.
+
+## 앱인토스 미니앱
+
+토스 안에서 최신 글을 검색하고 원문까지 읽을 수 있는 WebView 앱도 제공해요. 공개 글 API는 기존 Supabase 프로젝트의 Edge Function에서, 새 글 수집은 공개 저장소의 GitHub Actions에서 처리해요. 두 경로는 Vercel 배포에 의존하지 않아요.
+
+- [앱인토스 설정과 빌드 안내](docs/app-in-toss.md)
+- 앱 실행: `npm run intoss:dev`
+- 앱 번들 생성: `npm run intoss:build`
+- 자동 수집 일정: `.github/workflows/techgotgan-maintenance.yml`
+- 자동 수집 일정: `.github/workflows/techgotgan-maintenance.yml`

@@ -31,7 +31,11 @@ const SUMMARY_SCHEMA = {
 } as const;
 
 export function isArticleSummaryEnabled(): boolean {
-  return process.env.OPENAI_SUMMARY_ENABLED === "true" && Boolean(process.env.OPENAI_API_KEY);
+  return isArticleSummaryQueueEnabled() && Boolean(process.env.OPENAI_API_KEY);
+}
+
+export function isArticleSummaryQueueEnabled(): boolean {
+  return process.env.OPENAI_SUMMARY_ENABLED === "true";
 }
 
 function extractOutputText(response: Record<string, unknown>): string | null {

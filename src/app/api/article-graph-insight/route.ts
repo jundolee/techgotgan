@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { getArticlePreview, getRelatedArticles } from "@/lib/data/related-articles";
 import { getPublicGraphArticle } from "@/lib/data/dev-article-graph";
 import { explainArticleConnections, type ConnectionSource } from "@/lib/ingestion/article-connection-insight";
+import { hasSupabaseServiceCredentials } from "@/lib/supabase/service-key";
 
 export const runtime = "nodejs";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid article pair" }, { status: 400 });
   }
 
-  const databaseConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY.includes("[SENSITIVE]"));
+  const databaseConfigured = hasSupabaseServiceCredentials();
   const [source, target] = await Promise.all([
     databaseConfigured ? getArticlePreview(body.sourceId) : getPublicGraphArticle(body.sourceId),
     databaseConfigured ? getArticlePreview(body.relatedId) : getPublicGraphArticle(body.relatedId),

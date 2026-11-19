@@ -1,0 +1,4 @@
+project_id = "techgotgan"
+
+[functions.techgotgan-intoss-api]
+verify_jwt = false
