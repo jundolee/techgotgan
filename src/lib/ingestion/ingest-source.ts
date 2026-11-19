@@ -4,12 +4,11 @@ import { scrapeSource } from "./scrape-source";
 import { canonicalizeUrl } from "./dedup";
 import { fetchOgImage } from "./fetch-og-image";
 import { mirrorThumbnail } from "@/lib/storage/thumbnails";
+import { isThumbnailMirroringEnabled } from "@/lib/storage/thumbnail-policy";
 import { classifyArticlesBatch } from "./category-classifier";
 import type { FeedType, NormalizedArticle, ScrapeConfig } from "./types";
-import {
-  ARTICLE_SUMMARY_PROMPT_VERSION,
-  isArticleSummaryEnabled,
-} from "./article-summary";
+import { isArticleSummaryEnabled, isArticleSummaryQueueEnabled } from "./article-summary";
+import { enqueuePendingSummaryJobs, getRecentSummaryRetryIds } from "./summary-job-queue";
 import { summarizeArticlesDirect } from "./run-summary-jobs";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
@@ -47,6 +46,56 @@ export interface SourceRow {
   feed_url: string | null;
   feed_type: FeedType;
   scrape_config: ScrapeConfig | null;
+}
+
+type InsertedArticleRow = { articleId: string; thumbnailUrl: string | null; index: number };
+
+export async function processInsertedArticleMetadata(
+  supabase: SupabaseClient,
+  insertedRows: readonly InsertedArticleRow[],
+  articles: readonly Pick<NormalizedArticle, "title" | "excerpt">[],
+  dependencies: {
+    mirrorEnabled?: boolean;
+    mirror?: typeof mirrorThumbnail;
+    classify?: typeof classifyArticlesBatch;
+  } = {},
+): Promise<void> {
+  if (insertedRows.length === 0) return;
+  const mirrorEnabled = dependencies.mirrorEnabled ?? isThumbnailMirroringEnabled();
+  const mirror = dependencies.mirror ?? mirrorThumbnail;
+  const classify = dependencies.classify ?? classifyArticlesBatch;
+
+  await Promise.all([
+    (async () => {
+      if (!mirrorEnabled) return;
+      await mapWithConcurrency(
+        insertedRows.filter((row) => row.thumbnailUrl),
+        ARTICLE_CONCURRENCY,
+        async (row) => {
+          const mirroredUrl = await mirror(supabase, row.thumbnailUrl!, row.articleId);
+          if (mirroredUrl) {
+            await supabase.from("articles").update({ thumbnail_url: mirroredUrl }).eq("id", row.articleId);
+          }
+        },
+      );
+    })(),
+    (async () => {
+      const classifications = await classify(
+        insertedRows.map((row) => ({ title: articles[row.index].title, excerpt: articles[row.index].excerpt })),
+      );
+      await mapWithConcurrency(
+        [...insertedRows],
+        ARTICLE_CONCURRENCY,
+        async (row, index) => {
+          const classification = classifications[index];
+          if (!classification) return;
+          await supabase.from("articles")
+            .update({ category: classification.category, tags: classification.tags })
+            .eq("id", row.articleId);
+        },
+      );
+    })(),
+  ]);
 }
 
 export async function fetchArticlesForSource(source: SourceRow): Promise<NormalizedArticle[]> {
@@ -93,6 +142,7 @@ export async function ingestSource(
   });
   const existingDedupKeys = new Set<string>();
   const existingCanonicalUrls = new Set<string>();
+  const existingSummaryCandidates = new Map<string, string | null>();
   const candidateBatches = Array.from(
     { length: Math.ceil(candidates.length / ARTICLE_LOOKUP_BATCH_SIZE) },
     (_, batchIndex) => candidates.slice(
@@ -106,18 +156,24 @@ export async function ingestSource(
   await mapWithConcurrency(candidateBatches, 2, async (batch) => {
     const [dedupResult, canonicalResult] = await Promise.all([
       supabase.from("articles")
-        .select("dedup_key")
+        .select("id,dedup_key,discovered_at")
         .eq("source_id", source.id)
         .in("dedup_key", batch.map(({ article }) => article.dedupKey)),
       supabase.from("articles")
-        .select("canonical_url")
+        .select("id,canonical_url,discovered_at")
         .in("canonical_url", batch.map(({ canonicalUrl }) => canonicalUrl)),
     ]);
 
     if (dedupResult.error) throw dedupResult.error;
     if (canonicalResult.error) throw canonicalResult.error;
-    for (const row of dedupResult.data ?? []) existingDedupKeys.add(row.dedup_key);
-    for (const row of canonicalResult.data ?? []) existingCanonicalUrls.add(row.canonical_url);
+    for (const row of dedupResult.data ?? []) {
+      existingDedupKeys.add(row.dedup_key);
+      existingSummaryCandidates.set(row.id, row.discovered_at);
+    }
+    for (const row of canonicalResult.data ?? []) {
+      existingCanonicalUrls.add(row.canonical_url);
+      existingSummaryCandidates.set(row.id, row.discovered_at);
+    }
   });
 
   const seenDedupKeys = new Set<string>();
@@ -131,6 +187,14 @@ export async function ingestSource(
     seenCanonicalUrls.add(candidate.canonicalUrl);
     return !isDuplicate;
   });
+
+  if (isArticleSummaryQueueEnabled() && existingSummaryCandidates.size > 0) {
+    // Reconcile recent inserts from a failed queue write without backfilling the old feed.
+    const retryIds = getRecentSummaryRetryIds(
+      [...existingSummaryCandidates].map(([id, discovered_at]) => ({ id, discovered_at })),
+    );
+    await enqueuePendingSummaryJobs(supabase, retryIds);
+  }
 
   if (newCandidates.length === 0) {
     return { found: articles.length, inserted: 0, duplicates: articles.length };
@@ -183,47 +247,22 @@ export async function ingestSource(
   // 겹쳐 타임아웃의 실제 원인 중 하나였다(docs/decisions.md 참고). 새 글만 대상으로 하면 평소(중복만
   // 있는 날)엔 이 블록이 API 호출 없이 즉시 끝난다.
   await Promise.all([
-    mapWithConcurrency(
-      insertedRows.filter((r) => r.thumbnailUrl),
-      ARTICLE_CONCURRENCY,
-      async (r) => {
-        const mirroredUrl = await mirrorThumbnail(supabase, r.thumbnailUrl!, r.articleId);
-        if (mirroredUrl) {
-          await supabase.from("articles").update({ thumbnail_url: mirroredUrl }).eq("id", r.articleId);
-        }
+    processInsertedArticleMetadata(supabase, insertedRows, articles),
+    (async () => {
+      if (!isArticleSummaryQueueEnabled() || insertedRows.length === 0) return;
+      const insertedIds = insertedRows.map((r) => r.articleId);
+      if (!isArticleSummaryEnabled()) {
+        // Free ingestion workers can enqueue work without receiving an OpenAI key.
+        await enqueuePendingSummaryJobs(supabase, insertedIds);
+        return;
       }
-    ),
-    (async () => {
-      if (insertedRows.length === 0) return;
-      const classifications = await classifyArticlesBatch(
-        insertedRows.map((r) => ({ title: articles[r.index].title, excerpt: articles[r.index].excerpt }))
-      );
-      await mapWithConcurrency(
-        insertedRows,
-        ARTICLE_CONCURRENCY,
-        async (r, i) => {
-          const classification = classifications[i];
-          if (!classification) return;
-          await supabase
-            .from("articles")
-            .update({ category: classification.category, tags: classification.tags })
-            .eq("id", r.articleId);
-        }
-      );
-    })(),
-    (async () => {
-      if (!isArticleSummaryEnabled() || insertedRows.length === 0) return;
-      const targetIds = insertedRows.map((r) => r.articleId);
       // 곳간 목록에 노출되기 전 새로 등록된 글의 본문 추출 및 AI 요약을 즉시 생성
       try {
-        await summarizeArticlesDirect(targetIds, supabase);
+        await summarizeArticlesDirect(insertedIds, supabase);
       } catch (summaryError) {
         console.error(`Immediate direct summary failed for source ${source.id}:`, summaryError);
         // 직접 실행 중 예외 발생 시 백그라운드 큐로 폴백 등록
-        await supabase.from("article_summary_jobs").upsert(
-          targetIds.map((articleId) => ({ article_id: articleId, prompt_version: ARTICLE_SUMMARY_PROMPT_VERSION })),
-          { onConflict: "article_id,prompt_version", ignoreDuplicates: true }
-        );
+        await enqueuePendingSummaryJobs(supabase, insertedIds);
       }
     })(),
   ]);

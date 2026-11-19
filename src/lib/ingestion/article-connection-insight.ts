@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { createServiceClient } from "@/lib/supabase/service";
+import { hasSupabaseServiceCredentials } from "@/lib/supabase/service-key";
 
 const MODEL = "gpt-5.6-luna";
 const PROMPT_VERSION = "2026-10-28-evidence-checked-v8";
@@ -90,7 +91,7 @@ export async function explainArticleConnections(
 ): Promise<Map<string, ArticleConnectionInsight>> {
   const results = new Map<string, ArticleConnectionInsight>();
   const candidates = related.slice(0, MAX_ARTICLES_PER_REQUEST);
-  const serviceConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY.includes("[SENSITIVE]"));
+  const serviceConfigured = hasSupabaseServiceCredentials();
   if (serviceConfigured && candidates.length > 0) {
     try {
       const client = createServiceClient();

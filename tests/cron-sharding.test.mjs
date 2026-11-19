@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { CRON_SHARD_COUNT, kstDayStart, sourceShard } from "../src/lib/ingestion/cron-sharding.ts";
+import { getIngestionSweepPlan } from "../scripts/ingestion-sweep-plan.ts";
 
 test("every source has one stable shard in the configured range", () => {
   const seen = new Set();
@@ -22,29 +23,42 @@ test("KST day starts at 15:00 UTC on the previous calendar day", () => {
   assert.equal(kstDayStart(new Date("2026-09-22T15:00:00Z")), "2026-09-22T15:00:00.000Z");
 });
 
-test("every first and retry shard has one daily Vercel cron", () => {
-  const { crons } = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
-  const indexNowCrons = crons.filter((cron) => cron.path === "/api/cron/indexnow");
-  assert.ok(indexNowCrons.length <= 1);
-  assert.deepEqual(indexNowCrons, indexNowCrons.length
-    ? [{ path: "/api/cron/indexnow", schedule: "30 0 * * *" }]
-    : []);
-  assert.equal(crons.length, CRON_SHARD_COUNT * 2 + 5 + indexNowCrons.length);
-  for (const [sweep, hour, minuteInterval] of [["first", 22, 3], ["retry", 23, 1]]) {
-    for (let shard = 0; shard < CRON_SHARD_COUNT; shard++) {
-      assert.deepEqual(crons.filter((cron) => cron.path === `/api/cron/ingest/${sweep}/${shard}`),
-        [{ path: `/api/cron/ingest/${sweep}/${shard}`, schedule: `${shard * minuteInterval} ${hour} * * *` }]);
-    }
-  }
-  assert.deepEqual(crons.filter((cron) => cron.path === "/api/cron/embeddings"), [
-    { path: "/api/cron/embeddings", schedule: "0 0 * * *" },
-  ]);
-  assert.deepEqual(crons.filter((cron) => cron.path === "/api/cron/summaries"), [
-    { path: "/api/cron/summaries", schedule: "30 23 * * *" },
-  ]);
-  for (const [shard, schedule] of [[1, "30 5 * * *"], [2, "30 11 * * *"], [3, "30 17 * * *"]]) {
-    assert.deepEqual(crons.filter((cron) => cron.path === `/api/cron/summaries/${shard}`), [
-      { path: `/api/cron/summaries/${shard}`, schedule },
-    ]);
-  }
+test("GitHub Actions schedules every ingestion shard and keeps the retry sweep", () => {
+  const workflow = readFileSync(new URL("../.github/workflows/techgotgan-maintenance.yml", import.meta.url), "utf8");
+  const first = getIngestionSweepPlan("first");
+  const retry = getIngestionSweepPlan("retry");
+
+  assert.equal(first.shards.length, CRON_SHARD_COUNT);
+  assert.equal(retry.shards.length, CRON_SHARD_COUNT);
+  assert.deepEqual(first.shards, Array.from({ length: CRON_SHARD_COUNT }, (_, index) => index));
+  assert.equal(first.delayBetweenShards, 180_000);
+  assert.equal(retry.delayBetweenShards, 60_000);
+  assert.match(workflow, /cron: "15 22 \* \* \*"/);
+  assert.match(workflow, /cron: "15 23 \* \* \*"/);
+  assert.match(workflow, /cron: "45 23 \* \* \*"/);
+  assert.match(workflow, /cron: "45 5 \* \* \*"/);
+  assert.match(workflow, /cron: "45 11 \* \* \*"/);
+  assert.match(workflow, /cron: "45 17 \* \* \*"/);
+  assert.match(workflow, /cron: "15 0 \* \* \*"/);
+  assert.match(workflow, /cron: "30 0 \* \* \*"/);
+  const installAndSelect = workflow.split("      - run: npm ci")[1].split("      - name: Run first ingestion sweep")[0];
+  assert.doesNotMatch(installAndSelect, /SUPABASE_SERVICE_ROLE_KEY|OPENAI_API_KEY|PINECONE_API_KEY/);
+  const ingestionSteps = workflow.split("      - name: Run first ingestion sweep")[1].split("      - name: Run summary worker")[0];
+  assert.doesNotMatch(ingestionSteps, /OPENAI_API_KEY/);
+  assert.match(ingestionSteps, /OPENAI_SUMMARY_ENABLED: \$\{\{ vars\.OPENAI_SUMMARY_ENABLED \|\| 'false' \}\}/);
+  assert.match(ingestionSteps, /MIRROR_THUMBNAILS_ENABLED: "false"/);
+  assert.match(workflow, /SUPABASE_SECRET_KEY: \$\{\{ secrets\.SUPABASE_SECRET_KEY \}\}/);
+  assert.match(workflow, /OPENAI_SUMMARY_ENABLED: "true"/);
+  assert.match(workflow, /steps\.select-task\.outputs\.task == 'summaries' && vars\.OPENAI_SUMMARY_ENABLED == 'true'/);
+  assert.match(workflow, /steps\.select-task\.outputs\.task == 'indexnow' && vars\.INDEXNOW_ENABLED == 'true'/);
+  assert.match(workflow, /cleanup-thumbnails/);
+  assert.match(workflow, /cleanup-thumbnails-audit/);
+  assert.match(workflow, /ORPHAN_THUMBNAIL_EXPECTED_COUNT: "214"/);
+  assert.match(workflow, /ORPHAN_THUMBNAIL_EXPECTED_DIGEST: \$\{\{ vars\.ORPHAN_THUMBNAIL_EXPECTED_DIGEST \}\}/);
+  assert.match(workflow, /ORPHAN_THUMBNAIL_EXPECTED_INVENTORY_DIGEST: \$\{\{ vars\.ORPHAN_THUMBNAIL_EXPECTED_INVENTORY_DIGEST \}\}/);
+  assert.match(workflow, /ORPHAN_THUMBNAIL_DRY_RUN: "true"/);
+  assert.match(workflow, /npm run cleanup:orphan-thumbnails/);
+  assert.match(workflow, /--proto '=https' --proto-redir '=https'/);
+  const vercelConfig = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
+  assert.equal("crons" in vercelConfig, false);
 });

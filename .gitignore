@@ -2,6 +2,11 @@
 
 # dependencies
 /node_modules
+/apps/in-toss/node_modules
+/apps/in-toss/dist
+/apps/in-toss/*.ait
+/apps/in-toss/.env
+/apps/in-toss/.env.local
 /.pnp
 .pnp.*
 .yarn/*
@@ -36,6 +41,9 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# supabase CLI working state
+/supabase/.temp/
 
 # typescript
 *.tsbuildinfo

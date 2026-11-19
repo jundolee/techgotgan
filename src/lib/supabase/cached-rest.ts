@@ -1,4 +1,5 @@
 import "server-only";
+import { getSupabaseServiceHeaders, getSupabaseServiceKey } from "./service-key";
 
 /**
  * 홈 화면의 무거운 조회(글 목록/소스 목록)를 supabase-js 대신 PostgREST에 직접 fetch()로 붙여서
@@ -15,19 +16,16 @@ export async function fetchCachedFromSupabase<T>(
   cache: { revalidate: number; tags: string[] }
 ): Promise<T> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) {
+  const serviceKey = getSupabaseServiceKey();
+  if (!url || !serviceKey) {
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되어 있지 않습니다. .env.example을 참고해 .env.local을 만드세요."
+      "NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SECRET_KEY 환경변수가 설정되어 있지 않습니다. .env.example을 참고해 .env.local을 만드세요."
     );
   }
 
   const query = new URLSearchParams(params);
   const res = await fetch(`${url}/rest/v1/${table}?${query.toString()}`, {
-    headers: {
-      apikey: serviceRoleKey,
-      authorization: `Bearer ${serviceRoleKey}`,
-    },
+    headers: getSupabaseServiceHeaders(serviceKey),
     cache: "force-cache",
     next: { revalidate: cache.revalidate, tags: cache.tags },
   });
@@ -47,20 +45,17 @@ export async function fetchCachedRpcFromSupabase<T>(
   cache: { revalidate: number; tags: string[] }
 ): Promise<T> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) {
+  const serviceKey = getSupabaseServiceKey();
+  if (!url || !serviceKey) {
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되어 있지 않습니다. .env.example을 참고해 .env.local을 만드세요."
+      "NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SECRET_KEY 환경변수가 설정되어 있지 않습니다. .env.example을 참고해 .env.local을 만드세요."
     );
   }
 
   const query = new URLSearchParams(params);
   const res = await fetch(`${url}/rest/v1/rpc/${encodeURIComponent(functionName)}?${query.toString()}`, {
     method: "GET",
-    headers: {
-      apikey: serviceRoleKey,
-      authorization: `Bearer ${serviceRoleKey}`,
-    },
+    headers: getSupabaseServiceHeaders(serviceKey),
     cache: "force-cache",
     next: { revalidate: cache.revalidate, tags: cache.tags },
   });

@@ -8,6 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --conditions react-server --test tests/*.test.ts tests/*.test.mjs",
+    "intoss:dev": "npm --prefix apps/in-toss run dev",
+    "intoss:build": "npm --prefix apps/in-toss run build",
+    "intoss:deploy": "npm --prefix apps/in-toss run deploy",
+    "cron:ingest": "tsx --conditions react-server scripts/run-ingestion-sweep.ts",
+    "cron:summaries": "tsx --conditions react-server scripts/run-summary-worker.ts",
+    "cron:embeddings": "tsx --conditions react-server scripts/run-embedding-worker.ts",
+    "cleanup:orphan-thumbnails": "tsx --conditions react-server scripts/cleanup-orphan-thumbnails.ts",
     "backfill:categories": "npx tsx scripts/backfill-categories.ts",
     "retry:summaries": "npx tsx --conditions react-server scripts/retry-summaries.ts"
   },
