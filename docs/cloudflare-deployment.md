@@ -35,5 +35,6 @@ Production fails closed for `/sources`, its Server Actions, and the admin backfi
 - The Images binding uses Cloudflare's free transformations, currently limited to 5,000 unique transformations each month; new transformations are rejected after that limit rather than billed automatically.
 - The OpenNext adapter warns that Next.js 16 `proxy.ts` support is experimental. The preview smoke workflow checks that `/sources` remains protected.
 - The GitHub Actions preview workflow exposes `SUPABASE_SECRET_KEY` only to the smoke-test step, not dependency installation or the build.
+- Production is served on the account's `workers.dev` route; per-version Preview URLs are disabled.
 
 Cloudflare documents the [Workers Free limits](https://developers.cloudflare.com/workers/platform/limits/), [Durable Objects pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/), [R2 pricing](https://developers.cloudflare.com/r2/pricing/), [Images pricing](https://developers.cloudflare.com/images/pricing/), and [OpenNext Cloudflare adapter](https://opennext.js.org/cloudflare).
