@@ -10,6 +10,7 @@ import type { FeedType, NormalizedArticle, ScrapeConfig } from "./types";
 import { isArticleSummaryEnabled, isArticleSummaryQueueEnabled } from "./article-summary";
 import { enqueuePendingSummaryJobs, getRecentSummaryRetryIds } from "./summary-job-queue";
 import { summarizeArticlesDirect } from "./run-summary-jobs";
+import { IngestionInfrastructureError } from "./error-message";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
 const ARTICLE_CONCURRENCY = 4;
@@ -74,7 +75,10 @@ export async function processInsertedArticleMetadata(
         async (row) => {
           const mirroredUrl = await mirror(supabase, row.thumbnailUrl!, row.articleId);
           if (mirroredUrl) {
-            await supabase.from("articles").update({ thumbnail_url: mirroredUrl }).eq("id", row.articleId);
+            const { error } = await supabase.from("articles")
+              .update({ thumbnail_url: mirroredUrl })
+              .eq("id", row.articleId);
+            if (error) throw new IngestionInfrastructureError("Update mirrored article thumbnail", error);
           }
         },
       );
@@ -89,9 +93,10 @@ export async function processInsertedArticleMetadata(
         async (row, index) => {
           const classification = classifications[index];
           if (!classification) return;
-          await supabase.from("articles")
+          const { error } = await supabase.from("articles")
             .update({ category: classification.category, tags: classification.tags })
             .eq("id", row.articleId);
+          if (error) throw new IngestionInfrastructureError("Update article classification", error);
         },
       );
     })(),
@@ -164,8 +169,8 @@ export async function ingestSource(
         .in("canonical_url", batch.map(({ canonicalUrl }) => canonicalUrl)),
     ]);
 
-    if (dedupResult.error) throw dedupResult.error;
-    if (canonicalResult.error) throw canonicalResult.error;
+    if (dedupResult.error) throw new IngestionInfrastructureError("Read existing article dedup keys", dedupResult.error);
+    if (canonicalResult.error) throw new IngestionInfrastructureError("Read existing canonical article URLs", canonicalResult.error);
     for (const row of dedupResult.data ?? []) {
       existingDedupKeys.add(row.dedup_key);
       existingSummaryCandidates.set(row.id, row.discovered_at);
@@ -228,7 +233,7 @@ export async function ingestSource(
         if (error.code === POSTGRES_UNIQUE_VIOLATION) {
           return { duplicate: true as const };
         }
-        throw error;
+        throw new IngestionInfrastructureError("Insert article", error);
       }
       return { duplicate: false as const, articleId: insertedRow.id, thumbnailUrl, index };
     }

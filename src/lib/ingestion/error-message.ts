@@ -34,3 +34,19 @@ export function getIngestionErrorMessage(cause: unknown): string {
   }
   return sanitizeDiagnosticError(String(cause)) ?? "Ingestion failed";
 }
+
+export class IngestionInfrastructureError extends Error {
+  constructor(context: string, cause: unknown) {
+    super(`${context}: ${getIngestionErrorMessage(cause)}`);
+    this.name = "IngestionInfrastructureError";
+    this.cause = cause;
+  }
+}
+
+export function isIngestionInfrastructureFailure(
+  cause: unknown,
+  sourceIngestCompleted: boolean,
+  errorRecorded: boolean,
+): boolean {
+  return sourceIngestCompleted || cause instanceof IngestionInfrastructureError || !errorRecorded;
+}

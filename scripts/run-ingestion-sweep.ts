@@ -1,15 +1,12 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { runCronShard } from "@/lib/ingestion/run-cron-shard";
-import { getIngestionSweepPlan } from "./ingestion-sweep-plan";
-
-type ShardResult = {
-  ok?: boolean;
-  attempted?: number;
-  succeeded?: number;
-  failed?: number;
-  remaining?: string[];
-  error?: string;
-};
+import {
+  getIngestionSweepPlan,
+  isCompletedWithRecordedSourceFailures,
+  isSuccessfulIngestionShardResult,
+  shouldFailIngestionSweep,
+  type IngestionShardResult,
+} from "./ingestion-sweep-plan";
 
 async function main() {
   const sweepArg = process.argv[2] ?? "";
@@ -21,17 +18,34 @@ async function main() {
   }
 
   let failedShards = 0;
+  let partialShards = 0;
+  let attemptedSources = 0;
+  let succeededSources = 0;
+  let recordedSourceFailures = 0;
   for (const shard of plan.shards) {
     const response = await runCronShard(shard, plan.sweep);
-    const result = await response.json() as ShardResult;
-    const failed = !response.ok || result.ok === false;
+    const result = await response.json() as IngestionShardResult;
+    const successfulShard = isSuccessfulIngestionShardResult(result, response.status);
+    const completedWithSourceFailures = isCompletedWithRecordedSourceFailures(result, response.status);
+    const completed = successfulShard || completedWithSourceFailures;
+    const failed = !completed;
     if (failed) failedShards += 1;
+    if (completed) {
+      attemptedSources += result.attempted!;
+      succeededSources += result.succeeded!;
+      recordedSourceFailures += result.recordedSourceFailures!;
+    }
+    if (completedWithSourceFailures) {
+      partialShards += 1;
+      console.warn(`Cron ${plan.sweep} shard ${shard} completed with ${result.failed} recorded source failure(s)`);
+    }
 
     console.log(JSON.stringify({
       sweep: plan.sweep,
       shard,
       status: response.status,
-      ok: !failed,
+      ok: completed,
+      partial: completedWithSourceFailures,
       attempted: result.attempted ?? 0,
       succeeded: result.succeeded ?? 0,
       failed: result.failed ?? 0,
@@ -41,7 +55,12 @@ async function main() {
 
     if (shard < plan.shards.length - 1) await delay(plan.delayBetweenShards);
   }
-  if (failedShards > 0) throw new Error(`${failedShards} ${plan.sweep} ingestion shard(s) did not complete successfully`);
+  if (partialShards > 0) {
+    console.warn(`${recordedSourceFailures} source failure(s) were recorded in the database across ${partialShards} completed shard(s)`);
+  }
+  if (shouldFailIngestionSweep(failedShards, attemptedSources, succeededSources)) {
+    throw new Error(`${failedShards} ${plan.sweep} infrastructure/incomplete shard(s); ${succeededSources}/${attemptedSources} source(s) succeeded`);
+  }
 }
 
 main().catch((error: unknown) => {
