@@ -9,6 +9,7 @@ import { classifyArticlesBatch } from "./category-classifier";
 import type { FeedType, NormalizedArticle, ScrapeConfig } from "./types";
 import { isArticleSummaryEnabled, isArticleSummaryQueueEnabled } from "./article-summary";
 import { createArticleLookupBatches, createArticleLookupRpcParameters } from "./article-lookup-batches";
+import { collectArticleLookupResults } from "./article-lookup-results";
 import { enqueuePendingSummaryJobs, getRecentSummaryRetryIds } from "./summary-job-queue";
 import { summarizeArticlesDirect } from "./run-summary-jobs";
 import { IngestionInfrastructureError } from "./error-message";
@@ -158,11 +159,10 @@ export async function ingestSource(
       createArticleLookupRpcParameters(source.id, batch),
     );
     if (error) throw new IngestionInfrastructureError("Read existing article lookup keys", error);
-    for (const row of data ?? []) {
-      existingDedupKeys.add(row.dedup_key);
-      existingCanonicalUrls.add(row.canonical_url);
-      existingSummaryCandidates.set(row.id, row.discovered_at);
-    }
+    const matches = collectArticleLookupResults(data ?? [], source.id);
+    for (const dedupKey of matches.dedupKeys) existingDedupKeys.add(dedupKey);
+    for (const canonicalUrl of matches.canonicalUrls) existingCanonicalUrls.add(canonicalUrl);
+    for (const [id, discoveredAt] of matches.summaryCandidates) existingSummaryCandidates.set(id, discoveredAt);
   });
 
   const seenDedupKeys = new Set<string>();
