@@ -8,13 +8,13 @@ import { isThumbnailMirroringEnabled } from "@/lib/storage/thumbnail-policy";
 import { classifyArticlesBatch } from "./category-classifier";
 import type { FeedType, NormalizedArticle, ScrapeConfig } from "./types";
 import { isArticleSummaryEnabled, isArticleSummaryQueueEnabled } from "./article-summary";
+import { createArticleLookupBatches } from "./article-lookup-batches";
 import { enqueuePendingSummaryJobs, getRecentSummaryRetryIds } from "./summary-job-queue";
 import { summarizeArticlesDirect } from "./run-summary-jobs";
 import { IngestionInfrastructureError } from "./error-message";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
 const ARTICLE_CONCURRENCY = 4;
-const ARTICLE_LOOKUP_BATCH_SIZE = 100;
 
 interface ArticleCandidate {
   article: NormalizedArticle;
@@ -148,13 +148,7 @@ export async function ingestSource(
   const existingDedupKeys = new Set<string>();
   const existingCanonicalUrls = new Set<string>();
   const existingSummaryCandidates = new Map<string, string | null>();
-  const candidateBatches = Array.from(
-    { length: Math.ceil(candidates.length / ARTICLE_LOOKUP_BATCH_SIZE) },
-    (_, batchIndex) => candidates.slice(
-      batchIndex * ARTICLE_LOOKUP_BATCH_SIZE,
-      (batchIndex + 1) * ARTICLE_LOOKUP_BATCH_SIZE
-    )
-  );
+  const candidateBatches = createArticleLookupBatches(candidates);
 
   // Check both unique keys before requesting og:image or inserting. Repeated feed entries
   // are common, so avoid fetching each old article's page just to discover a 23505 afterward.
