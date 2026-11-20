@@ -157,7 +157,7 @@ try {
     const candidateBody = await candidateFeed.text();
     if (candidateFeed.status !== 200 || !/xml/i.test(candidateFeed.headers.get("content-type") ?? "") ||
       !/<rss[\s>]/i.test(candidateBody.slice(0, 2_000))) {
-      throw new Error(`Candidate RSS proxy did not return a valid Yozm feed (HTTP ${candidateFeed.status})`);
+      throw new Error(`Candidate RSS proxy did not return a valid feed from ${rssProxyTestTargetUrl} (HTTP ${candidateFeed.status})`);
     }
     console.log(JSON.stringify({ check: "candidate-rss-proxy", status: candidateFeed.status }));
 
