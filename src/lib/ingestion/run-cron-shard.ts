@@ -2,6 +2,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/service";
 import { ingestSource, type SourceRow } from "@/lib/ingestion/ingest-source";
 import { kstDayStart } from "@/lib/ingestion/cron-sharding";
+import { getIngestionErrorMessage, sanitizeDiagnosticError } from "@/lib/ingestion/error-message";
 
 type SourceWithCheck = SourceRow & { last_success_at: string | null };
 type Client = ReturnType<typeof createServiceClient>;
@@ -36,10 +37,15 @@ async function ingestOne(client: Client, source: SourceWithCheck): Promise<Sourc
       .eq("id", source.id)
       .select("id")
       .single();
-    if (error) throw new Error(`Failed to record successful check: ${error.message}`);
-    return { sourceId: source.id, siteUrl: source.site_url, ok: true, ...result };
+    if (error) throw new Error(`Failed to record successful check: ${getIngestionErrorMessage(error)}`);
+    return {
+      sourceId: source.id,
+      siteUrl: sanitizeDiagnosticError(source.site_url) ?? "[invalid URL]",
+      ok: true,
+      ...result,
+    };
   } catch (cause) {
-    const message = cause instanceof Error ? cause.message : String(cause);
+    const message = getIngestionErrorMessage(cause);
     let combined = message;
     try {
       const { error } = await client.from("sources")
@@ -47,12 +53,13 @@ async function ingestOne(client: Client, source: SourceWithCheck): Promise<Sourc
         .eq("id", source.id)
         .select("id")
         .single();
-      if (error) combined += `; failed to record source error: ${error.message}`;
+      if (error) combined += `; failed to record source error: ${getIngestionErrorMessage(error)}`;
     } catch (updateError) {
-      combined += `; failed to record source error: ${updateError instanceof Error ? updateError.message : String(updateError)}`;
+      combined += `; failed to record source error: ${getIngestionErrorMessage(updateError)}`;
     }
-    console.error(`Cron ingestion failed for ${source.id} (${source.site_url}): ${combined}`);
-    return { sourceId: source.id, siteUrl: source.site_url, ok: false, error: combined };
+    const siteUrl = sanitizeDiagnosticError(source.site_url) ?? "[invalid URL]";
+    console.error(`Cron ingestion failed for ${source.id} (${siteUrl}): ${combined}`);
+    return { sourceId: source.id, siteUrl, ok: false, error: combined };
   } finally {
     if (timeout) clearTimeout(timeout);
   }
@@ -72,8 +79,9 @@ export async function runCronShard(shard: number, sweep: "first" | "retry"): Pro
       .order("id", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
     if (error) {
-      console.error(`Cron ${sweep} shard ${shard} source query failed: ${error.message}`);
-      return Response.json({ ok: false, sweep, shard, error: error.message }, { status: 500 });
+      const message = getIngestionErrorMessage(error);
+      console.error(`Cron ${sweep} shard ${shard} source query failed: ${message}`);
+      return Response.json({ ok: false, sweep, shard, error: message }, { status: 500 });
     }
     const page = (data ?? []) as SourceWithCheck[];
     candidates.push(...page.filter((source) =>
