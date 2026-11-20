@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ARTICLE_SUMMARY_PROMPT_VERSION } from "./article-summary";
+import { IngestionInfrastructureError } from "./error-message";
 
 export function getSummaryQueueCandidateIds(
   existingArticleIds: readonly string[],
@@ -36,6 +37,6 @@ export async function enqueuePendingSummaryJobs(
     })),
     { onConflict: "article_id,prompt_version", ignoreDuplicates: true },
   );
-  if (error) throw error;
+  if (error) throw new IngestionInfrastructureError("Enqueue article summary jobs", error);
   return uniqueIds.length;
 }

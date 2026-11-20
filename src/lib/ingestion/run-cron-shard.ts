@@ -2,7 +2,12 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/service";
 import { ingestSource, type SourceRow } from "@/lib/ingestion/ingest-source";
 import { kstDayStart } from "@/lib/ingestion/cron-sharding";
-import { getIngestionErrorMessage, sanitizeDiagnosticError } from "@/lib/ingestion/error-message";
+import {
+  getIngestionErrorMessage,
+  IngestionInfrastructureError,
+  isIngestionInfrastructureFailure,
+  sanitizeDiagnosticError,
+} from "@/lib/ingestion/error-message";
 
 type SourceWithCheck = SourceRow & { last_success_at: string | null };
 type Client = ReturnType<typeof createServiceClient>;
@@ -20,17 +25,24 @@ interface SourceResult {
   found?: number;
   inserted?: number;
   error?: string;
+  errorRecorded?: boolean;
+  infrastructureFailure?: boolean;
 }
 
 async function ingestOne(client: Client, source: SourceWithCheck): Promise<SourceResult> {
   let timeout: ReturnType<typeof setTimeout> | undefined;
+  let sourceIngestCompleted = false;
   try {
     const result = await Promise.race([
       ingestSource(client, source),
       new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => reject(new Error("Source timed out after 20 seconds")), SOURCE_TIMEOUT_MS);
+        timeout = setTimeout(() => reject(new IngestionInfrastructureError(
+          `Source operation timed out for ${source.id}`,
+          new Error(`Timed out after ${SOURCE_TIMEOUT_MS} milliseconds`),
+        )), SOURCE_TIMEOUT_MS);
       }),
     ]);
+    sourceIngestCompleted = true;
     const checkedAt = new Date().toISOString();
     const { error } = await client.from("sources")
       .update({ last_checked_at: checkedAt, last_success_at: checkedAt, last_error: null })
@@ -47,6 +59,7 @@ async function ingestOne(client: Client, source: SourceWithCheck): Promise<Sourc
   } catch (cause) {
     const message = getIngestionErrorMessage(cause);
     let combined = message;
+    let errorRecorded = false;
     try {
       const { error } = await client.from("sources")
         .update({ last_checked_at: new Date().toISOString(), last_error: message })
@@ -54,12 +67,14 @@ async function ingestOne(client: Client, source: SourceWithCheck): Promise<Sourc
         .select("id")
         .single();
       if (error) combined += `; failed to record source error: ${getIngestionErrorMessage(error)}`;
+      else errorRecorded = true;
     } catch (updateError) {
       combined += `; failed to record source error: ${getIngestionErrorMessage(updateError)}`;
     }
     const siteUrl = sanitizeDiagnosticError(source.site_url) ?? "[invalid URL]";
     console.error(`Cron ingestion failed for ${source.id} (${siteUrl}): ${combined}`);
-    return { sourceId: source.id, siteUrl, ok: false, error: combined };
+    const infrastructureFailure = isIngestionInfrastructureFailure(cause, sourceIngestCompleted, errorRecorded);
+    return { sourceId: source.id, siteUrl, ok: false, error: combined, errorRecorded, infrastructureFailure };
   } finally {
     if (timeout) clearTimeout(timeout);
   }
@@ -110,6 +125,8 @@ export async function runCronShard(shard: number, sweep: "first" | "retry"): Pro
 
   const remaining = candidates.slice(next).map((source) => source.id);
   const failures = summaries.filter((summary) => !summary.ok);
+  const recordedSourceFailures = failures.filter((summary) => summary.errorRecorded && !summary.infrastructureFailure).length;
+  const infrastructureFailures = failures.filter((summary) => summary.infrastructureFailure).length;
   const ok = failures.length === 0 && remaining.length === 0;
   if (remaining.length) {
     console.error(`Cron ${sweep} shard ${shard} incomplete: ${remaining.length} sources were not attempted`);
@@ -117,6 +134,6 @@ export async function runCronShard(shard: number, sweep: "first" | "retry"): Pro
   return Response.json({
     ok, sweep, shard, todayStart, selected: candidates.length,
     attempted: summaries.length, succeeded: summaries.length - failures.length,
-    failed: failures.length, remaining, summaries,
+    failed: failures.length, recordedSourceFailures, infrastructureFailures, remaining, summaries,
   }, { status: ok ? 200 : 503 });
 }
