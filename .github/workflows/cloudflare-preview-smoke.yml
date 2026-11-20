@@ -22,6 +22,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Run unit tests
+        run: npm test
+      - name: Lint
+        run: npm run lint
       - run: npm run build:cloudflare
       - name: Smoke test Cloudflare preview
         run: npm run smoke:cloudflare
