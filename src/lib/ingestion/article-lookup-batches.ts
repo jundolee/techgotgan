@@ -6,6 +6,11 @@ export interface ArticleLookupItem {
   canonicalUrl: string;
 }
 
+export interface ArticleLookupBatchPlan<T> {
+  batches: T[][];
+  oversized: T[];
+}
+
 function inFilter(values: readonly string[]): string {
   const cleanedValues = Array.from(new Set(values))
     .map((value) => /[,()]/.test(value) ? `"${value}"` : value)
@@ -35,15 +40,23 @@ export function createArticleLookupBatches<T extends ArticleLookupItem>(
   items: readonly T[],
   supabaseUrl: string,
   sourceId: string,
-): T[][] {
+): ArticleLookupBatchPlan<T> {
   const batches: T[][] = [];
+  const oversized: T[] = [];
   let batch: T[] = [];
 
   for (const item of items) {
+    const itemUrlLength = getArticleLookupRequestUrlLength([item], supabaseUrl, sourceId);
+    if (itemUrlLength > MAX_ARTICLE_LOOKUP_URL_LENGTH) {
+      if (batch.length > 0) batches.push(batch);
+      batch = [];
+      oversized.push(item);
+      continue;
+    }
+
     const candidate = [...batch, item];
     const exceedsItemLimit = candidate.length > ARTICLE_LOOKUP_BATCH_SIZE;
-    const exceedsUrlLimit = getArticleLookupRequestUrlLength(candidate, supabaseUrl, sourceId) >
-      MAX_ARTICLE_LOOKUP_URL_LENGTH;
+    const exceedsUrlLimit = getArticleLookupRequestUrlLength(candidate, supabaseUrl, sourceId) > MAX_ARTICLE_LOOKUP_URL_LENGTH;
 
     if (batch.length > 0 && (exceedsItemLimit || exceedsUrlLimit)) {
       batches.push(batch);
@@ -52,11 +65,8 @@ export function createArticleLookupBatches<T extends ArticleLookupItem>(
       batch = candidate;
     }
 
-    if (getArticleLookupRequestUrlLength(batch, supabaseUrl, sourceId) > MAX_ARTICLE_LOOKUP_URL_LENGTH) {
-      throw new Error("An article key or canonical URL exceeds the safe Supabase lookup URL length");
-    }
   }
 
   if (batch.length > 0) batches.push(batch);
-  return batches;
+  return { batches, oversized };
 }

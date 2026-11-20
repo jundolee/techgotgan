@@ -15,10 +15,11 @@ const makeCandidate = (index: number, canonicalUrl = `https://example.com/posts/
 
 test("article lookup batching caps item count without dropping candidates", () => {
   const candidates = Array.from({ length: 74 }, (_, index) => makeCandidate(index));
-  const batches = createArticleLookupBatches(candidates, supabaseUrl, sourceId);
+  const plan = createArticleLookupBatches(candidates, supabaseUrl, sourceId);
 
-  assert.deepEqual(batches.map((batch) => batch.length), [50, 24]);
-  assert.deepEqual(batches.flat(), candidates);
+  assert.deepEqual(plan.batches.map((batch) => batch.length), [50, 24]);
+  assert.deepEqual(plan.batches.flat(), candidates);
+  assert.deepEqual(plan.oversized, []);
 });
 
 test("article lookup batching also respects serialized URI length for Unicode slugs", () => {
@@ -26,24 +27,28 @@ test("article lookup batching also respects serialized URI length for Unicode sl
     index,
     `https://example.com/posts/${"한글".repeat(10)}-${index}`,
   ));
-  const batches = createArticleLookupBatches(candidates, supabaseUrl, sourceId);
+  const plan = createArticleLookupBatches(candidates, supabaseUrl, sourceId);
 
-  assert.ok(batches.some((batch) => batch.length < 50));
-  assert.deepEqual(batches.flat(), candidates);
-  for (const batch of batches) {
+  assert.ok(plan.batches.some((batch) => batch.length < 50));
+  assert.deepEqual(plan.batches.flat(), candidates);
+  assert.deepEqual(plan.oversized, []);
+  for (const batch of plan.batches) {
     assert.ok(getArticleLookupRequestUrlLength(batch, supabaseUrl, sourceId) <= MAX_ARTICLE_LOOKUP_URL_LENGTH);
   }
 });
 
-test("article lookup batching rejects a single value that exceeds the URI ceiling", () => {
-  const candidates = [makeCandidate(1, `https://example.com/${"a".repeat(8_000)}`)];
+test("one oversized article URL is isolated while normal candidates remain batched", () => {
+  const candidates = [
+    makeCandidate(1),
+    makeCandidate(2, `https://example.com/${"a".repeat(8_000)}`),
+    makeCandidate(3),
+  ];
+  const plan = createArticleLookupBatches(candidates, supabaseUrl, sourceId);
 
-  assert.throws(
-    () => createArticleLookupBatches(candidates, supabaseUrl, sourceId),
-    /safe Supabase lookup URL length/,
-  );
+  assert.deepEqual(plan.batches.flat(), [candidates[0], candidates[2]]);
+  assert.deepEqual(plan.oversized, [candidates[1]]);
 });
 
 test("article lookup batching returns no empty requests", () => {
-  assert.deepEqual(createArticleLookupBatches([], supabaseUrl, sourceId), []);
+  assert.deepEqual(createArticleLookupBatches([], supabaseUrl, sourceId), { batches: [], oversized: [] });
 });

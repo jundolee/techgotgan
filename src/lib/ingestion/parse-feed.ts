@@ -37,11 +37,18 @@ function parseUrl(sourceUrl: string, requestUrl: string) {
         await response.body?.cancel();
         throw new Error(`Status code ${response.status}`);
       }
-      return parser.parseString(await response.text());
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      return parser.parseString(decodeFeedResponseBody(bytes, response.headers.get("content-type")));
     });
   }
 
   return parser.parseURL(requestUrl);
+}
+
+export function decodeFeedResponseBody(bytes: Uint8Array, contentType: string | null): string {
+  const charset = contentType?.match(/(?:^|;)\s*charset\s*=\s*(?:"([^"]+)"|'([^']+)'|([^;\s]+))/i);
+  const label = charset?.[1] ?? charset?.[2] ?? charset?.[3] ?? "utf-8";
+  return new TextDecoder(label.trim()).decode(bytes);
 }
 
 function resolveUrl(raw: string, base: string): string | null {

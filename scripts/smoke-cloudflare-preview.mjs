@@ -133,13 +133,6 @@ try {
   }
   console.log(JSON.stringify({ check: "sources-admin-gate", status: sourcesResponse.status }));
 
-  // The preview has production-capable Supabase credentials; never issue a POST that could mutate live rows.
-  const backfillGet = await fetch(`${origin}/api/admin/backfill`, { redirect: "manual" });
-  if (backfillGet.status !== 405 || backfillGet.headers.get("allow") !== "POST") {
-    throw new Error(`/api/admin/backfill must not mutate data through GET (HTTP ${backfillGet.status})`);
-  }
-  console.log(JSON.stringify({ check: "admin-backfill-method", getStatus: backfillGet.status }));
-
   const deniedProxy = await fetch(`${origin}/api/rss-proxy?url=${encodeURIComponent("https://yozm.wishket.com/magazine/feed/")}`);
   if (deniedProxy.status !== 404) {
     throw new Error(`RSS proxy accepted a request without its token (HTTP ${deniedProxy.status})`);
@@ -151,6 +144,18 @@ try {
     if (disallowedProxy.status !== 403) {
       throw new Error(`RSS proxy accepted a destination outside its allowlist (HTTP ${disallowedProxy.status})`);
     }
+
+    const candidateUrl = new URL("/api/rss-proxy", origin);
+    candidateUrl.searchParams.set("url", "https://yozm.wishket.com/magazine/feed/");
+    const candidateFeed = await fetch(candidateUrl, {
+      headers: { Authorization: `Bearer ${rssProxyToken}` },
+    });
+    const candidateBody = await candidateFeed.text();
+    if (candidateFeed.status !== 200 || !/xml/i.test(candidateFeed.headers.get("content-type") ?? "") ||
+      !/<rss[\s>]/i.test(candidateBody.slice(0, 2_000))) {
+      throw new Error(`Candidate RSS proxy did not return a valid Yozm feed (HTTP ${candidateFeed.status})`);
+    }
+    console.log(JSON.stringify({ check: "candidate-rss-proxy", status: candidateFeed.status }));
 
     const remoteUrl = new URL(rssProxyUrl.replace(/\/+$/, ""));
     remoteUrl.searchParams.set("url", "https://techblog.woowahan.com/feed/");

@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { GET } from "../src/app/api/admin/backfill/route";
 import { withAdminAccess } from "../src/lib/admin-access";
+
+test("admin backfill exposes no mutating GET method", async () => {
+  const response = await GET();
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "POST");
+});
 
 test("admin-only operations do not run until production authorization succeeds", async () => {
   const previousNodeEnv = process.env.NODE_ENV;

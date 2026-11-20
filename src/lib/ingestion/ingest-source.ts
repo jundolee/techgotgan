@@ -150,11 +150,15 @@ export async function ingestSource(
   const existingSummaryCandidates = new Map<string, string | null>();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl) throw new IngestionInfrastructureError("Build article lookup URLs", new Error("Missing Supabase URL"));
-  const candidateBatches = createArticleLookupBatches(candidates, supabaseUrl, source.id);
+  const lookupPlan = createArticleLookupBatches(candidates, supabaseUrl, source.id);
+  const oversizedCandidateSet = new Set(lookupPlan.oversized);
+  if (lookupPlan.oversized.length > 0) {
+    console.warn(`Cron ingestion source ${source.id} has ${lookupPlan.oversized.length} article(s) too large for a safe lookup URL; processing them separately`);
+  }
 
   // Check both unique keys before requesting og:image or inserting. Repeated feed entries
   // are common, so avoid fetching each old article's page just to discover a 23505 afterward.
-  await mapWithConcurrency(candidateBatches, 2, async (batch) => {
+  await mapWithConcurrency(lookupPlan.batches, 2, async (batch) => {
     const [dedupResult, canonicalResult] = await Promise.all([
       supabase.from("articles")
         .select("id,dedup_key,discovered_at")
@@ -180,8 +184,11 @@ export async function ingestSource(
   const seenDedupKeys = new Set<string>();
   const seenCanonicalUrls = new Set<string>();
   const newCandidates = candidates.filter((candidate) => {
-    const isDuplicate = existingDedupKeys.has(candidate.article.dedupKey) ||
-      existingCanonicalUrls.has(candidate.canonicalUrl) ||
+    const canLookupExisting = !oversizedCandidateSet.has(candidate);
+    const isDuplicate = (canLookupExisting && (
+      existingDedupKeys.has(candidate.article.dedupKey) ||
+      existingCanonicalUrls.has(candidate.canonicalUrl)
+    )) ||
       seenDedupKeys.has(candidate.article.dedupKey) ||
       seenCanonicalUrls.has(candidate.canonicalUrl);
     seenDedupKeys.add(candidate.article.dedupKey);
@@ -201,8 +208,10 @@ export async function ingestSource(
     return { found: articles.length, inserted: 0, duplicates: articles.length };
   }
 
-  const insertResults = await mapWithConcurrency(
-    newCandidates,
+  const normalCandidates = newCandidates.filter((candidate) => !oversizedCandidateSet.has(candidate));
+  const oversizedCandidates = newCandidates.filter((candidate) => oversizedCandidateSet.has(candidate));
+  const insertCandidates = (candidatesToInsert: ArticleCandidate[]) => mapWithConcurrency(
+    candidatesToInsert,
     ARTICLE_CONCURRENCY,
     async ({ article: a, index, canonicalUrl }) => {
       // RSS 필드/thumbnailSelector로 못 찾았을 때만 원문 페이지의 og:image를 한 번 더 시도한다 —
@@ -235,38 +244,49 @@ export async function ingestSource(
     }
   );
 
-  const insertedRows = insertResults.filter(
+  const normalInsertResults = await insertCandidates(normalCandidates);
+  const normalInsertedRows = normalInsertResults.filter(
     (r): r is { duplicate: false; articleId: string; thumbnailUrl: string | null; index: number } => !r.duplicate
   );
-  const duplicates = articles.length - insertedRows.length;
 
-  // 새로 들어온 글만(중복 제외) (1) 썸네일을 우리 스토리지로 미러링하고 (2) AI로 카테고리/태그를
-  // 분류한다 — 둘 다 새 글에만 필요한 후처리이고 서로 독립적이라 병렬로 진행한다.
-  // 2026-08-20 결정: 원래는 매 실행마다 feed 전체(대부분 이미 저장된 중복)를 다시 분류해서 소스당
-  // 최대 AI_TIMEOUT_MS(20초)가 삽입 전에 그대로 더해졌음 — 중복 글의 분류 결과는 애초에 insert가
-  // 23505로 버려지면서 한 번도 저장되지 않는 완전한 낭비였고, 이 지연이 크론의 소스별 시간 상한과
-  // 겹쳐 타임아웃의 실제 원인 중 하나였다(docs/decisions.md 참고). 새 글만 대상으로 하면 평소(중복만
-  // 있는 날)엔 이 블록이 API 호출 없이 즉시 끝난다.
-  await Promise.all([
-    processInsertedArticleMetadata(supabase, insertedRows, articles),
-    (async () => {
-      if (!isArticleSummaryQueueEnabled() || insertedRows.length === 0) return;
-      const insertedIds = insertedRows.map((r) => r.articleId);
-      if (!isArticleSummaryEnabled()) {
-        // Free ingestion workers can enqueue work without receiving an OpenAI key.
-        await enqueuePendingSummaryJobs(supabase, insertedIds);
-        return;
-      }
-      // 곳간 목록에 노출되기 전 새로 등록된 글의 본문 추출 및 AI 요약을 즉시 생성
-      try {
-        await summarizeArticlesDirect(insertedIds, supabase);
-      } catch (summaryError) {
-        console.error(`Immediate direct summary failed for source ${source.id}:`, summaryError);
-        // 직접 실행 중 예외 발생 시 백그라운드 큐로 폴백 등록
-        await enqueuePendingSummaryJobs(supabase, insertedIds);
-      }
-    })(),
-  ]);
+  const processNewRows = async (insertedRows: typeof normalInsertedRows) => {
+    // 새로 들어온 글만(중복 제외) (1) 썸네일을 우리 스토리지로 미러링하고 (2) AI로 카테고리/태그를
+    // 분류한다 — 둘 다 새 글에만 필요한 후처리이고 서로 독립적이라 병렬로 진행한다.
+    // 2026-08-20 결정: 원래는 매 실행마다 feed 전체(대부분 이미 저장된 중복)를 다시 분류해서 소스당
+    // 최대 AI_TIMEOUT_MS(20초)가 삽입 전에 그대로 더해졌음 — 중복 글의 분류 결과는 애초에 insert가
+    // 23505로 버려지면서 한 번도 저장되지 않는 완전한 낭비였고, 이 지연이 크론의 소스별 시간 상한과
+    // 겹쳐 타임아웃의 실제 원인 중 하나였다(docs/decisions.md 참고). 새 글만 대상으로 하면 평소(중복만
+    // 있는 날)엔 이 블록이 API 호출 없이 즉시 끝난다.
+    await Promise.all([
+      processInsertedArticleMetadata(supabase, insertedRows, articles),
+      (async () => {
+        if (!isArticleSummaryQueueEnabled() || insertedRows.length === 0) return;
+        const insertedIds = insertedRows.map((r) => r.articleId);
+        if (!isArticleSummaryEnabled()) {
+          // Free ingestion workers can enqueue work without receiving an OpenAI key.
+          await enqueuePendingSummaryJobs(supabase, insertedIds);
+          return;
+        }
+        // 곳간 목록에 노출되기 전 새로 등록된 글의 본문 추출 및 AI 요약을 즉시 생성
+        try {
+          await summarizeArticlesDirect(insertedIds, supabase);
+        } catch (summaryError) {
+          console.error(`Immediate direct summary failed for source ${source.id}:`, summaryError);
+          // 직접 실행 중 예외 발생 시 백그라운드 큐로 폴백 등록
+          await enqueuePendingSummaryJobs(supabase, insertedIds);
+        }
+      })(),
+    ]);
+  };
 
-  return { found: articles.length, inserted: insertedRows.length, duplicates };
+  await processNewRows(normalInsertedRows);
+  const oversizedInsertResults = await insertCandidates(oversizedCandidates);
+  const oversizedInsertedRows = oversizedInsertResults.filter(
+    (r): r is { duplicate: false; articleId: string; thumbnailUrl: string | null; index: number } => !r.duplicate
+  );
+  await processNewRows(oversizedInsertedRows);
+
+  const insertedCount = normalInsertedRows.length + oversizedInsertedRows.length;
+  const duplicates = articles.length - insertedCount;
+  return { found: articles.length, inserted: insertedCount, duplicates };
 }
