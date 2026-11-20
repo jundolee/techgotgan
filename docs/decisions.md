@@ -562,6 +562,14 @@
 - Cloudflare 신규 생성 Worker 서브도메인의 SSL 발급 지연으로 인한 `SSL alert number 40` (handshake failure) 대응으로 `toHttpUrl` 및 `isSslError` 기반 HTTP 자동 폴백 추가.
 **영향**: `src/lib/ingestion/feed-proxy.ts`(신규), `src/lib/ingestion/parse-feed.ts`, `src/lib/ingestion/discover-feed.ts`, `src/lib/storage/thumbnails.ts`, `.env.example`, `docs/decisions.md`.
 
+### 2026-11-20 — Techgotgan Worker 안에 인증된 RSS 프록시 제공
+**배경**: GitHub 저장소에 `RSS_PROXY_URL`이 설정되지 않아 예약 수집은 WAF 차단 피드를 원본에서 직접 읽고 있었다. 최신 스윕에서 Yozm 405와 Woowahan 403을 확인했다.
+**결정 및 구현**:
+1. `/api/rss-proxy`를 같은 무료 Cloudflare Worker에 추가하고, `RSS_PROXY_TOKEN` bearer 인증과 `isBlockedDomain` allowlist를 적용한다. HTTPS, 기본 포트, 제한된 redirect host, 응답 크기 제한을 검증해 임의 URL 프록시를 막는다.
+2. Yozm feed를 프록시 경유 도메인으로 지정하고, Woowahan 피드에 출처를 식별하는 `TechgotganRSS` User-Agent를 사용한다.
+3. GitHub Actions에는 `RSS_PROXY_URL`을 Repository variable로, `RSS_PROXY_TOKEN`을 secret으로 둔다. 토큰은 ingestion과 summary 단계에만 전달한다.
+**영향**: Worker proxy route, ingestion proxy headers/User-Agent, preview smoke, maintenance workflow, `.env.example`, deployment docs.
+
 ### 2026-10-19 — 검색·공개 허브·sitemap을 실제 제품 흐름에 맞춤
 **배경**: 라이브 검색은 제목/요약의 연속 문자열만 찾았고, `react`와 `리액트` 결과 수가 크게 달랐음. 블로그 허브는 전체 최신 200건에서만 소스 글을 찾으므로 일부 활성 소스가 글이 있는 상태에서도 빈 페이지로 보일 수 있었음. sitemap은 모든 URL에 2026-09-22 고정 `lastmod`를 넣고 있었음.
 **결정 및 수정**:

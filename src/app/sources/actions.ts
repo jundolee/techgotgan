@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
+import { assertAdminAccess } from "@/lib/admin-access";
 import { addSourcesBulk, deleteSource, insertSource, setSourceActive } from "@/lib/data/sources";
 import { markSourceSuggestionReviewed } from "@/lib/data/source-suggestions";
 import { discoverFeed } from "@/lib/ingestion/discover-feed";
@@ -89,6 +90,7 @@ export async function addSourceFlowAction(
   prevState: AddSourceFlowState,
   formData: FormData
 ): Promise<AddSourceFlowState> {
+  await assertAdminAccess();
   const intent = String(formData.get("intent") ?? "preview");
   const siteUrl = String(formData.get("siteUrl") ?? "").trim();
 
@@ -253,6 +255,7 @@ export async function addSourcesBulkAction(
   _prevState: BulkAddActionState | null,
   formData: FormData
 ): Promise<BulkAddActionState> {
+  await assertAdminAccess();
   const raw = String(formData.get("urls") ?? "");
   const urls = raw
     .split("\n")
@@ -275,6 +278,7 @@ export async function addSourcesBulkAction(
 }
 
 export async function toggleSourceActiveAction(formData: FormData) {
+  await assertAdminAccess();
   const id = String(formData.get("id") ?? "");
   const nextActive = formData.get("nextActive") === "true";
   if (!id) return;
@@ -284,6 +288,7 @@ export async function toggleSourceActiveAction(formData: FormData) {
 }
 
 export async function deleteSourceAction(formData: FormData) {
+  await assertAdminAccess();
   const id = String(formData.get("id") ?? "");
   if (!id) return;
   await deleteSource(id);
@@ -292,6 +297,7 @@ export async function deleteSourceAction(formData: FormData) {
 }
 
 export async function reviewSourceSuggestionAction(formData: FormData) {
+  await assertAdminAccess();
   const id = String(formData.get("id") ?? "");
   if (!id) return;
   await markSourceSuggestionReviewed(id);
@@ -312,6 +318,7 @@ export async function ingestSourceNowAction(
   _prevState: IngestNowState,
   formData: FormData
 ): Promise<IngestNowState> {
+  await assertAdminAccess();
   const id = String(formData.get("id") ?? "");
   if (!id) return { ok: false, message: "잘못된 요청입니다." };
 

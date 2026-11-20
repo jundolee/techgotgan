@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { ADMIN_COOKIE_NAME, LEGACY_ADMIN_COOKIE_NAME, sha256Hex } from "@/lib/admin-auth";
+import { ADMIN_COOKIE_NAME, LEGACY_ADMIN_COOKIE_NAME, isAdminGateConfigured, sha256Hex } from "@/lib/admin-auth";
 
 /**
  * ADMIN_EMAILS에 등록된 이메일로 로그인된 상태인지 확인한다. Supabase 세션 쿠키가 아예 없으면
@@ -38,6 +38,17 @@ async function guardSourcesAdmin(request: NextRequest): Promise<NextResponse> {
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!isAdminGateConfigured(process.env.ADMIN_EMAILS, password)) {
+    if (process.env.NODE_ENV === "production") {
+      const loginUrl = new URL("/admin-login", request.url);
+      loginUrl.searchParams.set("error", "configuration");
+      return NextResponse.redirect(loginUrl);
+    }
+    // 로컬 개발에서는 인증 설정 없이도 소스 관리 화면을 확인할 수 있다.
+    return NextResponse.next();
+  }
 
   if (adminEmails.length > 0) {
     const email = await getAllowedAdminEmail(request);
@@ -49,10 +60,10 @@ async function guardSourcesAdmin(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(loginUrl);
   }
 
-  const password = process.env.ADMIN_PASSWORD;
   if (!password) {
-    // 비밀번호를 설정하지 않았으면(로컬 개발 등) 막지 않는다.
-    return NextResponse.next();
+    const loginUrl = new URL("/admin-login", request.url);
+    loginUrl.searchParams.set("error", "configuration");
+    return NextResponse.redirect(loginUrl);
   }
 
   const expected = await sha256Hex(password);

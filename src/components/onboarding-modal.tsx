@@ -31,7 +31,7 @@ const STEPS: StepData[] = [
     badgeTone: "blue",
     title: "긴 기술 아티클도 1분 만에! AI 핵심 브리핑",
     subtitle: "문제 배경, 기술 스택, 실무 교훈까지 3줄로 명쾌하게 정리했어요. 바쁜 출퇴근길에도 핵심 인사이트만 빠르게 챙겨보세요.",
-    imageSrc: "/api/admin/summary-preview-image",
+    imageSrc: "/onboarding/step2-ai-summary.png",
     imageAlt: "AI 엔지니어링 브리핑 요약 화면 캡처",
   },
   {

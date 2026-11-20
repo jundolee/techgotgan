@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { withAdminAccess } from "@/lib/admin-access";
 import { createServiceClient } from "@/lib/supabase/service";
 import { classifyArticlesBatch } from "@/lib/ingestion/category-classifier";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-export async function GET(request: NextRequest) {
-  const supabase = createServiceClient();
+export async function GET() {
+  return new NextResponse(null, { status: 405, headers: { Allow: "POST" } });
+}
+
+export async function POST(request: NextRequest) {
+  if (request.headers.get("origin") !== new URL(request.url).origin) {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  const adminClient = await withAdminAccess(createServiceClient);
+  if (!adminClient.authorized) return new NextResponse(null, { status: 404 });
+  const supabase = adminClient.value;
   const searchParams = request.nextUrl.searchParams;
 
   const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "50", 10), 1), 100);

@@ -70,7 +70,8 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          RSS_PROXY_URL: ${{ secrets.RSS_PROXY_URL }}
+          RSS_PROXY_URL: ${{ vars.RSS_PROXY_URL }}
+          RSS_PROXY_TOKEN: ${{ secrets.RSS_PROXY_TOKEN }}
           OPENAI_SUMMARY_ENABLED: ${{ vars.OPENAI_SUMMARY_ENABLED || 'false' }}
           MIRROR_THUMBNAILS_ENABLED: "false"
         run: npm run cron:ingest -- first
@@ -79,7 +80,8 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          RSS_PROXY_URL: ${{ secrets.RSS_PROXY_URL }}
+          RSS_PROXY_URL: ${{ vars.RSS_PROXY_URL }}
+          RSS_PROXY_TOKEN: ${{ secrets.RSS_PROXY_TOKEN }}
           OPENAI_SUMMARY_ENABLED: ${{ vars.OPENAI_SUMMARY_ENABLED || 'false' }}
           MIRROR_THUMBNAILS_ENABLED: "false"
         run: npm run cron:ingest -- retry
@@ -88,6 +90,8 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          RSS_PROXY_URL: ${{ vars.RSS_PROXY_URL }}
+          RSS_PROXY_TOKEN: ${{ secrets.RSS_PROXY_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_SUMMARY_ENABLED: "true"
         run: |
