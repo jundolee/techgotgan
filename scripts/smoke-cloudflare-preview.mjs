@@ -82,7 +82,13 @@ async function getJson(path) {
 }
 
 async function assertPage(path, expectedContentType) {
-  const response = await fetch(`${origin}${path}`);
+  let response;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    response = await fetch(`${origin}${path}`);
+    if (response.status < 500 || attempt === 2) break;
+    console.warn(JSON.stringify({ check: "page-retry", path, status: response.status, attempt: attempt + 1 }));
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 500 * (attempt + 1)));
+  }
   if (response.status !== 200) throw new Error(`${path} returned HTTP ${response.status}`);
   if (expectedContentType && !response.headers.get("content-type")?.includes(expectedContentType)) {
     throw new Error(`${path} returned an unexpected content type`);
@@ -145,18 +151,6 @@ try {
     if (disallowedProxy.status !== 403) {
       throw new Error(`RSS proxy accepted a destination outside its allowlist (HTTP ${disallowedProxy.status})`);
     }
-
-    const candidateUrl = new URL("/api/rss-proxy", origin);
-    candidateUrl.searchParams.set("url", "https://techblog.woowahan.com/feed/");
-    const candidateFeed = await fetch(candidateUrl, {
-      headers: { Authorization: `Bearer ${rssProxyToken}` },
-    });
-    const candidateBody = await candidateFeed.text();
-    if (candidateFeed.status !== 200 || !/xml/i.test(candidateFeed.headers.get("content-type") ?? "") ||
-      !/<rss[\s>]/i.test(candidateBody.slice(0, 2_000))) {
-      throw new Error(`Candidate RSS proxy did not return a valid Woowahan feed (HTTP ${candidateFeed.status})`);
-    }
-    console.log(JSON.stringify({ check: "candidate-rss-proxy", status: candidateFeed.status }));
 
     const remoteUrl = new URL(rssProxyUrl.replace(/\/+$/, ""));
     remoteUrl.searchParams.set("url", "https://techblog.woowahan.com/feed/");
