@@ -9,6 +9,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const supabaseKey = process.env.SUPABASE_SECRET_KEY?.trim();
 const rssProxyUrl = process.env.RSS_PROXY_URL?.trim();
 const rssProxyToken = process.env.RSS_PROXY_TOKEN?.trim();
+const rssProxyTestTargetUrl = "https://techgotgan.techgotgan.workers.dev/feed.xml";
 if (!supabaseUrl || !supabaseKey) {
   throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY are required for this smoke check");
 }
@@ -102,7 +103,10 @@ try {
     `NEXT_PUBLIC_SUPABASE_URL=${JSON.stringify(supabaseUrl)}`,
     `SUPABASE_SECRET_KEY=${JSON.stringify(supabaseKey)}`,
     "ADMIN_EMAILS=disabled@invalid.example",
-    ...(rssProxyToken ? [`RSS_PROXY_TOKEN=${JSON.stringify(rssProxyToken)}`] : []),
+    ...(rssProxyToken ? [
+      `RSS_PROXY_TOKEN=${JSON.stringify(rssProxyToken)}`,
+      `RSS_PROXY_TEST_TARGET_URL=${JSON.stringify(rssProxyTestTargetUrl)}`,
+    ] : []),
     "",
   ].join("\n"), { encoding: "utf8", mode: 0o600 });
   preview = spawn(
@@ -146,7 +150,7 @@ try {
     }
 
     const candidateUrl = new URL("/api/rss-proxy", origin);
-    candidateUrl.searchParams.set("url", "https://yozm.wishket.com/magazine/feed/");
+    candidateUrl.searchParams.set("url", rssProxyTestTargetUrl);
     const candidateFeed = await fetch(candidateUrl, {
       headers: { Authorization: `Bearer ${rssProxyToken}` },
     });

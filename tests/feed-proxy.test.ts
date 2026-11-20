@@ -24,6 +24,19 @@ test("proxy targets require HTTPS and an allowlisted public host", () => {
   assert.equal(isAllowedProxyTarget("https://yozm.wishket.com:8443/feed.xml"), false);
 });
 
+test("the preview smoke target is a single explicit public feed URL", () => {
+  const previousTarget = process.env.RSS_PROXY_TEST_TARGET_URL;
+  process.env.RSS_PROXY_TEST_TARGET_URL = "https://techgotgan.techgotgan.workers.dev/feed.xml";
+  try {
+    assert.equal(isAllowedProxyTarget("https://techgotgan.techgotgan.workers.dev/feed.xml"), true);
+    assert.equal(isAllowedProxyTarget("https://techgotgan.techgotgan.workers.dev/api/rss-proxy"), false);
+    assert.equal(isAllowedProxyTarget("https://example.com/feed.xml"), false);
+  } finally {
+    if (previousTarget === undefined) delete process.env.RSS_PROXY_TEST_TARGET_URL;
+    else process.env.RSS_PROXY_TEST_TARGET_URL = previousTarget;
+  }
+});
+
 test("proxy URLs carry a bearer token only when the URL targets the configured proxy", () => {
   const previousUrl = process.env.RSS_PROXY_URL;
   const previousToken = process.env.RSS_PROXY_TOKEN;

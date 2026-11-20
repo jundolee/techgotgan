@@ -14,6 +14,8 @@ const BLOCKED_DOMAINS = [
   "blog.kmong.com",
   "yozm.wishket.com",
 ];
+// This harmless public feed is available only when the local smoke script explicitly sets the matching test variable.
+const RSS_PROXY_SMOKE_FEED_URL = "https://techgotgan.techgotgan.workers.dev/feed.xml";
 
 export function isBlockedDomain(url: string): boolean {
   try {
@@ -68,7 +70,11 @@ export function getProxyFetchOptions(requestUrl: string): {
 export function isAllowedProxyTarget(rawUrl: string): boolean {
   try {
     const url = new URL(rawUrl);
-    return url.protocol === "https:" && !url.username && !url.password && !url.hash && !url.port && isBlockedDomain(url.toString());
+    if (url.protocol !== "https:" || url.username || url.password || url.hash || url.port) return false;
+    const normalizedUrl = url.toString();
+    const smokeTarget = process.env.RSS_PROXY_TEST_TARGET_URL?.trim();
+    const isSmokeTarget = smokeTarget === RSS_PROXY_SMOKE_FEED_URL && normalizedUrl === RSS_PROXY_SMOKE_FEED_URL;
+    return isBlockedDomain(normalizedUrl) || isSmokeTarget;
   } catch {
     return false;
   }
