@@ -7,9 +7,6 @@
     "nodejs_compat",
     "global_fetch_strictly_public"
   ],
-  "limits": {
-    "cpu_ms": 10
-  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
@@ -20,13 +17,17 @@
       "service": "techgotgan"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "NEXT_INC_CACHE_R2_BUCKET",
-      "bucket_name": "techgotgan-next-cache"
-    }
-  ],
   "images": {
     "binding": "IMAGES"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "NEXT_INC_CACHE_KV",
+      "id": "ab1478da05d74baea725848539b40d95"
+    }
+  ],
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://efwfmebvvnxumuvydbrq.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_5J4u25Cz2lHGDOll0sW6mA_wc4H5lQL"
   }
 }
