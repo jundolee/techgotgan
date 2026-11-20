@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { INGESTION_USER_AGENT } from "@/lib/ingestion/user-agent";
 import {
-  getProxyAuthorizationHeaders,
+  getProxyFetchOptions,
   getProxiedUrl,
   isBlockedDomain,
   isRssProxyUrl,
@@ -74,11 +74,13 @@ export async function mirrorThumbnail(
     await ensureBucket(supabase);
 
     const targetUrl = isBlockedDomain(sourceUrl) ? getProxiedUrl(sourceUrl) : sourceUrl;
+    const proxyOptions = isRssProxyUrl(targetUrl) ? getProxyFetchOptions(targetUrl) : null;
     let res: Response | null = null;
     try {
       res = await fetch(targetUrl, {
-        headers: { "User-Agent": USER_AGENT, ...getProxyAuthorizationHeaders(targetUrl) },
+        headers: { "User-Agent": USER_AGENT, ...(proxyOptions?.headers ?? {}) },
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        redirect: proxyOptions?.redirect ?? "follow",
       });
     } catch (err) {
       if (targetUrl !== sourceUrl && !isRssProxyUrl(targetUrl) && isSslError(err)) {
@@ -109,10 +111,12 @@ export async function mirrorThumbnail(
       if (res?.status === 403 && targetUrl === sourceUrl) {
         const fallbackUrl = getProxiedUrl(sourceUrl);
         if (fallbackUrl !== sourceUrl) {
+          const fallbackProxyOptions = isRssProxyUrl(fallbackUrl) ? getProxyFetchOptions(fallbackUrl) : null;
           try {
             res = await fetch(fallbackUrl, {
-              headers: { "User-Agent": USER_AGENT, ...getProxyAuthorizationHeaders(fallbackUrl) },
+              headers: { "User-Agent": USER_AGENT, ...(fallbackProxyOptions?.headers ?? {}) },
               signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+              redirect: fallbackProxyOptions?.redirect ?? "follow",
             });
           } catch {
             res = null;

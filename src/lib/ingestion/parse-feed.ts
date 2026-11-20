@@ -4,7 +4,7 @@ import type { NormalizedArticle } from "./types";
 import { computeDedupKey } from "./dedup";
 import { INGESTION_USER_AGENT } from "./user-agent";
 import {
-  getProxyAuthorizationHeaders,
+  getProxyFetchOptions,
   getProxyUpstreamUserAgent,
   getProxiedUrl,
   isBlockedDomain,
@@ -17,14 +17,30 @@ import {
 // (discoverFeed의 fetchText는 Accept:*/*를 이미 보내 문제없이 통과했지만, rss-parser 기본값에는
 // 없었음) 명시적으로 지정해 같은 문제를 피한다 (docs/decisions.md 참고).
 function parseUrl(sourceUrl: string, requestUrl: string) {
+  const headers = {
+    "User-Agent": getProxyUpstreamUserAgent(sourceUrl) || INGESTION_USER_AGENT,
+    Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+  };
   const parser = new Parser({
     timeout: 10_000,
-    headers: {
-      "User-Agent": getProxyUpstreamUserAgent(sourceUrl) || INGESTION_USER_AGENT,
-      Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
-      ...getProxyAuthorizationHeaders(requestUrl),
-    },
+    headers,
   });
+
+  if (isRssProxyUrl(requestUrl)) {
+    const proxyOptions = getProxyFetchOptions(requestUrl);
+    return fetch(requestUrl, {
+      ...proxyOptions,
+      headers: { ...headers, ...proxyOptions.headers },
+      signal: AbortSignal.timeout(10_000),
+    }).then(async (response) => {
+      if (!response.ok) {
+        await response.body?.cancel();
+        throw new Error(`Status code ${response.status}`);
+      }
+      return parser.parseString(await response.text());
+    });
+  }
+
   return parser.parseURL(requestUrl);
 }
 

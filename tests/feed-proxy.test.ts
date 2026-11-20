@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   getProxyAuthorizationHeaders,
+  getProxyFetchOptions,
   getProxyUpstreamUserAgent,
   getProxiedUrl,
   isAllowedProxyTarget,
@@ -32,6 +33,10 @@ test("proxy URLs carry a bearer token only when the URL targets the configured p
     const proxied = getProxiedUrl("https://yozm.wishket.com/magazine/feed/");
     assert.equal(new URL(proxied).pathname, "/api/rss-proxy");
     assert.deepEqual(getProxyAuthorizationHeaders(proxied), { Authorization: "Bearer test-proxy-token" });
+    assert.deepEqual(getProxyFetchOptions(proxied), {
+      headers: { Authorization: "Bearer test-proxy-token" },
+      redirect: "manual",
+    });
     assert.deepEqual(getProxyAuthorizationHeaders("https://yozm.wishket.com/magazine/feed/"), {});
     assert.deepEqual(getProxyAuthorizationHeaders("https://techgotgan.example.workers.dev/api/rss-proxy.evil"), {});
   } finally {

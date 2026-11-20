@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { assertAdminAccess } from "@/lib/admin-access";
+import { withAdminAccess } from "@/lib/admin-access";
 import { createServiceClient } from "@/lib/supabase/service";
 import { classifyArticlesBatch } from "@/lib/ingestion/category-classifier";
 
@@ -16,13 +16,9 @@ export async function POST(request: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
 
-  try {
-    await assertAdminAccess();
-  } catch {
-    return new NextResponse(null, { status: 404 });
-  }
-
-  const supabase = createServiceClient();
+  const adminClient = await withAdminAccess(createServiceClient);
+  if (!adminClient.authorized) return new NextResponse(null, { status: 404 });
+  const supabase = adminClient.value;
   const searchParams = request.nextUrl.searchParams;
 
   const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "50", 10), 1), 100);

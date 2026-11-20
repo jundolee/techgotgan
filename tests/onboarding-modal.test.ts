@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 
-test("onboarding modal screenshots exist in their access-controlled asset locations", () => {
+test("onboarding modal screenshots exist in the public asset directory", () => {
   const step1 = path.join(process.cwd(), "public/onboarding/step1-feed.png");
-  const step2 = path.join(process.cwd(), "private-assets/onboarding/step2-ai-summary.png");
+  const step2 = path.join(process.cwd(), "public/onboarding/step2-ai-summary.png");
   const step3 = path.join(process.cwd(), "public/onboarding/step3-unread-sync.png");
 
   assert.ok(fs.existsSync(step1), "step1-feed.png must exist");
@@ -28,6 +28,7 @@ test("onboarding component source contains refined clean marketing propositions"
   // 마케팅 소구점 확인
   assert.ok(content.includes("매일 아침 자동 수집"), "Contains daily auto fetch hook");
   assert.ok(content.includes("AI 3줄 핵심 요약"), "Contains AI summary hook");
+  assert.ok(content.includes("/onboarding/step2-ai-summary.png"), "Uses the deployable public summary screenshot");
   assert.ok(content.includes("안읽은 새 글"), "Contains unread articles filter hook");
   assert.ok(content.includes("Google 1초 시작하기"), "Contains quick google signup CTA");
   assert.ok(content.includes("techgotgan_onboarding_dismissed"), "Uses correct storage key");

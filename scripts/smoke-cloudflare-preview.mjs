@@ -114,26 +114,25 @@ try {
     console.log(JSON.stringify({ check: "page", path, status: 200 }));
   }
 
+  const onboardingImage = await assertPage("/onboarding/step2-ai-summary.png", "image/png");
+  const onboardingImageBytes = await onboardingImage.arrayBuffer();
+  if (onboardingImageBytes.byteLength < 10_000) {
+    throw new Error("The onboarding summary screenshot was unexpectedly small");
+  }
+  console.log(JSON.stringify({ check: "onboarding-summary-image", status: 200, bytes: onboardingImageBytes.byteLength }));
+
   const sourcesResponse = await fetch(`${origin}/sources`, { redirect: "manual" });
   if (sourcesResponse.status !== 307 || !sourcesResponse.headers.get("location")?.includes("/login")) {
     throw new Error(`/sources was not protected by the configured admin email gate (HTTP ${sourcesResponse.status})`);
   }
   console.log(JSON.stringify({ check: "sources-admin-gate", status: sourcesResponse.status }));
 
+  // The preview has production-capable Supabase credentials; never issue a POST that could mutate live rows.
   const backfillGet = await fetch(`${origin}/api/admin/backfill`, { redirect: "manual" });
   if (backfillGet.status !== 405 || backfillGet.headers.get("allow") !== "POST") {
     throw new Error(`/api/admin/backfill must not mutate data through GET (HTTP ${backfillGet.status})`);
   }
-  const backfillPost = await fetch(`${origin}/api/admin/backfill`, {
-    method: "POST",
-    headers: { Origin: origin, "Content-Type": "application/json" },
-    body: "{}",
-    redirect: "manual",
-  });
-  if (backfillPost.status !== 404) {
-    throw new Error(`/api/admin/backfill allowed an unauthenticated mutation (HTTP ${backfillPost.status})`);
-  }
-  console.log(JSON.stringify({ check: "admin-backfill-closed", getStatus: backfillGet.status, postStatus: backfillPost.status }));
+  console.log(JSON.stringify({ check: "admin-backfill-method", getStatus: backfillGet.status }));
 
   const deniedProxy = await fetch(`${origin}/api/rss-proxy?url=${encodeURIComponent("https://yozm.wishket.com/magazine/feed/")}`);
   if (deniedProxy.status !== 404) {
@@ -146,6 +145,18 @@ try {
     if (disallowedProxy.status !== 403) {
       throw new Error(`RSS proxy accepted a destination outside its allowlist (HTTP ${disallowedProxy.status})`);
     }
+
+    const candidateUrl = new URL("/api/rss-proxy", origin);
+    candidateUrl.searchParams.set("url", "https://techblog.woowahan.com/feed/");
+    const candidateFeed = await fetch(candidateUrl, {
+      headers: { Authorization: `Bearer ${rssProxyToken}` },
+    });
+    const candidateBody = await candidateFeed.text();
+    if (candidateFeed.status !== 200 || !/xml/i.test(candidateFeed.headers.get("content-type") ?? "") ||
+      !/<rss[\s>]/i.test(candidateBody.slice(0, 2_000))) {
+      throw new Error(`Candidate RSS proxy did not return a valid Woowahan feed (HTTP ${candidateFeed.status})`);
+    }
+    console.log(JSON.stringify({ check: "candidate-rss-proxy", status: candidateFeed.status }));
 
     const remoteUrl = new URL(rssProxyUrl.replace(/\/+$/, ""));
     remoteUrl.searchParams.set("url", "https://techblog.woowahan.com/feed/");

@@ -148,7 +148,9 @@ export async function ingestSource(
   const existingDedupKeys = new Set<string>();
   const existingCanonicalUrls = new Set<string>();
   const existingSummaryCandidates = new Map<string, string | null>();
-  const candidateBatches = createArticleLookupBatches(candidates);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) throw new IngestionInfrastructureError("Build article lookup URLs", new Error("Missing Supabase URL"));
+  const candidateBatches = createArticleLookupBatches(candidates, supabaseUrl, source.id);
 
   // Check both unique keys before requesting og:image or inserting. Repeated feed entries
   // are common, so avoid fetching each old article's page just to discover a 23505 afterward.

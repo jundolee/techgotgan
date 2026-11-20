@@ -34,3 +34,16 @@ export async function assertAdminAccess(): Promise<void> {
     throw new Error("Admin access required");
   }
 }
+
+export type AdminAccessResult<T> = { authorized: true; value: T } | { authorized: false };
+
+export async function withAdminAccess<T>(
+  operation: () => T | Promise<T>,
+): Promise<AdminAccessResult<Awaited<T>>> {
+  try {
+    await assertAdminAccess();
+  } catch {
+    return { authorized: false };
+  }
+  return { authorized: true, value: await operation() };
+}

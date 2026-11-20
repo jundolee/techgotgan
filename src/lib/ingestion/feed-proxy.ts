@@ -55,6 +55,16 @@ export function getProxyAuthorizationHeaders(requestUrl: string): Record<string,
   return token && isRssProxyUrl(requestUrl) ? { Authorization: `Bearer ${token}` } : {};
 }
 
+export function getProxyFetchOptions(requestUrl: string): {
+  headers: Record<string, string>;
+  redirect: "manual";
+} {
+  if (!isRssProxyUrl(requestUrl)) {
+    throw new Error("Authenticated RSS proxy requests must target the configured HTTPS endpoint");
+  }
+  return { headers: getProxyAuthorizationHeaders(requestUrl), redirect: "manual" };
+}
+
 export function isAllowedProxyTarget(rawUrl: string): boolean {
   try {
     const url = new URL(rawUrl);
