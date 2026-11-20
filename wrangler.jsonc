@@ -51,6 +51,7 @@
   ],
   "vars": {
     "NEXT_PUBLIC_SUPABASE_URL": "https://efwfmebvvnxumuvydbrq.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_5J4u25Cz2lHGDOll0sW6mA_wc4H5lQL"
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_5J4u25Cz2lHGDOll0sW6mA_wc4H5lQL",
+    "RSS_PROXY_URL": "https://techgotgan.techgotgan.workers.dev/api/rss-proxy"
   }
 }

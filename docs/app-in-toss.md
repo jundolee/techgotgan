@@ -46,7 +46,7 @@ GitHub 저장소 Settings → Secrets and variables → Actions에 아래 값을
 
 - Repository variable `NEXT_PUBLIC_SUPABASE_URL`
 - Repository secret `SUPABASE_SECRET_KEY` (`sb_secret_...`, Node 수집·worker용)
-- 선택 Secret `RSS_PROXY_URL`
+- Repository variable `RSS_PROXY_URL` and secret `RSS_PROXY_TOKEN` for the authenticated Cloudflare RSS proxy used by scheduled ingestion.
 - AI 요약을 켤 때만 Secret `OPENAI_API_KEY`와 Variable `OPENAI_SUMMARY_ENABLED=true`
 - 벡터 추천을 켤 때만 Secret `PINECONE_API_KEY`, `PINECONE_INDEX_HOST`와 Variable `ENABLE_EMBEDDING_JOBS=true`
 

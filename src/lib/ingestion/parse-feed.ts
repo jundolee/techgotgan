@@ -3,18 +3,30 @@ import * as cheerio from "cheerio";
 import type { NormalizedArticle } from "./types";
 import { computeDedupKey } from "./dedup";
 import { INGESTION_USER_AGENT } from "./user-agent";
-import { getProxiedUrl, isBlockedDomain, toHttpUrl, isSslError } from "./feed-proxy";
+import {
+  getProxyAuthorizationHeaders,
+  getProxyUpstreamUserAgent,
+  getProxiedUrl,
+  isBlockedDomain,
+  isRssProxyUrl,
+  toHttpUrl,
+  isSslError,
+} from "./feed-proxy";
 
 // d2.naver.com/d2.atom처럼 Accept 헤더가 없으면 406(Not Acceptable)으로 거부하는 서버가 있어
 // (discoverFeed의 fetchText는 Accept:*/*를 이미 보내 문제없이 통과했지만, rss-parser 기본값에는
 // 없었음) 명시적으로 지정해 같은 문제를 피한다 (docs/decisions.md 참고).
-const parser = new Parser({
-  timeout: 10_000,
-  headers: {
-    "User-Agent": INGESTION_USER_AGENT,
-    Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
-  },
-});
+function parseUrl(sourceUrl: string, requestUrl: string) {
+  const parser = new Parser({
+    timeout: 10_000,
+    headers: {
+      "User-Agent": getProxyUpstreamUserAgent(sourceUrl) || INGESTION_USER_AGENT,
+      Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+      ...getProxyAuthorizationHeaders(requestUrl),
+    },
+  });
+  return parser.parseURL(requestUrl);
+}
 
 function resolveUrl(raw: string, base: string): string | null {
   try {
@@ -161,14 +173,14 @@ export async function parseFeed(feedUrl: string): Promise<ParsedFeed> {
 
   let feed;
   try {
-    feed = await parser.parseURL(targetUrl);
+    feed = await parseUrl(feedUrl, targetUrl);
   } catch (err) {
     // 1. 프록시 HTTPS 접속 시 SSL 핸드셰이크 오류(Cloudflare 서브도메인 인증서 발급 지연 등) 발생 시 HTTP로 즉시 재시도
-    if (targetUrl !== feedUrl && isSslError(err)) {
+    if (targetUrl !== feedUrl && !isRssProxyUrl(targetUrl) && isSslError(err)) {
       const httpUrl = toHttpUrl(targetUrl);
       if (httpUrl) {
         try {
-          feed = await parser.parseURL(httpUrl);
+          feed = await parseUrl(feedUrl, httpUrl);
         } catch {
           // HTTP 시도도 실패하면 다음 폴백 진행
         }
@@ -179,7 +191,7 @@ export async function parseFeed(feedUrl: string): Promise<ParsedFeed> {
       if (targetUrl !== feedUrl) {
         // 프록시 호출이 실패한 경우(예: 사내망 방화벽의 workers.dev 차단 등) 원본 URL로 폴백 시도
         try {
-          feed = await parser.parseURL(feedUrl);
+          feed = await parseUrl(feedUrl, feedUrl);
         } catch {
           throw err;
         }
@@ -188,11 +200,11 @@ export async function parseFeed(feedUrl: string): Promise<ParsedFeed> {
         const fallbackUrl = getProxiedUrl(feedUrl);
         if (fallbackUrl !== feedUrl) {
           try {
-            feed = await parser.parseURL(fallbackUrl);
+            feed = await parseUrl(feedUrl, fallbackUrl);
           } catch (proxyErr) {
-            const httpUrl = toHttpUrl(fallbackUrl);
+            const httpUrl = isRssProxyUrl(fallbackUrl) ? null : toHttpUrl(fallbackUrl);
             if (httpUrl) {
-              feed = await parser.parseURL(httpUrl);
+              feed = await parseUrl(feedUrl, httpUrl);
             } else {
               throw proxyErr;
             }

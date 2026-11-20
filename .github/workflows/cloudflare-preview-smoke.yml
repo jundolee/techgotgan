@@ -27,3 +27,5 @@ jobs:
         run: npm run smoke:cloudflare
         env:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          RSS_PROXY_TOKEN: ${{ secrets.RSS_PROXY_TOKEN }}
+          RSS_PROXY_URL: ${{ vars.RSS_PROXY_URL }}

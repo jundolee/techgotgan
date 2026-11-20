@@ -2,6 +2,7 @@
  * 우아한형제들 등 클라우드(AWS/Vercel) IP 대역을 WAF에서 차단(403)하는 사이트를 위해
  * Cloudflare Worker 등 외부 프록시 경유 URL을 생성하는 유틸리티.
  */
+import { INGESTION_USER_AGENT, RSS_PROXY_USER_AGENT } from "./user-agent";
 
 const BLOCKED_DOMAINS = [
   "techblog.woowahan.com",
@@ -11,6 +12,7 @@ const BLOCKED_DOMAINS = [
   "techblog.lotteon.com",
   "techblog.musinsa.com",
   "blog.kmong.com",
+  "yozm.wishket.com",
 ];
 
 export function isBlockedDomain(url: string): boolean {
@@ -33,6 +35,42 @@ export function getProxiedUrl(targetUrl: string): string {
   if (!proxyBase) return targetUrl;
   if (targetUrl.startsWith(proxyBase)) return targetUrl;
   return `${proxyBase}/?url=${encodeURIComponent(targetUrl)}`;
+}
+
+export function isRssProxyUrl(requestUrl: string): boolean {
+  const proxyBase = process.env.RSS_PROXY_URL?.trim().replace(/\/+$/, "");
+  if (!proxyBase) return false;
+  try {
+    const target = new URL(requestUrl);
+    const proxy = new URL(proxyBase);
+    return target.protocol === "https:" && target.origin === proxy.origin &&
+      (target.pathname === proxy.pathname || target.pathname.startsWith(`${proxy.pathname}/`));
+  } catch {
+    return false;
+  }
+}
+
+export function getProxyAuthorizationHeaders(requestUrl: string): Record<string, string> {
+  const token = process.env.RSS_PROXY_TOKEN?.trim();
+  return token && isRssProxyUrl(requestUrl) ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export function isAllowedProxyTarget(rawUrl: string): boolean {
+  try {
+    const url = new URL(rawUrl);
+    return url.protocol === "https:" && !url.username && !url.password && !url.hash && !url.port && isBlockedDomain(url.toString());
+  } catch {
+    return false;
+  }
+}
+
+export function getProxyUpstreamUserAgent(targetUrl: string): string {
+  try {
+    if (new URL(targetUrl).hostname === "techblog.woowahan.com") {
+      return RSS_PROXY_USER_AGENT;
+    }
+  } catch {}
+  return INGESTION_USER_AGENT;
 }
 
 /**

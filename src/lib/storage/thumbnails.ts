@@ -1,7 +1,14 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { INGESTION_USER_AGENT } from "@/lib/ingestion/user-agent";
-import { getProxiedUrl, isBlockedDomain, toHttpUrl, isSslError } from "@/lib/ingestion/feed-proxy";
+import {
+  getProxyAuthorizationHeaders,
+  getProxiedUrl,
+  isBlockedDomain,
+  isRssProxyUrl,
+  toHttpUrl,
+  isSslError,
+} from "@/lib/ingestion/feed-proxy";
 
 const BUCKET = "thumbnails";
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB — Notion 등 일부 CMS가 원본 해상도 이미지를 그대로 서빙해 5MB로는 부족했음
@@ -70,11 +77,11 @@ export async function mirrorThumbnail(
     let res: Response | null = null;
     try {
       res = await fetch(targetUrl, {
-        headers: { "User-Agent": USER_AGENT },
+        headers: { "User-Agent": USER_AGENT, ...getProxyAuthorizationHeaders(targetUrl) },
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
     } catch (err) {
-      if (targetUrl !== sourceUrl && isSslError(err)) {
+      if (targetUrl !== sourceUrl && !isRssProxyUrl(targetUrl) && isSslError(err)) {
         const httpUrl = toHttpUrl(targetUrl);
         if (httpUrl) {
           try {
@@ -104,7 +111,7 @@ export async function mirrorThumbnail(
         if (fallbackUrl !== sourceUrl) {
           try {
             res = await fetch(fallbackUrl, {
-              headers: { "User-Agent": USER_AGENT },
+              headers: { "User-Agent": USER_AGENT, ...getProxyAuthorizationHeaders(fallbackUrl) },
               signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
             });
           } catch {

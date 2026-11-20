@@ -1,13 +1,42 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdtemp, rm, unlink, writeFile } from "node:fs/promises";
+import { Agent as HttpsAgent, request as httpsRequest } from "node:https";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const supabaseKey = process.env.SUPABASE_SECRET_KEY?.trim();
+const rssProxyUrl = process.env.RSS_PROXY_URL?.trim();
+const rssProxyToken = process.env.RSS_PROXY_TOKEN?.trim();
 if (!supabaseUrl || !supabaseKey) {
   throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY are required for this smoke check");
+}
+if (Boolean(rssProxyUrl) !== Boolean(rssProxyToken)) {
+  throw new Error("RSS_PROXY_URL and RSS_PROXY_TOKEN must be configured together");
+}
+
+const httpsAgent = new HttpsAgent({ maxVersion: "TLSv1.2" });
+
+function getRemoteProxyResponse(url) {
+  return new Promise((resolveResponse, reject) => {
+    const request = httpsRequest(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${rssProxyToken}` },
+      agent: httpsAgent,
+      timeout: 15_000,
+    }, (response) => {
+      const chunks = [];
+      response.on("data", (chunk) => chunks.push(chunk));
+      response.on("end", () => resolveResponse({
+        status: response.statusCode ?? 0,
+        contentType: response.headers["content-type"] ?? "",
+        body: Buffer.concat(chunks).toString("utf8"),
+      }));
+    });
+    request.on("error", reject);
+    request.end();
+  });
 }
 
 const devVarsPath = resolve(".dev.vars");
@@ -67,6 +96,7 @@ try {
     `NEXT_PUBLIC_SUPABASE_URL=${JSON.stringify(supabaseUrl)}`,
     `SUPABASE_SECRET_KEY=${JSON.stringify(supabaseKey)}`,
     "ADMIN_EMAILS=disabled@invalid.example",
+    ...(rssProxyToken ? [`RSS_PROXY_TOKEN=${JSON.stringify(rssProxyToken)}`] : []),
     "",
   ].join("\n"), { encoding: "utf8", mode: 0o600 });
   preview = spawn(
@@ -105,6 +135,27 @@ try {
   }
   console.log(JSON.stringify({ check: "admin-backfill-closed", getStatus: backfillGet.status, postStatus: backfillPost.status }));
 
+  const deniedProxy = await fetch(`${origin}/api/rss-proxy/?url=${encodeURIComponent("https://yozm.wishket.com/magazine/feed/")}`);
+  if (deniedProxy.status !== 404) {
+    throw new Error(`RSS proxy accepted a request without its token (HTTP ${deniedProxy.status})`);
+  }
+  if (rssProxyUrl && rssProxyToken) {
+    const disallowedProxy = await fetch(`${origin}/api/rss-proxy/?url=${encodeURIComponent("https://example.com/")}`, {
+      headers: { Authorization: `Bearer ${rssProxyToken}` },
+    });
+    if (disallowedProxy.status !== 403) {
+      throw new Error(`RSS proxy accepted a destination outside its allowlist (HTTP ${disallowedProxy.status})`);
+    }
+
+    const remoteUrl = new URL(`${rssProxyUrl.replace(/\/+$/, "")}/`);
+    remoteUrl.searchParams.set("url", "https://techblog.woowahan.com/feed/");
+    const remoteFeed = await getRemoteProxyResponse(remoteUrl);
+    if (remoteFeed.status !== 200 || !/xml/i.test(remoteFeed.contentType) || !/<rss[\s>]/i.test(remoteFeed.body.slice(0, 2_000))) {
+      throw new Error(`Live RSS proxy did not return a valid Woowahan feed (HTTP ${remoteFeed.status})`);
+    }
+    console.log(JSON.stringify({ check: "rss-proxy", status: remoteFeed.status, contentType: remoteFeed.contentType.split(";")[0] }));
+  }
+
   const [feed, publishers, weeks] = await Promise.all([
     getJson("/api/intoss/feed"),
     getJson("/api/intoss/publishers"),
@@ -141,6 +192,7 @@ try {
   const secret = process.env.SUPABASE_SECRET_KEY;
   const safeTail = logs.join("").slice(-1_500)
     .replaceAll(secret ?? "\0", "[redacted]")
+    .replaceAll(rssProxyToken ?? "\0", "[redacted]")
     .replace(/sb_secret_[A-Za-z0-9._~-]+/g, "sb_secret_[redacted]")
     .replace(/eyJ[A-Za-z0-9._-]{20,}/g, "[JWT redacted]");
   if (safeTail) console.error(safeTail);

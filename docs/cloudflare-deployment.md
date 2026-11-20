@@ -18,8 +18,8 @@ npm run preview:cloudflare
 1. Sign in to a Cloudflare account with Workers Free enabled.
 2. `wrangler.jsonc` already has this account's Workers KV namespace ID. For another Cloudflare account, create a free namespace with `npx wrangler kv namespace create techgotgan-next-cache --binding NEXT_INC_CACHE_KV --update-config`, then use its ID in `wrangler.jsonc`.
 3. Register a workers.dev account subdomain once. The Worker uses the `techgotgan` account subdomain and the `techgotgan` Worker name.
-4. `wrangler.jsonc` contains the public Supabase URL and publishable key as Worker variables. Keep `ADMIN_EMAILS` unset until the owner-only source editor allowlist is intentionally configured; all server actions and the admin backfill API deny access when production admin credentials are missing.
-5. Add `SUPABASE_SECRET_KEY` as a Worker secret. Keep it server-side; do not put it in the client bundle or `wrangler.jsonc`.
+4. `wrangler.jsonc` contains the public Supabase URL, publishable key, and RSS proxy URL as Worker variables. Keep `ADMIN_EMAILS` unset until the owner-only source editor allowlist is intentionally configured; all server actions and the admin backfill API deny access when production admin credentials are missing.
+5. Add `SUPABASE_SECRET_KEY` and `RSS_PROXY_TOKEN` as Worker secrets. Keep both server-side; do not put them in the client bundle or `wrangler.jsonc`.
 6. Deploy with `npm run deploy:cloudflare` and verify the generated `workers.dev` URL. The checked-in Wrangler migration creates the SQLite Durable Objects used by the revalidation queue and tag cache.
 7. To restore `www.techgotgan.co.kr`, attach a Cloudflare custom domain and update DNS at the current domain provider (KSDOM).
 
@@ -36,5 +36,6 @@ Production fails closed for `/sources`, its Server Actions, and the admin backfi
 - The OpenNext adapter warns that Next.js 16 `proxy.ts` support is experimental. The preview smoke workflow checks that `/sources` remains protected.
 - The GitHub Actions preview workflow exposes `SUPABASE_SECRET_KEY` only to the smoke-test step, not dependency installation or the build.
 - Production is served on the account's `workers.dev` route; per-version Preview URLs are disabled.
+- The RSS proxy endpoint accepts only HTTPS URLs for explicitly allowlisted public blog domains and requires a bearer token. GitHub scheduled ingestion passes that token only to ingestion and summary steps.
 
 Cloudflare documents the [Workers Free limits](https://developers.cloudflare.com/workers/platform/limits/), [Durable Objects pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/), [R2 pricing](https://developers.cloudflare.com/r2/pricing/), [Images pricing](https://developers.cloudflare.com/images/pricing/), and [OpenNext Cloudflare adapter](https://opennext.js.org/cloudflare).
