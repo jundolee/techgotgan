@@ -1,6 +1,9 @@
 name: Cloudflare preview smoke
 
 on:
+  push:
+    branches:
+      - jundolee/cloudflare-next-migration
   workflow_dispatch:
 
 permissions:
