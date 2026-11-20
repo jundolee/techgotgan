@@ -1,0 +1,145 @@
+import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { mkdtemp, rm, unlink, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { tmpdir } from "node:os";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+const supabaseKey = process.env.SUPABASE_SECRET_KEY?.trim();
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY are required for this smoke check");
+}
+
+const devVarsPath = resolve(".dev.vars");
+if (existsSync(devVarsPath)) {
+  throw new Error("Refusing to overwrite an existing .dev.vars file");
+}
+
+const port = process.env.CLOUDFLARE_PREVIEW_PORT?.trim() || "8790";
+const origin = `http://127.0.0.1:${port}`;
+let preview;
+let persistPath;
+let previewSpawnError;
+const logs = [];
+const rememberLog = (chunk) => {
+  logs.push(String(chunk));
+  while (logs.join("").length > 6000) logs.shift();
+};
+
+async function waitForServer() {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    if (previewSpawnError) throw previewSpawnError;
+    if (preview.exitCode !== null) throw new Error(`Preview exited early (${preview.exitCode})`);
+    try {
+      const response = await fetch(`${origin}/robots.txt`);
+      if (response.ok) return;
+    } catch {
+      // The local Worker is still starting.
+    }
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 1_000));
+  }
+  throw new Error("Preview did not become ready within 60 seconds");
+}
+
+async function getJson(path) {
+  const response = await fetch(`${origin}${path}`);
+  let body;
+  try {
+    body = await response.json();
+  } catch {
+    body = null;
+  }
+  return { response, body };
+}
+
+async function assertPage(path, expectedContentType) {
+  const response = await fetch(`${origin}${path}`);
+  if (response.status !== 200) throw new Error(`${path} returned HTTP ${response.status}`);
+  if (expectedContentType && !response.headers.get("content-type")?.includes(expectedContentType)) {
+    throw new Error(`${path} returned an unexpected content type`);
+  }
+  return response;
+}
+
+try {
+  persistPath = await mkdtemp(resolve(tmpdir(), "techgotgan-cloudflare-preview-"));
+  await writeFile(devVarsPath, [
+    `NEXT_PUBLIC_SUPABASE_URL=${JSON.stringify(supabaseUrl)}`,
+    `SUPABASE_SECRET_KEY=${JSON.stringify(supabaseKey)}`,
+    "ADMIN_EMAILS=disabled@invalid.example",
+    "",
+  ].join("\n"), { encoding: "utf8", mode: 0o600 });
+  preview = spawn(
+    resolve("node_modules/.bin/opennextjs-cloudflare"),
+    ["preview", "--port", port, "--persist-to", persistPath],
+    { detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"] },
+  );
+  preview.on("error", (error) => { previewSpawnError = error; });
+  preview.stdout.on("data", rememberLog);
+  preview.stderr.on("data", rememberLog);
+  await waitForServer();
+
+  for (const path of ["/", "/blogs", "/digest", "/topics", "/feed.xml"]) {
+    await assertPage(path, path === "/feed.xml" ? "application/rss+xml" : "text/html");
+    console.log(JSON.stringify({ check: "page", path, status: 200 }));
+  }
+
+  const sourcesResponse = await fetch(`${origin}/sources`, { redirect: "manual" });
+  if (sourcesResponse.status !== 307 || !sourcesResponse.headers.get("location")?.includes("/login")) {
+    throw new Error(`/sources was not protected by the configured admin email gate (HTTP ${sourcesResponse.status})`);
+  }
+  console.log(JSON.stringify({ check: "sources-admin-gate", status: sourcesResponse.status }));
+
+  const [feed, publishers, weeks] = await Promise.all([
+    getJson("/api/intoss/feed"),
+    getJson("/api/intoss/publishers"),
+    getJson("/api/intoss/digest/weeks"),
+  ]);
+  for (const [name, result] of [["feed", feed], ["publishers", publishers], ["digest-weeks", weeks]]) {
+    if (!result.response.ok || !Array.isArray(result.body) || result.body.length === 0) {
+      throw new Error(`${name} API failed its response check (HTTP ${result.response.status})`);
+    }
+    console.log(JSON.stringify({ check: name, status: result.response.status, count: result.body.length }));
+  }
+
+  const search = await fetch(`${origin}/api/intoss/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query: "React" }),
+  });
+  const searchRows = await search.json().catch(() => null);
+  if (!search.ok || !Array.isArray(searchRows)) {
+    throw new Error(`search API failed its response check (HTTP ${search.status})`);
+  }
+  console.log(JSON.stringify({ check: "search", status: search.status, count: searchRows.length }));
+
+  const articleId = feed.body[0]?.id;
+  if (typeof articleId !== "string") throw new Error("feed API returned no article ID");
+  const detail = await getJson(`/api/intoss/articles/${encodeURIComponent(articleId)}`);
+  if (!detail.response.ok || typeof detail.body?.title !== "string") {
+    throw new Error(`article detail failed its response check (HTTP ${detail.response.status})`);
+  }
+  console.log(JSON.stringify({ check: "article-detail", status: detail.response.status }));
+} catch (error) {
+  const message = error instanceof Error ? error.message : "Cloudflare preview smoke check failed";
+  console.error(message);
+  const secret = process.env.SUPABASE_SECRET_KEY;
+  const safeTail = logs.join("").slice(-1_500)
+    .replaceAll(secret ?? "\0", "[redacted]")
+    .replace(/sb_secret_[A-Za-z0-9._~-]+/g, "sb_secret_[redacted]")
+    .replace(/eyJ[A-Za-z0-9._-]{20,}/g, "[JWT redacted]");
+  if (safeTail) console.error(safeTail);
+  process.exitCode = 1;
+} finally {
+  if (preview?.pid && preview.exitCode === null && preview.signalCode === null) {
+    try {
+      if (process.platform === "win32") preview.kill("SIGTERM");
+      else process.kill(-preview.pid, "SIGTERM");
+    } catch {
+      // The preview may have exited between the state check and signal.
+    }
+    await new Promise((resolveExit) => preview.once("close", resolveExit));
+  }
+  await unlink(devVarsPath).catch(() => {});
+  if (persistPath) await rm(persistPath, { recursive: true, force: true });
+}
