@@ -47,8 +47,13 @@ function parseUrl(sourceUrl: string, requestUrl: string) {
 
 export function decodeFeedResponseBody(bytes: Uint8Array, contentType: string | null): string {
   const charset = contentType?.match(/(?:^|;)\s*charset\s*=\s*(?:"([^"]+)"|'([^']+)'|([^;\s]+))/i);
-  const label = charset?.[1] ?? charset?.[2] ?? charset?.[3] ?? "utf-8";
-  return new TextDecoder(label.trim()).decode(bytes);
+  const label = (charset?.[1] ?? charset?.[2] ?? charset?.[3] ?? "utf-8").trim().toLowerCase();
+  const encoding = label === "ucs2" || label === "ucs-2" ? "utf-16le" : label;
+  try {
+    return new TextDecoder(encoding).decode(bytes);
+  } catch {
+    return new TextDecoder("utf-8").decode(bytes);
+  }
 }
 
 function resolveUrl(raw: string, base: string): string | null {

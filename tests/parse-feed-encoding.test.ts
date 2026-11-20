@@ -11,3 +11,8 @@ test("proxied feed decoding defaults to UTF-8 when no charset is declared", () =
   const bytes = Buffer.from("한글 feed", "utf8");
   assert.equal(decodeFeedResponseBody(bytes, "application/rss+xml"), "한글 feed");
 });
+
+test("proxied feed decoding supports the ucs2 alias and falls back for unknown labels", () => {
+  assert.equal(decodeFeedResponseBody(Buffer.from("한글", "utf16le"), "application/rss+xml; charset=ucs2"), "한글");
+  assert.equal(decodeFeedResponseBody(Buffer.from("feed", "utf8"), "application/rss+xml; charset=x-unknown"), "feed");
+});

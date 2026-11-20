@@ -9,6 +9,7 @@ import { classifyArticlesBatch } from "./category-classifier";
 import type { FeedType, NormalizedArticle, ScrapeConfig } from "./types";
 import { isArticleSummaryEnabled, isArticleSummaryQueueEnabled } from "./article-summary";
 import { createArticleLookupBatches } from "./article-lookup-batches";
+import { readOversizedArticleMatches, type ExistingArticleLookupRow } from "./oversized-article-lookup";
 import { enqueuePendingSummaryJobs, getRecentSummaryRetryIds } from "./summary-job-queue";
 import { summarizeArticlesDirect } from "./run-summary-jobs";
 import { IngestionInfrastructureError } from "./error-message";
@@ -181,14 +182,31 @@ export async function ingestSource(
     }
   });
 
+  if (lookupPlan.oversized.length > 0) {
+    await readOversizedArticleMatches(
+      lookupPlan.oversized,
+      async (offset, pageSize) => {
+        const { data, error } = await supabase.from("articles")
+          .select("id,dedup_key,canonical_url,discovered_at")
+          .eq("source_id", source.id)
+          .order("id", { ascending: true })
+          .range(offset, offset + pageSize - 1);
+        if (error) throw new IngestionInfrastructureError("Read oversized article lookup keys", error);
+        return (data ?? []) as ExistingArticleLookupRow[];
+      },
+      (row) => {
+        existingDedupKeys.add(row.dedup_key);
+        existingCanonicalUrls.add(row.canonical_url);
+        existingSummaryCandidates.set(row.id, row.discovered_at);
+      },
+    );
+  }
+
   const seenDedupKeys = new Set<string>();
   const seenCanonicalUrls = new Set<string>();
   const newCandidates = candidates.filter((candidate) => {
-    const canLookupExisting = !oversizedCandidateSet.has(candidate);
-    const isDuplicate = (canLookupExisting && (
-      existingDedupKeys.has(candidate.article.dedupKey) ||
-      existingCanonicalUrls.has(candidate.canonicalUrl)
-    )) ||
+    const isDuplicate = existingDedupKeys.has(candidate.article.dedupKey) ||
+      existingCanonicalUrls.has(candidate.canonicalUrl) ||
       seenDedupKeys.has(candidate.article.dedupKey) ||
       seenCanonicalUrls.has(candidate.canonicalUrl);
     seenDedupKeys.add(candidate.article.dedupKey);
