@@ -90,6 +90,21 @@ try {
   }
   console.log(JSON.stringify({ check: "sources-admin-gate", status: sourcesResponse.status }));
 
+  const backfillGet = await fetch(`${origin}/api/admin/backfill`, { redirect: "manual" });
+  if (backfillGet.status !== 405 || backfillGet.headers.get("allow") !== "POST") {
+    throw new Error(`/api/admin/backfill must not mutate data through GET (HTTP ${backfillGet.status})`);
+  }
+  const backfillPost = await fetch(`${origin}/api/admin/backfill`, {
+    method: "POST",
+    headers: { Origin: origin, "Content-Type": "application/json" },
+    body: "{}",
+    redirect: "manual",
+  });
+  if (backfillPost.status !== 404) {
+    throw new Error(`/api/admin/backfill allowed an unauthenticated mutation (HTTP ${backfillPost.status})`);
+  }
+  console.log(JSON.stringify({ check: "admin-backfill-closed", getStatus: backfillGet.status, postStatus: backfillPost.status }));
+
   const [feed, publishers, weeks] = await Promise.all([
     getJson("/api/intoss/feed"),
     getJson("/api/intoss/publishers"),

@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isAdminGateConfigured } from "../src/lib/admin-auth";
+import {
+  isAdminEmailAllowed,
+  isAdminGateConfigured,
+  isAdminPasswordCookieAllowed,
+  sha256Hex,
+} from "../src/lib/admin-auth";
 
 test("admin access requires a configured email list or legacy password", () => {
   assert.equal(isAdminGateConfigured(undefined, undefined), false);
@@ -8,4 +13,16 @@ test("admin access requires a configured email list or legacy password", () => {
   assert.equal(isAdminGateConfigured("owner@example.com", undefined), true);
   assert.equal(isAdminGateConfigured(" , owner@example.com ", undefined), true);
   assert.equal(isAdminGateConfigured(undefined, "password"), true);
+});
+
+test("admin email authorization is case insensitive and rejects non-listed users", () => {
+  assert.equal(isAdminEmailAllowed("owner@example.com, editor@example.com", "Owner@Example.com"), true);
+  assert.equal(isAdminEmailAllowed("owner@example.com", "other@example.com"), false);
+  assert.equal(isAdminEmailAllowed("owner@example.com", null), false);
+});
+
+test("legacy admin password cookies match only the configured password digest", async () => {
+  assert.equal(await isAdminPasswordCookieAllowed("password", await sha256Hex("password")), true);
+  assert.equal(await isAdminPasswordCookieAllowed("password", await sha256Hex("other")), false);
+  assert.equal(await isAdminPasswordCookieAllowed(undefined, "cookie"), false);
 });

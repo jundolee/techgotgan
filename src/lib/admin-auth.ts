@@ -8,10 +8,27 @@ export function isAdminGateConfigured(adminEmails: string | undefined, adminPass
   return hasAdminEmails || Boolean(adminPassword);
 }
 
+export function isAdminEmailAllowed(adminEmails: string | undefined, email: string | null | undefined): boolean {
+  if (!email) return false;
+  const allowedEmails = (adminEmails ?? "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+  return allowedEmails.includes(email.trim().toLowerCase());
+}
+
 export async function sha256Hex(input: string): Promise<string> {
   const data = new TextEncoder().encode(input);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(hashBuffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+export async function isAdminPasswordCookieAllowed(
+  adminPassword: string | undefined,
+  cookieValue: string | undefined
+): Promise<boolean> {
+  if (!adminPassword || !cookieValue) return false;
+  return cookieValue === await sha256Hex(adminPassword);
 }
