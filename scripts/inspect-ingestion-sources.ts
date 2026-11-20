@@ -2,7 +2,9 @@ import { createClient } from "@supabase/supabase-js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createSupabaseServiceFetch } from "../src/lib/supabase/service-key-headers";
+import { sanitizeDiagnosticError } from "../src/lib/ingestion/error-message";
 import type { FeedType, ScrapeConfig } from "../src/lib/ingestion/types";
+export { sanitizeDiagnosticError } from "../src/lib/ingestion/error-message";
 
 const SOURCE_DIAGNOSTIC_ALLOWLIST = new Set([
   "d489e2a3-d227-4bf0-ab1d-894cb8eac51a",
@@ -33,7 +35,7 @@ export function parseSourceDiagnosticIds(value: string | undefined): string[] {
   return ids;
 }
 
-function sanitizeUrl(value: string | null): string | null {
+function sanitizeSourceUrl(value: string | null): string | null {
   if (!value) return null;
   try {
     const url = new URL(value);
@@ -43,21 +45,12 @@ function sanitizeUrl(value: string | null): string | null {
   }
 }
 
-export function sanitizeDiagnosticError(value: string | null): string | null {
-  if (!value) return null;
-  return value
-    .replace(/https?:\/\/[^\s"'<>]+/gi, (match) => sanitizeUrl(match) ?? "[invalid URL]")
-    .replace(/(authorization\s*:\s*bearer\s+)[^\s,;]+/gi, "$1[redacted]")
-    .replace(/sb_secret_[A-Za-z0-9._~-]+/g, "sb_secret_[redacted]")
-    .replace(/eyJ[A-Za-z0-9._-]{20,}/g, "[JWT redacted]");
-}
-
 export function formatSourceDiagnostics(sources: readonly SourceDiagnostic[]) {
   return sources.map(({ id, title, site_url, feed_url, feed_type, scrape_config, is_active, last_error }) => ({
     id,
     title,
-    siteUrl: sanitizeUrl(site_url) ?? "[invalid URL]",
-    feedUrl: sanitizeUrl(feed_url),
+    siteUrl: sanitizeSourceUrl(site_url) ?? "[invalid URL]",
+    feedUrl: sanitizeSourceUrl(feed_url),
     feedType: feed_type,
     active: is_active,
     hasLastError: Boolean(last_error),
