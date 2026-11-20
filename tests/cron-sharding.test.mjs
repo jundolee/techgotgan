@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { CRON_SHARD_COUNT, kstDayStart, sourceShard } from "../src/lib/ingestion/cron-sharding.ts";
-import { getIngestionSweepPlan } from "../scripts/ingestion-sweep-plan.ts";
+import {
+  getIngestionSweepPlan,
+  isCompletedWithRecordedSourceFailures,
+  isSuccessfulIngestionShardResult,
+  shouldFailIngestionSweep,
+} from "../scripts/ingestion-sweep-plan.ts";
 
 test("every source has one stable shard in the configured range", () => {
   const seen = new Set();
@@ -21,6 +26,73 @@ test("every source has one stable shard in the configured range", () => {
 test("KST day starts at 15:00 UTC on the previous calendar day", () => {
   assert.equal(kstDayStart(new Date("2026-09-22T14:59:59Z")), "2026-09-21T15:00:00.000Z");
   assert.equal(kstDayStart(new Date("2026-09-22T15:00:00Z")), "2026-09-22T15:00:00.000Z");
+});
+
+test("a shard with fully attempted, recorded publisher failures is partial rather than infrastructure failure", () => {
+  assert.equal(isCompletedWithRecordedSourceFailures({
+    ok: false,
+    selected: 2,
+    attempted: 2,
+    succeeded: 1,
+    failed: 1,
+    recordedSourceFailures: 1,
+    infrastructureFailures: 0,
+    remaining: [],
+  }, 503), true);
+  assert.equal(isCompletedWithRecordedSourceFailures({
+    ok: false,
+    selected: 3,
+    attempted: 2,
+    succeeded: 0,
+    failed: 1,
+    recordedSourceFailures: 1,
+    infrastructureFailures: 0,
+    remaining: ["source-2"],
+  }, 503), false);
+  assert.equal(isCompletedWithRecordedSourceFailures({
+    ok: false,
+    selected: 1,
+    attempted: 1,
+    succeeded: 0,
+    failed: 1,
+    recordedSourceFailures: 0,
+    infrastructureFailures: 1,
+    remaining: [],
+  }, 500), false);
+  assert.equal(isCompletedWithRecordedSourceFailures({
+    ok: false,
+    selected: 1,
+    attempted: 1,
+    succeeded: 0,
+    failed: 1,
+    recordedSourceFailures: 0,
+    infrastructureFailures: 1,
+    remaining: [],
+  }, 503), false);
+  assert.equal(isCompletedWithRecordedSourceFailures({
+    ok: false,
+    selected: 2,
+    attempted: 1,
+    succeeded: -1,
+    failed: 2,
+    recordedSourceFailures: 2,
+    infrastructureFailures: 0,
+    remaining: [],
+  }, 503), false);
+  assert.equal(isSuccessfulIngestionShardResult({
+    ok: true,
+    selected: 2,
+    attempted: 2,
+    succeeded: 2,
+    failed: 0,
+    recordedSourceFailures: 0,
+    infrastructureFailures: 0,
+    remaining: [],
+  }, 200), true);
+  assert.equal(isSuccessfulIngestionShardResult({ ok: true }, 200), false);
+  assert.equal(shouldFailIngestionSweep(0, 85, 81), false);
+  assert.equal(shouldFailIngestionSweep(0, 4, 0), true);
+  assert.equal(shouldFailIngestionSweep(1, 85, 81), true);
 });
 
 test("GitHub Actions schedules every ingestion shard and keeps the retry sweep", () => {
