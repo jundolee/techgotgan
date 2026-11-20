@@ -135,19 +135,19 @@ try {
   }
   console.log(JSON.stringify({ check: "admin-backfill-closed", getStatus: backfillGet.status, postStatus: backfillPost.status }));
 
-  const deniedProxy = await fetch(`${origin}/api/rss-proxy/?url=${encodeURIComponent("https://yozm.wishket.com/magazine/feed/")}`);
+  const deniedProxy = await fetch(`${origin}/api/rss-proxy?url=${encodeURIComponent("https://yozm.wishket.com/magazine/feed/")}`);
   if (deniedProxy.status !== 404) {
     throw new Error(`RSS proxy accepted a request without its token (HTTP ${deniedProxy.status})`);
   }
   if (rssProxyUrl && rssProxyToken) {
-    const disallowedProxy = await fetch(`${origin}/api/rss-proxy/?url=${encodeURIComponent("https://example.com/")}`, {
+    const disallowedProxy = await fetch(`${origin}/api/rss-proxy?url=${encodeURIComponent("https://example.com/")}`, {
       headers: { Authorization: `Bearer ${rssProxyToken}` },
     });
     if (disallowedProxy.status !== 403) {
       throw new Error(`RSS proxy accepted a destination outside its allowlist (HTTP ${disallowedProxy.status})`);
     }
 
-    const remoteUrl = new URL(`${rssProxyUrl.replace(/\/+$/, "")}/`);
+    const remoteUrl = new URL(rssProxyUrl.replace(/\/+$/, ""));
     remoteUrl.searchParams.set("url", "https://techblog.woowahan.com/feed/");
     const remoteFeed = await getRemoteProxyResponse(remoteUrl);
     if (remoteFeed.status !== 200 || !/xml/i.test(remoteFeed.contentType) || !/<rss[\s>]/i.test(remoteFeed.body.slice(0, 2_000))) {

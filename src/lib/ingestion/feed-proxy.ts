@@ -34,7 +34,7 @@ export function getProxiedUrl(targetUrl: string): string {
   const proxyBase = process.env.RSS_PROXY_URL?.trim().replace(/\/+$/, "");
   if (!proxyBase) return targetUrl;
   if (targetUrl.startsWith(proxyBase)) return targetUrl;
-  return `${proxyBase}/?url=${encodeURIComponent(targetUrl)}`;
+  return `${proxyBase}?url=${encodeURIComponent(targetUrl)}`;
 }
 
 export function isRssProxyUrl(requestUrl: string): boolean {

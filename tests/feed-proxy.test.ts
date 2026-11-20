@@ -30,7 +30,7 @@ test("proxy URLs carry a bearer token only when the URL targets the configured p
   process.env.RSS_PROXY_TOKEN = "test-proxy-token";
   try {
     const proxied = getProxiedUrl("https://yozm.wishket.com/magazine/feed/");
-    assert.equal(new URL(proxied).pathname, "/api/rss-proxy/");
+    assert.equal(new URL(proxied).pathname, "/api/rss-proxy");
     assert.deepEqual(getProxyAuthorizationHeaders(proxied), { Authorization: "Bearer test-proxy-token" });
     assert.deepEqual(getProxyAuthorizationHeaders("https://yozm.wishket.com/magazine/feed/"), {});
     assert.deepEqual(getProxyAuthorizationHeaders("https://techgotgan.example.workers.dev/api/rss-proxy.evil"), {});
