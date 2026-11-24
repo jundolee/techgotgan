@@ -11,6 +11,7 @@ import { isArticleSummaryEnabled, isArticleSummaryQueueEnabled } from "./article
 import { enqueuePendingSummaryJobs, getRecentSummaryRetryIds } from "./summary-job-queue";
 import { summarizeArticlesDirect } from "./run-summary-jobs";
 import { IngestionInfrastructureError } from "./error-message";
+import { readWithTransientSupabaseRetry } from "./retry-supabase-read";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
 const ARTICLE_CONCURRENCY = 4;
@@ -159,23 +160,27 @@ export async function ingestSource(
   // Check both unique keys before requesting og:image or inserting. Repeated feed entries
   // are common, so avoid fetching each old article's page just to discover a 23505 afterward.
   await mapWithConcurrency(candidateBatches, 2, async (batch) => {
-    const [dedupResult, canonicalResult] = await Promise.all([
-      supabase.from("articles")
-        .select("id,dedup_key,discovered_at")
-        .eq("source_id", source.id)
-        .in("dedup_key", batch.map(({ article }) => article.dedupKey)),
-      supabase.from("articles")
-        .select("id,canonical_url,discovered_at")
-        .in("canonical_url", batch.map(({ canonicalUrl }) => canonicalUrl)),
+    const [dedupRows, canonicalRows] = await Promise.all([
+      readWithTransientSupabaseRetry(
+        () => supabase.from("articles")
+          .select("id,dedup_key,discovered_at")
+          .eq("source_id", source.id)
+          .in("dedup_key", batch.map(({ article }) => article.dedupKey)),
+        "Read existing article dedup keys",
+      ),
+      readWithTransientSupabaseRetry(
+        () => supabase.from("articles")
+          .select("id,canonical_url,discovered_at")
+          .in("canonical_url", batch.map(({ canonicalUrl }) => canonicalUrl)),
+        "Read existing canonical article URLs",
+      ),
     ]);
 
-    if (dedupResult.error) throw new IngestionInfrastructureError("Read existing article dedup keys", dedupResult.error);
-    if (canonicalResult.error) throw new IngestionInfrastructureError("Read existing canonical article URLs", canonicalResult.error);
-    for (const row of dedupResult.data ?? []) {
+    for (const row of dedupRows ?? []) {
       existingDedupKeys.add(row.dedup_key);
       existingSummaryCandidates.set(row.id, row.discovered_at);
     }
-    for (const row of canonicalResult.data ?? []) {
+    for (const row of canonicalRows ?? []) {
       existingCanonicalUrls.add(row.canonical_url);
       existingSummaryCandidates.set(row.id, row.discovered_at);
     }
