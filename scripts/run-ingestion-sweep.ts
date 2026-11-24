@@ -10,10 +10,13 @@ import {
 
 async function main() {
   const sweepArg = process.argv[2] ?? "";
-  const dryRun = process.argv[3] === "--dry-run";
+  const options = new Set(process.argv.slice(3));
+  const dryRun = options.has("--dry-run");
+  const fast = options.has("--fast");
   const plan = getIngestionSweepPlan(sweepArg);
+  const delayBetweenShards = fast ? 0 : plan.delayBetweenShards;
   if (dryRun) {
-    console.log(JSON.stringify({ ...plan, totalSpacingMs: (plan.shards.length - 1) * plan.delayBetweenShards }));
+    console.log(JSON.stringify({ ...plan, delayBetweenShards, totalSpacingMs: (plan.shards.length - 1) * delayBetweenShards }));
     return;
   }
 
@@ -53,7 +56,7 @@ async function main() {
       ...(result.error ? { error: result.error } : {}),
     }));
 
-    if (shard < plan.shards.length - 1) await delay(plan.delayBetweenShards);
+    if (shard < plan.shards.length - 1) await delay(delayBetweenShards);
   }
   if (partialShards > 0) {
     console.warn(`${recordedSourceFailures} source failure(s) were recorded in the database across ${partialShards} completed shard(s)`);
