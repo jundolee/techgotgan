@@ -9,10 +9,8 @@ import { parseFeed } from "@/lib/ingestion/parse-feed";
 import { scrapeSource } from "@/lib/ingestion/scrape-source";
 import { autoDetectScrapeConfig } from "@/lib/ingestion/auto-detect-scrape-config";
 import { inferScrapeConfigWithAI } from "@/lib/ingestion/ai-selector-inference";
-import { ingestSource, type SourceRow } from "@/lib/ingestion/ingest-source";
-import { getIngestionErrorMessage } from "@/lib/ingestion/error-message";
-import { createServiceClient } from "@/lib/supabase/service";
 import { BOT_USER_AGENT } from "@/lib/ingestion/user-agent";
+import { ingestSourceById } from "@/lib/ingestion/ingest-source-now";
 import type { FeedType, NormalizedArticle, ScrapeConfig } from "@/lib/ingestion/types";
 
 export interface AddSourceFlowState {
@@ -311,58 +309,6 @@ export interface IngestNowState {
   inserted?: number;
 }
 
-async function performSourceIngestion(id: string): Promise<IngestNowState> {
-  if (!id) return { ok: false, message: "잘못된 요청입니다." };
-
-  const checkedAt = new Date().toISOString();
-  let supabase: ReturnType<typeof createServiceClient> | null = null;
-
-  try {
-    supabase = createServiceClient();
-    const { data: source, error } = await supabase
-      .from("sources")
-      .select("id, site_url, feed_url, feed_type, scrape_config")
-      .eq("id", id)
-      .single();
-
-    if (error) throw new Error(`Read source for ingestion: ${getIngestionErrorMessage(error)}`);
-    if (!source) return { ok: false, message: "소스를 찾을 수 없습니다." };
-
-    const result = await ingestSource(supabase, source as SourceRow);
-    const { error: updateError } = await supabase
-      .from("sources")
-      .update({ last_checked_at: checkedAt, last_success_at: checkedAt, last_error: null })
-      .eq("id", id);
-    if (updateError) {
-      throw new Error(`Record source ingestion success: ${getIngestionErrorMessage(updateError)}`);
-    }
-
-    return {
-      ok: true,
-      message:
-        result.inserted > 0
-          ? `새 글 ${result.inserted}개를 가져왔어요.`
-          : "확인했지만 새 글은 없었어요.",
-      inserted: result.inserted,
-    };
-  } catch (error) {
-    const message = getIngestionErrorMessage(error);
-    if (supabase) {
-      try {
-        const { error: recordError } = await supabase
-          .from("sources")
-          .update({ last_checked_at: checkedAt, last_error: message })
-          .eq("id", id);
-        if (recordError) console.error(`Could not record ingestion failure for source ${id}:`, recordError);
-      } catch (recordError) {
-        console.error(`Could not record ingestion failure for source ${id}:`, recordError);
-      }
-    }
-    console.error(`Immediate source ingestion failed for ${id}:`, message);
-    return { ok: false, message: "수집에 실패했어요." };
-  }
-}
-
 function revalidateIngestionViews(includeHome: boolean): boolean {
   try {
     updateTag("sources");
@@ -385,18 +331,9 @@ export async function ingestSourceNowAction(
 ): Promise<IngestNowState> {
   await assertAdminAccess();
   const id = String(formData.get("id") ?? "");
-  const result = await performSourceIngestion(id);
+  const result = await ingestSourceById(id);
   revalidateIngestionViews((result.inserted ?? 0) > 0);
   return result;
-}
-
-/** Run one source for the client-side bulk flow without invalidating cache on every source. */
-export async function ingestSourceForBulkAction(
-  _prevState: IngestNowState,
-  formData: FormData
-): Promise<IngestNowState> {
-  await assertAdminAccess();
-  return performSourceIngestion(String(formData.get("id") ?? ""));
 }
 
 /** Coalesce source-list and homepage invalidation into one operation after a bulk run. */

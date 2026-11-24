@@ -2,10 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { ActionButton } from "seed-design/ui/action-button";
-import {
-  ingestSourceForBulkAction,
-  revalidateAfterBulkIngestAction,
-} from "@/app/sources/actions";
+import { revalidateAfterBulkIngestAction } from "@/app/sources/actions";
 
 export interface IngestAllSource {
   id: string;
@@ -43,9 +40,15 @@ export function IngestAllButton({ sources }: { sources: IngestAllSource[] }) {
         setProgress({ done: i, total, current: source.label });
 
         try {
-          const formData = new FormData();
-          formData.set("id", source.id);
-          const res = await ingestSourceForBulkAction({ ok: true, message: "" }, formData);
+          const response = await fetch("/api/admin/ingest-source", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            cache: "no-store",
+            body: JSON.stringify({ id: source.id }),
+          });
+          if (!response.ok) throw new Error(`Source request failed with status ${response.status}`);
+          const res = await response.json() as { ok: boolean; inserted?: number };
           if (res.ok) {
             succeeded += 1;
             inserted += res.inserted ?? 0;
