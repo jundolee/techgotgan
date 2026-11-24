@@ -111,6 +111,16 @@ export function IngestAllButton({ sources }: { sources: IngestAllSource[] }) {
               {result.failedSources.length > 3 ? ` 외 ${result.failedSources.length - 3}개` : ""}
             </span>
           )}
+          {result.failed > 0 && (
+            <a
+              href="https://github.com/jundolee/techgotgan/actions/workflows/techgotgan-maintenance.yml"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: 12, color: "var(--seed-color-fg-neutral-muted)", textDecoration: "underline" }}
+            >
+              GitHub Actions에서 전체 수집 다시 실행
+            </a>
+          )}
           {result.refreshFailed && (
             <span style={{ fontSize: 12, color: "var(--seed-color-fg-critical)" }}>
               목록 갱신이 지연될 수 있어요. 페이지를 새로고침해주세요.
