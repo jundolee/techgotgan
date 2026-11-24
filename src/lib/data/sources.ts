@@ -36,6 +36,17 @@ export async function listSources(): Promise<Source[]> {
   );
 }
 
+/** The private admin list needs fresh ingestion status and should not write to the ISR cache. */
+export async function listSourcesForAdmin(): Promise<Source[]> {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("sources")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data as Source[];
+}
+
 export interface AddSourceResult {
   siteUrl: string;
   ok: boolean;

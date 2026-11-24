@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Text } from "@seed-design/react";
 import { ActionButton } from "seed-design/ui/action-button";
-import { listSources } from "@/lib/data/sources";
+import { listSourcesForAdmin } from "@/lib/data/sources";
 import { listPendingSourceSuggestions } from "@/lib/data/source-suggestions";
 import { AddSourceForm } from "@/components/add-source-form";
 import { BulkAddSourceForm } from "@/components/bulk-add-source-form";
@@ -11,6 +11,9 @@ import { IngestAllButton } from "@/components/ingest-all-button";
 import { reviewSourceSuggestionAction } from "./actions";
 
 export const dynamic = "force-dynamic";
+// A single source can require several network requests; give its Server Action
+// the same bounded runtime as the ingestion cron routes.
+export const maxDuration = 60;
 
 // 관리자 전용 화면 — 검색엔진에 노출되면 안 된다 (홈 화면에도 눈에 띄는 링크를 두지 않음, docs/decisions.md 참고).
 export const metadata: Metadata = {
@@ -19,7 +22,7 @@ export const metadata: Metadata = {
 
 export default async function SourcesPage() {
   const [sources, suggestions] = await Promise.all([
-    listSources(),
+    listSourcesForAdmin(),
     // 추천 목록 조회가 실패해도(예: 마이그레이션 미적용) 소스 관리 자체는 계속 동작해야 한다 —
     // 관리자의 핵심 기능(등록/삭제/일시중지)을 부가 기능 하나 때문에 통째로 막으면 안 됨.
     listPendingSourceSuggestions().catch(() => []),

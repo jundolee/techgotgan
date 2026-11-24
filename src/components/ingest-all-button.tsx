@@ -2,7 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { ActionButton } from "seed-design/ui/action-button";
-import { ingestSourceNowAction } from "@/app/sources/actions";
+import {
+  ingestSourceForBulkAction,
+  revalidateAfterBulkIngestAction,
+} from "@/app/sources/actions";
 
 export interface IngestAllSource {
   id: string;
@@ -18,7 +21,13 @@ export interface IngestAllSource {
 export function IngestAllButton({ sources }: { sources: IngestAllSource[] }) {
   const [isPending, startTransition] = useTransition();
   const [progress, setProgress] = useState<{ done: number; total: number; current: string } | null>(null);
-  const [result, setResult] = useState<{ succeeded: number; failed: number; inserted: number } | null>(null);
+  const [result, setResult] = useState<{
+    succeeded: number;
+    failed: number;
+    inserted: number;
+    failedSources: string[];
+    refreshFailed: boolean;
+  } | null>(null);
 
   const handleClick = () => {
     setResult(null);
@@ -27,23 +36,39 @@ export function IngestAllButton({ sources }: { sources: IngestAllSource[] }) {
       let succeeded = 0;
       let failed = 0;
       let inserted = 0;
+      const failedSources: string[] = [];
 
       for (let i = 0; i < sources.length; i++) {
         const source = sources[i];
         setProgress({ done: i, total, current: source.label });
 
-        const formData = new FormData();
-        formData.set("id", source.id);
-        const res = await ingestSourceNowAction({ ok: true, message: "" }, formData);
-        if (res.ok) {
-          succeeded += 1;
-          inserted += res.inserted ?? 0;
-        } else {
+        try {
+          const formData = new FormData();
+          formData.set("id", source.id);
+          const res = await ingestSourceForBulkAction({ ok: true, message: "" }, formData);
+          if (res.ok) {
+            succeeded += 1;
+            inserted += res.inserted ?? 0;
+          } else {
+            failed += 1;
+            failedSources.push(source.label);
+          }
+        } catch {
+          // A request-level Server Action failure should not stop later sources.
           failed += 1;
+          failedSources.push(source.label);
         }
       }
 
-      setResult({ succeeded, failed, inserted });
+      let refreshFailed = false;
+      try {
+        const refresh = await revalidateAfterBulkIngestAction(inserted > 0);
+        refreshFailed = !refresh.ok;
+      } catch {
+        refreshFailed = true;
+      }
+
+      setResult({ succeeded, failed, inserted, failedSources, refreshFailed });
       setProgress(null);
     });
   };
@@ -66,16 +91,29 @@ export function IngestAllButton({ sources }: { sources: IngestAllSource[] }) {
         </span>
       )}
       {!progress && result && (
-        <span
-          style={{
-            fontSize: 12,
-            color: result.failed > 0 ? "var(--seed-color-fg-critical)" : "var(--seed-color-fg-neutral-muted)",
-          }}
-        >
-          {result.failed > 0
-            ? `${result.succeeded}개 성공, ${result.failed}개 실패, 새 글 ${result.inserted}개`
-            : `${result.succeeded}개 성공, 새 글 ${result.inserted}개`}
-        </span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <span
+            style={{
+              fontSize: 12,
+              color: result.failed > 0 ? "var(--seed-color-fg-critical)" : "var(--seed-color-fg-neutral-muted)",
+            }}
+          >
+            {result.failed > 0
+              ? `${result.succeeded}개 성공, ${result.failed}개 실패, 새 글 ${result.inserted}개`
+              : `${result.succeeded}개 성공, 새 글 ${result.inserted}개`}
+          </span>
+          {result.failedSources.length > 0 && (
+            <span style={{ fontSize: 12, color: "var(--seed-color-fg-critical)" }}>
+              실패한 소스: {result.failedSources.slice(0, 3).join(", ")}
+              {result.failedSources.length > 3 ? ` 외 ${result.failedSources.length - 3}개` : ""}
+            </span>
+          )}
+          {result.refreshFailed && (
+            <span style={{ fontSize: 12, color: "var(--seed-color-fg-critical)" }}>
+              목록 갱신이 지연될 수 있어요. 페이지를 새로고침해주세요.
+            </span>
+          )}
+        </div>
       )}
     </div>
   );
