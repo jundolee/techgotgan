@@ -72,6 +72,61 @@ test("secret-key transport preserves headers on Request inputs and unrelated bea
   assert.equal(receivedHeaders[0].get("prefer"), "return=representation");
 });
 
+test("Supabase GET requests retry transient transport failures and retryable server responses", async () => {
+  let attempts = 0;
+  const delays: number[] = [];
+  const serviceFetch = createSupabaseServiceFetch(
+    "sb_secret_test-key",
+    async () => {
+      attempts += 1;
+      if (attempts === 1) throw new TypeError("fetch failed");
+      if (attempts === 2) return new Response(null, { status: 503 });
+      return new Response("ok", { status: 200 });
+    },
+    async (milliseconds) => { delays.push(milliseconds); },
+  );
+
+  const response = await serviceFetch("https://project.supabase.co/rest/v1/articles");
+
+  assert.equal(await response.text(), "ok");
+  assert.equal(attempts, 3);
+  assert.deepEqual(delays, [250, 750]);
+});
+
+test("Supabase writes are not retried and a repeated server error returns after the retry budget", async () => {
+  let attempts = 0;
+  const serviceFetch = createSupabaseServiceFetch(
+    "sb_secret_test-key",
+    async () => {
+      attempts += 1;
+      return new Response(null, { status: 503 });
+    },
+    async () => {},
+  );
+
+  await serviceFetch("https://project.supabase.co/rest/v1/articles", { method: "POST" });
+  assert.equal(attempts, 1);
+
+  await serviceFetch("https://project.supabase.co/rest/v1/articles", { method: "GET" });
+  assert.equal(attempts, 4);
+});
+
+test("Supabase client errors are not retried", async () => {
+  let attempts = 0;
+  const serviceFetch = createSupabaseServiceFetch(
+    "sb_secret_test-key",
+    async () => {
+      attempts += 1;
+      return new Response(null, { status: 404 });
+    },
+    async () => {},
+  );
+
+  const response = await serviceFetch("https://project.supabase.co/rest/v1/articles");
+  assert.equal(response.status, 404);
+  assert.equal(attempts, 1);
+});
+
 test("new secret key takes precedence while legacy service-role remains a fallback", () => {
   const previousSecret = process.env.SUPABASE_SECRET_KEY;
   const previousLegacy = process.env.SUPABASE_SERVICE_ROLE_KEY;

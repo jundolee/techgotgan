@@ -18,7 +18,7 @@ test("retries a transient Supabase fetch failure and returns the read result", a
 
   assert.deepEqual(rows, [{ id: "article-1" }]);
   assert.equal(attempts, 2);
-  assert.deepEqual(delays, [250]);
+  assert.deepEqual(delays, [500]);
 });
 
 test("does not retry a non-transient Supabase query error", async () => {
@@ -55,6 +55,6 @@ test("retries a thrown transport error and reports it after exhausting retries",
     /Read article candidates: fetch failed/,
   );
 
-  assert.equal(attempts, 3);
-  assert.deepEqual(delays, [250, 750]);
+  assert.equal(attempts, 4);
+  assert.deepEqual(delays, [500, 1_500, 3_000]);
 });

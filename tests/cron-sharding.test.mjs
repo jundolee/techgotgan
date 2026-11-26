@@ -108,11 +108,14 @@ test("GitHub Actions schedules every ingestion shard and keeps the retry sweep",
   assert.match(workflow, /cron: "15 22 \* \* \*"/);
   assert.match(workflow, /cron: "15 23 \* \* \*"/);
   assert.match(workflow, /cron: "45 23 \* \* \*"/);
+  assert.match(workflow, /cron: "47 0 \* \* \*"/);
   assert.match(workflow, /cron: "45 5 \* \* \*"/);
   assert.match(workflow, /cron: "45 11 \* \* \*"/);
   assert.match(workflow, /cron: "45 17 \* \* \*"/);
   assert.match(workflow, /cron: "15 0 \* \* \*"/);
   assert.match(workflow, /cron: "30 0 \* \* \*"/);
+  assert.match(workflow, /task="ingest-catchup"/);
+  assert.match(workflow, /steps\.select-task\.outputs\.task == 'ingest-catchup'/);
   const installAndSelect = workflow.split("      - run: npm ci")[1].split("      - name: Run first ingestion sweep")[0];
   assert.doesNotMatch(installAndSelect, /SUPABASE_SERVICE_ROLE_KEY|OPENAI_API_KEY|PINECONE_API_KEY/);
   const ingestionSteps = workflow.split("      - name: Run first ingestion sweep")[1].split("      - name: Run summary worker")[0];

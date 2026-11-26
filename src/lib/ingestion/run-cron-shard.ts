@@ -4,7 +4,7 @@ import { ingestSource, type SourceRow } from "@/lib/ingestion/ingest-source";
 import { kstDayStart } from "@/lib/ingestion/cron-sharding";
 import {
   getIngestionErrorMessage,
-  IngestionInfrastructureError,
+  IngestionSourceTimeoutError,
   isIngestionInfrastructureFailure,
   sanitizeDiagnosticError,
 } from "@/lib/ingestion/error-message";
@@ -36,9 +36,9 @@ async function ingestOne(client: Client, source: SourceWithCheck): Promise<Sourc
     const result = await Promise.race([
       ingestSource(client, source),
       new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => reject(new IngestionInfrastructureError(
-          `Source operation timed out for ${source.id}`,
-          new Error(`Timed out after ${SOURCE_TIMEOUT_MS} milliseconds`),
+        timeout = setTimeout(() => reject(new IngestionSourceTimeoutError(
+          source.id,
+          SOURCE_TIMEOUT_MS,
         )), SOURCE_TIMEOUT_MS);
       }),
     ]);

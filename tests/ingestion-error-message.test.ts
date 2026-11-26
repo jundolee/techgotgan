@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   getIngestionErrorMessage,
   IngestionInfrastructureError,
+  IngestionSourceTimeoutError,
   isIngestionInfrastructureFailure,
 } from "../src/lib/ingestion/error-message";
 
@@ -30,7 +31,9 @@ test("database transport failures with empty error codes are explicitly tagged a
   assert.equal(isIngestionInfrastructureFailure(error, false, true), true);
   assert.equal(isIngestionInfrastructureFailure(new Error("publisher returned 404"), false, true), false);
   assert.equal(isIngestionInfrastructureFailure(Object.assign(new Error("publisher connection closed"), { code: "EPIPE" }), false, true), false);
-  assert.equal(isIngestionInfrastructureFailure(new IngestionInfrastructureError("Source operation timeout", new Error("timed out")), false, true), true);
+  assert.equal(isIngestionInfrastructureFailure(new IngestionSourceTimeoutError("source-1", 20_000), false, true), false);
+  assert.equal(isIngestionInfrastructureFailure(new IngestionSourceTimeoutError("source-1", 20_000), false, false), true);
+  assert.equal(isIngestionInfrastructureFailure(new IngestionInfrastructureError("Supabase read", new Error("fetch failed")), false, true), true);
   assert.equal(isIngestionInfrastructureFailure(new Error("status write failed"), true, true), true);
   assert.equal(isIngestionInfrastructureFailure(new Error("failed to record last_error"), false, false), true);
 });

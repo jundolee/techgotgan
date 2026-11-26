@@ -1,6 +1,6 @@
 import { IngestionInfrastructureError } from "./error-message";
 
-const RETRY_DELAYS_MS = [250, 750] as const;
+const RETRY_DELAYS_MS = [500, 1_500, 3_000] as const;
 
 export type SupabaseReadResult<T> = {
   data: T | null;

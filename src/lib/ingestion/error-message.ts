@@ -43,10 +43,18 @@ export class IngestionInfrastructureError extends Error {
   }
 }
 
+export class IngestionSourceTimeoutError extends Error {
+  constructor(sourceId: string, timeoutMs: number) {
+    super(`Source operation timed out for ${sourceId}: Timed out after ${timeoutMs} milliseconds`);
+    this.name = "IngestionSourceTimeoutError";
+  }
+}
+
 export function isIngestionInfrastructureFailure(
   cause: unknown,
   sourceIngestCompleted: boolean,
   errorRecorded: boolean,
 ): boolean {
+  if (cause instanceof IngestionSourceTimeoutError) return !errorRecorded;
   return sourceIngestCompleted || cause instanceof IngestionInfrastructureError || !errorRecorded;
 }
