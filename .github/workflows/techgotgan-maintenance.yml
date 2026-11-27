@@ -24,6 +24,8 @@ on:
           - ingest-retry
           - ingest-catchup
           - probe-rss-proxy
+          - inspect-missing-tags
+          - backfill-missing-tags
           - summaries
           - embeddings
           - indexnow
@@ -38,7 +40,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ (github.event.schedule == '15 22 * * *' || github.event.schedule == '15 23 * * *' || github.event.schedule == '47 0 * * *' || github.event.schedule == '17 1 * * *' || github.event.schedule == '17 2 * * *' || github.event.schedule == '17 3 * * *' || inputs.task == 'ingest-first' || inputs.task == 'ingest-retry' || inputs.task == 'ingest-catchup') && 'techgotgan-ingestion' || format('techgotgan-maintenance-{0}', github.event.schedule || inputs.task || 'manual') }}
+  group: ${{ (github.event.schedule == '15 22 * * *' || github.event.schedule == '15 23 * * *' || github.event.schedule == '47 0 * * *' || github.event.schedule == '17 1 * * *' || github.event.schedule == '17 2 * * *' || github.event.schedule == '17 3 * * *' || inputs.task == 'ingest-first' || inputs.task == 'ingest-retry' || inputs.task == 'ingest-catchup' || inputs.task == 'backfill-missing-tags') && 'techgotgan-ingestion' || format('techgotgan-maintenance-{0}', github.event.schedule || inputs.task || 'manual') }}
   cancel-in-progress: false
 
 jobs:
@@ -170,6 +172,19 @@ jobs:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           SOURCE_DIAGNOSTIC_IDS: "d489e2a3-d227-4bf0-ab1d-894cb8eac51a,ac45bdbc-c131-435f-8a84-d77baf96ea70,36bb1622-50a9-4dd1-8524-192c11716224,d7cedc18-30c3-4c37-98ce-4997972093eb"
         run: npm run diagnose:ingestion-sources
+      - name: Inspect missing article tags
+        if: ${{ steps.select-task.outputs.task == 'inspect-missing-tags' }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: npm run backfill:missing-tags
+      - name: Backfill missing article tags
+        if: ${{ steps.select-task.outputs.task == 'backfill-missing-tags' }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          ARTICLE_TAG_BACKFILL_APPROVED: "true"
+        run: npm run backfill:missing-tags -- --apply
       - name: Repair NAVER D2 feed with verified scrape selectors
         if: ${{ steps.select-task.outputs.task == 'repair-d2-source' }}
         env:
