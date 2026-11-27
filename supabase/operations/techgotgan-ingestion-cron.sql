@@ -1,6 +1,6 @@
 -- Apply manually in the Supabase Dashboard SQL Editor for project efwfmebvvnxumuvydbrq.
 -- The database timezone is UTC and pg_cron reports GMT; the schedules below are UTC.
--- Requires the Vault secret `github_actions_dispatch_token_r1` with Actions:write on
+-- Requires the Vault secret `github_actions_dispatch_token_r5` with Actions:write on
 -- jundolee/techgotgan. No credential value belongs in this file.
 
 create extension if not exists pg_cron with schema pg_catalog;
@@ -25,10 +25,10 @@ begin
   select decrypted_secret
   into github_token
   from vault.decrypted_secrets
-  where name = 'github_actions_dispatch_token_r1';
+  where name = 'github_actions_dispatch_token_r5';
 
   if nullif(github_token, '') is null then
-    raise exception 'Vault secret github_actions_dispatch_token_r1 is missing';
+    raise exception 'Vault secret github_actions_dispatch_token_r5 is missing';
   end if;
 
   select net.http_post(
