@@ -10,12 +10,52 @@ import type { FeedType, NormalizedArticle, ScrapeConfig } from "./types";
 import { isArticleSummaryEnabled, isArticleSummaryQueueEnabled } from "./article-summary";
 import { enqueuePendingSummaryJobs, getRecentSummaryRetryIds } from "./summary-job-queue";
 import { summarizeArticlesDirect } from "./run-summary-jobs";
-import { IngestionInfrastructureError } from "./error-message";
+import { getIngestionErrorMessage, IngestionInfrastructureError } from "./error-message";
 import { readWithTransientSupabaseRetry } from "./retry-supabase-read";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
 const ARTICLE_CONCURRENCY = 4;
-const ARTICLE_LOOKUP_BATCH_SIZE = 100;
+// Keep PostgREST `in` filters short enough for feed URLs with long slugs.
+const ARTICLE_LOOKUP_BATCH_SIZE = 25;
+const INGESTION_TIMING_SOURCE_IDS = new Set(
+  (process.env.INGESTION_TIMING_SOURCE_IDS ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean),
+);
+
+async function withSourceStageTiming<T>(
+  sourceId: string,
+  stage: string,
+  operation: () => Promise<T>,
+  summarize?: (result: T) => Record<string, number | string | boolean>,
+): Promise<T> {
+  if (!INGESTION_TIMING_SOURCE_IDS.has(sourceId)) return operation();
+
+  const startedAt = Date.now();
+  console.info(JSON.stringify({ event: "ingestion_stage_start", sourceId, stage }));
+  try {
+    const result = await operation();
+    console.info(JSON.stringify({
+      event: "ingestion_stage_done",
+      sourceId,
+      stage,
+      durationMs: Date.now() - startedAt,
+      ...summarize?.(result),
+    }));
+    return result;
+  } catch (error) {
+    console.info(JSON.stringify({
+      event: "ingestion_stage_error",
+      sourceId,
+      stage,
+      durationMs: Date.now() - startedAt,
+      errorName: error instanceof Error ? error.name : "UnknownError",
+      error: getIngestionErrorMessage(error),
+    }));
+    throw error;
+  }
+}
 
 interface ArticleCandidate {
   article: NormalizedArticle;
@@ -133,7 +173,12 @@ export async function ingestSource(
   source: SourceRow,
   signal?: AbortSignal,
 ): Promise<{ found: number; inserted: number; duplicates: number }> {
-  const articles = await fetchArticlesForSource(source, signal);
+  const articles = await withSourceStageTiming(
+    source.id,
+    "fetch_feed",
+    () => fetchArticlesForSource(source, signal),
+    (result) => ({ articles: result.length }),
+  );
   if (articles.length === 0) {
     return { found: 0, inserted: 0, duplicates: 0 };
   }
@@ -160,32 +205,47 @@ export async function ingestSource(
 
   // Check both unique keys before requesting og:image or inserting. Repeated feed entries
   // are common, so avoid fetching each old article's page just to discover a 23505 afterward.
-  await mapWithConcurrency(candidateBatches, 2, async (batch) => {
-    const [dedupRows, canonicalRows] = await Promise.all([
-      readWithTransientSupabaseRetry(
-        () => supabase.from("articles")
-          .select("id,dedup_key,discovered_at")
-          .eq("source_id", source.id)
-          .in("dedup_key", batch.map(({ article }) => article.dedupKey)),
-        "Read existing article dedup keys",
-      ),
-      readWithTransientSupabaseRetry(
-        () => supabase.from("articles")
-          .select("id,canonical_url,discovered_at")
-          .in("canonical_url", batch.map(({ canonicalUrl }) => canonicalUrl)),
-        "Read existing canonical article URLs",
-      ),
-    ]);
+  await withSourceStageTiming(source.id, "read_existing_articles", () =>
+    mapWithConcurrency(candidateBatches, 2, async (batch) => {
+      const [dedupRows, canonicalRows] = await Promise.all([
+        withSourceStageTiming(
+          source.id,
+          "read_source_dedup_keys",
+          () => readWithTransientSupabaseRetry(
+            () => supabase.from("articles")
+              .select("id,dedup_key,discovered_at")
+              .eq("source_id", source.id)
+              .in("dedup_key", batch.map(({ article }) => article.dedupKey)),
+            "Read existing article dedup keys",
+            undefined,
+            signal,
+          ),
+        ),
+        withSourceStageTiming(
+          source.id,
+          "read_canonical_urls",
+          () => readWithTransientSupabaseRetry(
+            () => supabase.from("articles")
+              .select("id,canonical_url,discovered_at")
+              .in("canonical_url", batch.map(({ canonicalUrl }) => canonicalUrl)),
+            "Read existing canonical article URLs",
+            undefined,
+            signal,
+          ),
+        ),
+      ]);
 
-    for (const row of dedupRows ?? []) {
-      existingDedupKeys.add(row.dedup_key);
-      existingSummaryCandidates.set(row.id, row.discovered_at);
-    }
-    for (const row of canonicalRows ?? []) {
-      existingCanonicalUrls.add(row.canonical_url);
-      existingSummaryCandidates.set(row.id, row.discovered_at);
-    }
-  });
+      for (const row of dedupRows ?? []) {
+        existingDedupKeys.add(row.dedup_key);
+        existingSummaryCandidates.set(row.id, row.discovered_at);
+      }
+      for (const row of canonicalRows ?? []) {
+        existingCanonicalUrls.add(row.canonical_url);
+        existingSummaryCandidates.set(row.id, row.discovered_at);
+      }
+    }),
+    () => ({ candidates: candidates.length, batches: candidateBatches.length }),
+  );
 
   const seenDedupKeys = new Set<string>();
   const seenCanonicalUrls = new Set<string>();
@@ -204,45 +264,53 @@ export async function ingestSource(
     const retryIds = getRecentSummaryRetryIds(
       [...existingSummaryCandidates].map(([id, discovered_at]) => ({ id, discovered_at })),
     );
-    await enqueuePendingSummaryJobs(supabase, retryIds);
+    await withSourceStageTiming(
+      source.id,
+      "reconcile_summary_jobs",
+      () => enqueuePendingSummaryJobs(supabase, retryIds),
+      (count) => ({ jobs: count }),
+    );
   }
 
   if (newCandidates.length === 0) {
     return { found: articles.length, inserted: 0, duplicates: articles.length };
   }
 
-  const insertResults = await mapWithConcurrency(
-    newCandidates,
-    ARTICLE_CONCURRENCY,
-    async ({ article: a, index, canonicalUrl }) => {
-      // RSS 필드/thumbnailSelector로 못 찾았을 때만 원문 페이지의 og:image를 한 번 더 시도한다 —
-      // 소스마다 thumbnailSelector를 신경 쓰지 않아도 대부분의 사이트가 공유하는 메타 태그로 커버된다.
-      const thumbnailUrl = a.thumbnailUrl ?? (await fetchOgImage(a.url));
+  const insertResults = await withSourceStageTiming(source.id, "insert_new_articles", () =>
+    mapWithConcurrency(
+      newCandidates,
+      ARTICLE_CONCURRENCY,
+      async ({ article: a, index, canonicalUrl }) => {
+        // RSS 필드/thumbnailSelector로 못 찾았을 때만 원문 페이지의 og:image를 한 번 더 시도한다 —
+        // 소스마다 thumbnailSelector를 신경 쓰지 않아도 대부분의 사이트가 공유하는 메타 태그로 커버된다.
+        const thumbnailUrl = a.thumbnailUrl ?? (await fetchOgImage(a.url));
 
-      // category/tags는 DB 기본값('general'/'{}')으로 두고, 새로 삽입된 글만 아래에서 분류해 채운다.
-      const { data: insertedRow, error } = await supabase
-        .from("articles")
-        .insert({
-          source_id: source.id,
-          title: a.title,
-          url: a.url,
-          canonical_url: canonicalUrl,
-          excerpt: a.excerpt,
-          thumbnail_url: thumbnailUrl,
-          published_at: a.publishedAt,
-          dedup_key: a.dedupKey,
-        })
-        .select("id")
-        .single();
+        // category/tags는 DB 기본값('general'/'{}')으로 두고, 새로 삽입된 글만 아래에서 분류해 채운다.
+        const { data: insertedRow, error } = await supabase
+          .from("articles")
+          .insert({
+            source_id: source.id,
+            title: a.title,
+            url: a.url,
+            canonical_url: canonicalUrl,
+            excerpt: a.excerpt,
+            thumbnail_url: thumbnailUrl,
+            published_at: a.publishedAt,
+            dedup_key: a.dedupKey,
+          })
+          .select("id")
+          .single();
 
-      if (error) {
-        if (error.code === POSTGRES_UNIQUE_VIOLATION) {
-          return { duplicate: true as const };
+        if (error) {
+          if (error.code === POSTGRES_UNIQUE_VIOLATION) {
+            return { duplicate: true as const };
+          }
+          throw new IngestionInfrastructureError("Insert article", error);
         }
-        throw new IngestionInfrastructureError("Insert article", error);
+        return { duplicate: false as const, articleId: insertedRow.id, thumbnailUrl, index };
       }
-      return { duplicate: false as const, articleId: insertedRow.id, thumbnailUrl, index };
-    }
+    ),
+    (result) => ({ inserted: result.filter((row) => !row.duplicate).length }),
   );
 
   const insertedRows = insertResults.filter(
@@ -257,7 +325,7 @@ export async function ingestSource(
   // 23505로 버려지면서 한 번도 저장되지 않는 완전한 낭비였고, 이 지연이 크론의 소스별 시간 상한과
   // 겹쳐 타임아웃의 실제 원인 중 하나였다(docs/decisions.md 참고). 새 글만 대상으로 하면 평소(중복만
   // 있는 날)엔 이 블록이 API 호출 없이 즉시 끝난다.
-  await Promise.all([
+  await withSourceStageTiming(source.id, "classify_and_queue_summaries", () => Promise.all([
     processInsertedArticleMetadata(supabase, insertedRows, articles),
     (async () => {
       if (!isArticleSummaryQueueEnabled() || insertedRows.length === 0) return;
@@ -276,7 +344,7 @@ export async function ingestSource(
         await enqueuePendingSummaryJobs(supabase, insertedIds);
       }
     })(),
-  ]);
+  ]));
 
   return { found: articles.length, inserted: insertedRows.length, duplicates };
 }

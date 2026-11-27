@@ -3,12 +3,20 @@ import * as cheerio from "cheerio";
 import type { NormalizedArticle } from "./types";
 import { computeDedupKey } from "./dedup";
 import { INGESTION_USER_AGENT } from "./user-agent";
-import { getProxiedUrl, isBlockedDomain, toHttpUrl, isSslError } from "./feed-proxy";
+import {
+  getProxyFetchOptions,
+  getProxyUpstreamUserAgent,
+  getProxiedUrl,
+  isBlockedDomain,
+  isRssProxyUrl,
+  toHttpUrl,
+  isSslError,
+} from "./feed-proxy";
 
 // d2.naver.com/d2.atom처럼 Accept 헤더가 없으면 406(Not Acceptable)으로 거부하는 서버가 있어
 // (discoverFeed의 fetchText는 Accept:*/*를 이미 보내 문제없이 통과했지만, rss-parser 기본값에는
 // 없었음) 명시적으로 지정해 같은 문제를 피한다 (docs/decisions.md 참고).
-function createParser(signal?: AbortSignal): Parser {
+function createParser(signal?: AbortSignal, userAgent = INGESTION_USER_AGENT): Parser {
   const requestTimeoutSignal = AbortSignal.timeout(10_000);
   const requestSignal = signal
     ? AbortSignal.any([signal, requestTimeoutSignal])
@@ -17,10 +25,48 @@ function createParser(signal?: AbortSignal): Parser {
     timeout: 10_000,
     requestOptions: { signal: requestSignal },
     headers: {
-      "User-Agent": INGESTION_USER_AGENT,
+      "User-Agent": userAgent,
       Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
     },
   });
+}
+
+function parseUrl(sourceUrl: string, requestUrl: string, signal?: AbortSignal) {
+  const userAgent = getProxyUpstreamUserAgent(sourceUrl);
+  const parser = createParser(signal, userAgent);
+
+  if (!isRssProxyUrl(requestUrl)) {
+    return parser.parseURL(requestUrl);
+  }
+
+  const proxyOptions = getProxyFetchOptions(requestUrl);
+  const requestTimeoutSignal = AbortSignal.timeout(10_000);
+  const requestSignal = signal
+    ? AbortSignal.any([signal, requestTimeoutSignal])
+    : requestTimeoutSignal;
+  return fetch(requestUrl, {
+    ...proxyOptions,
+    headers: { "User-Agent": userAgent, Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*", ...proxyOptions.headers },
+    signal: requestSignal,
+  }).then(async (response) => {
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new Error(`Status code ${response.status}`);
+    }
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    return parser.parseString(decodeFeedResponseBody(bytes, response.headers.get("content-type")));
+  });
+}
+
+export function decodeFeedResponseBody(bytes: Uint8Array, contentType: string | null): string {
+  const charset = contentType?.match(/(?:^|;)\s*charset\s*=\s*(?:"([^"]+)"|'([^']+)'|([^;\s]+))/i);
+  const label = (charset?.[1] ?? charset?.[2] ?? charset?.[3] ?? "utf-8").trim().toLowerCase();
+  const encoding = ["ucs2", "ucs-2", "utf16le"].includes(label) ? "utf-16le" : label;
+  try {
+    return new TextDecoder(encoding).decode(bytes);
+  } catch {
+    return new TextDecoder("utf-8").decode(bytes);
+  }
 }
 
 function resolveUrl(raw: string, base: string): string | null {
@@ -163,20 +209,19 @@ export interface ParsedFeed {
  * RSS/Atom 피드 URL을 받아 목록 메타데이터로 정규화한다. architecture.md 3절 "RSS/Atom 파싱" 참고.
  */
 export async function parseFeed(feedUrl: string, signal?: AbortSignal): Promise<ParsedFeed> {
-  const parser = createParser(signal);
   const shouldUseProxy = isBlockedDomain(feedUrl);
   const targetUrl = shouldUseProxy ? getProxiedUrl(feedUrl) : feedUrl;
 
   let feed;
   try {
-    feed = await parser.parseURL(targetUrl);
+    feed = await parseUrl(feedUrl, targetUrl, signal);
   } catch (err) {
     // 1. 프록시 HTTPS 접속 시 SSL 핸드셰이크 오류(Cloudflare 서브도메인 인증서 발급 지연 등) 발생 시 HTTP로 즉시 재시도
-    if (targetUrl !== feedUrl && isSslError(err)) {
+    if (targetUrl !== feedUrl && !isRssProxyUrl(targetUrl) && isSslError(err)) {
       const httpUrl = toHttpUrl(targetUrl);
       if (httpUrl) {
         try {
-          feed = await parser.parseURL(httpUrl);
+          feed = await parseUrl(feedUrl, httpUrl, signal);
         } catch {
           // HTTP 시도도 실패하면 다음 폴백 진행
         }
@@ -187,7 +232,7 @@ export async function parseFeed(feedUrl: string, signal?: AbortSignal): Promise<
       if (targetUrl !== feedUrl) {
         // 프록시 호출이 실패한 경우(예: 사내망 방화벽의 workers.dev 차단 등) 원본 URL로 폴백 시도
         try {
-          feed = await parser.parseURL(feedUrl);
+          feed = await parseUrl(feedUrl, feedUrl, signal);
         } catch {
           throw err;
         }
@@ -196,11 +241,11 @@ export async function parseFeed(feedUrl: string, signal?: AbortSignal): Promise<
         const fallbackUrl = getProxiedUrl(feedUrl);
         if (fallbackUrl !== feedUrl) {
           try {
-            feed = await parser.parseURL(fallbackUrl);
+            feed = await parseUrl(feedUrl, fallbackUrl, signal);
           } catch (proxyErr) {
-            const httpUrl = toHttpUrl(fallbackUrl);
+            const httpUrl = isRssProxyUrl(fallbackUrl) ? null : toHttpUrl(fallbackUrl);
             if (httpUrl) {
-              feed = await parser.parseURL(httpUrl);
+              feed = await parseUrl(feedUrl, httpUrl, signal);
             } else {
               throw proxyErr;
             }

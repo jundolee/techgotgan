@@ -23,6 +23,7 @@ on:
           - ingest-first
           - ingest-retry
           - ingest-catchup
+          - probe-rss-proxy
           - summaries
           - embeddings
           - indexnow
@@ -51,6 +52,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: ${{ inputs.task != 'probe-rss-proxy' }}
       - name: Select maintenance task
         id: select-task
         env:
@@ -79,10 +81,12 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          RSS_PROXY_URL: ${{ secrets.RSS_PROXY_URL }}
+          RSS_PROXY_URL: ${{ vars.RSS_PROXY_URL }}
+          RSS_PROXY_TOKEN: ${{ secrets.RSS_PROXY_TOKEN }}
           OPENAI_SUMMARY_ENABLED: ${{ vars.OPENAI_SUMMARY_ENABLED || 'false' }}
           MIRROR_THUMBNAILS_ENABLED: "false"
-          FAST_INGEST_SWEEP: ${{ github.event_name == 'workflow_dispatch' }}
+          INGESTION_TIMING_SOURCE_IDS: "36bb1622-50a9-4dd1-8524-192c11716224,d7cedc18-30c3-4c37-98ce-4997972093eb"
+          FAST_INGEST_SWEEP: "true"
         run: |
           if [ "$FAST_INGEST_SWEEP" = "true" ]; then
             npm run cron:ingest -- first --fast
@@ -94,21 +98,31 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          RSS_PROXY_URL: ${{ secrets.RSS_PROXY_URL }}
+          RSS_PROXY_URL: ${{ vars.RSS_PROXY_URL }}
+          RSS_PROXY_TOKEN: ${{ secrets.RSS_PROXY_TOKEN }}
           OPENAI_SUMMARY_ENABLED: ${{ vars.OPENAI_SUMMARY_ENABLED || 'false' }}
           MIRROR_THUMBNAILS_ENABLED: "false"
-          FAST_INGEST_SWEEP: ${{ github.event_name == 'workflow_dispatch' || steps.select-task.outputs.task == 'ingest-catchup' }}
+          INGESTION_TIMING_SOURCE_IDS: "36bb1622-50a9-4dd1-8524-192c11716224,d7cedc18-30c3-4c37-98ce-4997972093eb"
+          FAST_INGEST_SWEEP: "true"
         run: |
           if [ "$FAST_INGEST_SWEEP" = "true" ]; then
             npm run cron:ingest -- retry --fast
           else
             npm run cron:ingest -- retry
           fi
+      - name: Probe authenticated RSS proxy
+        if: ${{ steps.select-task.outputs.task == 'probe-rss-proxy' }}
+        env:
+          RSS_PROXY_URL: ${{ vars.RSS_PROXY_URL }}
+          RSS_PROXY_TOKEN: ${{ secrets.RSS_PROXY_TOKEN }}
+        run: node scripts/probe-rss-proxy.mjs
       - name: Run summary worker
         if: ${{ steps.select-task.outputs.task == 'summaries' && vars.OPENAI_SUMMARY_ENABLED == 'true' }}
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          RSS_PROXY_URL: ${{ vars.RSS_PROXY_URL }}
+          RSS_PROXY_TOKEN: ${{ secrets.RSS_PROXY_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_SUMMARY_ENABLED: "true"
         run: |
