@@ -82,12 +82,15 @@ export function classifyArticleWithRules(title: string, excerpt: string | null):
 
   // 1. AI / ML
   if (
-    /(llm|gpt|claude|openai|gemini|rag|prompt|agent|에이전트|openclaw|ralph loop|생성형|머신러닝|딥러닝|pytorch|tensorflow|transformer|embedding|vector|semantic search|langchain|ollama)/i.test(
+    /(\bai\b|인공지능|llm|gpt|claude|openai|gemini|rag|prompt|agent|에이전트|openclaw|ralph loop|생성형|머신러닝|딥러닝|pytorch|tensorflow|transformer|embedding|vector|semantic search|langchain|ollama)/i.test(
       text
     )
   ) {
     const tags: string[] = [];
+    if (/\bai\b|인공지능/i.test(text)) tags.push("ai");
     if (/llm|gpt|claude|openai/i.test(text)) tags.push("llm");
+    if (/\bgpu\b/i.test(text)) tags.push("gpu");
+    if (/data center|datacenter|데이터센터|cooling tower|냉각탑/i.test(text)) tags.push("infrastructure");
     if (/rag|embedding|vector|semantic search/i.test(text)) tags.push("rag");
     if (/agent|에이전트|openclaw|ralph loop/i.test(text)) tags.push("agent");
     return { category: "ai_ml", tags: tags.length > 0 ? tags : ["ai"] };
@@ -95,20 +98,20 @@ export function classifyArticleWithRules(title: string, excerpt: string | null):
 
   // 2. Mobile
   if (
-    /(ios|swift|swiftui|android|안드로이드|kotlin|compose|flutter|플러터|react native|리액트 네이티브|app store|앱스토어)/i.test(
+    /(ios|swift|swiftui|android|안드로이드|kotlin|compose|flutter|플러터|react native|리액트 네이티브|app store|앱스토어|one ui|oneui|갤럭시|smartphone|스마트폰|모바일 앱)/i.test(
       text
     )
   ) {
     const tags: string[] = [];
     if (/ios|swift/i.test(text)) tags.push("ios");
-    if (/android|kotlin/i.test(text)) tags.push("android");
+    if (/android|kotlin|one ui|oneui|갤럭시|smartphone|스마트폰/i.test(text)) tags.push("android");
     if (/flutter|react native/i.test(text)) tags.push("cross-platform");
     return { category: "mobile", tags: tags.length > 0 ? tags : ["mobile"] };
   }
 
   // 3. DevOps / Infra
   if (
-    /(kubernetes|k8s|쿠버네티스|eks|gke|aks|docker|도커|aws|gcp|terraform|테라폼|ci\/cd|github actions|argo|helm|sre|모니터링|grafana|prometheus|보안|security|vpc|nginx)/i.test(
+    /(kubernetes|k8s|쿠버네티스|eks|gke|aks|docker|도커|aws|gcp|gpu|terraform|테라폼|ci\/cd|github actions|argo|helm|sre|모니터링|grafana|prometheus|보안|security|vpc|nginx|data center|datacenter|데이터센터|cooling tower|냉각탑|observability|관측 가능성|oxlint|knip|eslint|linter|\blint\b|정적 분석|devtools)/i.test(
       text
     )
   ) {
@@ -116,7 +119,11 @@ export function classifyArticleWithRules(title: string, excerpt: string | null):
     if (/k8s|kubernetes|쿠버네티스|eks|gke|aks/i.test(text)) tags.push("k8s");
     if (/docker|도커/i.test(text)) tags.push("docker");
     if (/aws|gcp/i.test(text)) tags.push("cloud");
+    if (/\bgpu\b/i.test(text)) tags.push("gpu");
     if (/ci\/cd|github actions/i.test(text)) tags.push("cicd");
+    if (/data center|datacenter|데이터센터|cooling tower|냉각탑/i.test(text)) tags.push("infrastructure");
+    if (/observability|관측 가능성/i.test(text)) tags.push("observability");
+    if (/oxlint|knip|eslint|linter|\blint\b|정적 분석|devtools/i.test(text)) tags.push("devtools");
     return { category: "devops", tags: tags.length > 0 ? tags : ["infra"] };
   }
 
@@ -135,7 +142,7 @@ export function classifyArticleWithRules(title: string, excerpt: string | null):
 
   // 5. Frontend
   if (
-    /(react|리액트|next\.?js|vue|svelte|css|tailwind|html|javascript|자바스크립트|typescript|타입스크립트|web performance|웹 성능|브라우저|canvas|webgl|webpack|vite|rollup|turbopack|ui\/ux|design system|디자인 시스템)/i.test(
+    /(react|리액트|next\.?js|vue|svelte|css|tailwind|html|javascript|자바스크립트|typescript|타입스크립트|web performance|웹 성능|브라우저|canvas|webgl|webpack|vite|rollup|turbopack|ui\/ux|\bui\b|user interface|font|typography|서체|글꼴|home screen|홈 화면|voiceover|ascii|image processing|image-to-text|문자 그래픽|디자인 시스템)/i.test(
       text
     )
   ) {
@@ -144,6 +151,9 @@ export function classifyArticleWithRules(title: string, excerpt: string | null):
     else if (/react|리액트/i.test(text)) tags.push("react");
     if (/typescript|타입스크립트/i.test(text)) tags.push("typescript");
     if (/css|tailwind/i.test(text)) tags.push("css");
+    if (/\bui\b|ui\/ux|user interface|home screen|홈 화면|voiceover/i.test(text)) tags.push("ui");
+    if (/font|typography|서체|글꼴/i.test(text)) tags.push("typography");
+    if (/ascii|image processing|image-to-text|문자 그래픽/i.test(text)) tags.push("graphics");
     return { category: "frontend", tags: tags.length > 0 ? tags : ["web"] };
   }
 
@@ -172,6 +182,10 @@ export function classifyArticleWithRules(title: string, excerpt: string | null):
     if (/문화|팀/i.test(text)) tags.push("culture");
     if (/애자일|스크럼/i.test(text)) tags.push("agile");
     return { category: "culture", tags: tags.length > 0 ? tags : ["career"] };
+  }
+
+  if (/(matrix multiplication|행렬 곱셈|computational complexity|계산 복잡도|big-o|알고리즘)/i.test(text)) {
+    return { category: "general", tags: ["algorithm"] };
   }
 
   return { category: "general", tags: [] };
