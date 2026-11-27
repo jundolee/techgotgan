@@ -15,6 +15,7 @@
     "cron:summaries": "tsx --conditions react-server scripts/run-summary-worker.ts",
     "cron:embeddings": "tsx --conditions react-server scripts/run-embedding-worker.ts",
     "diagnose:ingestion-sources": "tsx --conditions react-server scripts/inspect-ingestion-sources.ts",
+    "backfill:missing-tags": "tsx --conditions react-server scripts/backfill-missing-article-tags.ts",
     "repair:d2-source": "tsx --conditions react-server scripts/repair-d2-source.ts",
     "cleanup:orphan-thumbnails": "tsx --conditions react-server scripts/cleanup-orphan-thumbnails.ts",
     "backfill:categories": "npx tsx scripts/backfill-categories.ts",

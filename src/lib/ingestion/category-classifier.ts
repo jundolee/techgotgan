@@ -26,6 +26,17 @@ const VALID_CATEGORIES: ArticleCategory[] = [
   "general",
 ];
 
+const CATEGORY_FALLBACK_TAGS: Record<ArticleCategory, string[]> = {
+  frontend: ["web"],
+  backend: ["backend"],
+  ai_ml: ["ai"],
+  devops: ["infra"],
+  mobile: ["mobile"],
+  data: ["data"],
+  culture: ["career"],
+  general: [],
+};
+
 const RESPONSE_SCHEMA = {
   type: "object",
   properties: {
@@ -71,14 +82,14 @@ export function classifyArticleWithRules(title: string, excerpt: string | null):
 
   // 1. AI / ML
   if (
-    /(llm|gpt|claude|openai|gemini|rag|prompt|agent|에이전트|생성형|머신러닝|딥러닝|pytorch|tensorflow|transformer|embedding|vector|langchain|ollama)/i.test(
+    /(llm|gpt|claude|openai|gemini|rag|prompt|agent|에이전트|openclaw|ralph loop|생성형|머신러닝|딥러닝|pytorch|tensorflow|transformer|embedding|vector|semantic search|langchain|ollama)/i.test(
       text
     )
   ) {
     const tags: string[] = [];
     if (/llm|gpt|claude|openai/i.test(text)) tags.push("llm");
-    if (/rag|embedding|vector/i.test(text)) tags.push("rag");
-    if (/agent|에이전트/i.test(text)) tags.push("agent");
+    if (/rag|embedding|vector|semantic search/i.test(text)) tags.push("rag");
+    if (/agent|에이전트|openclaw|ralph loop/i.test(text)) tags.push("agent");
     return { category: "ai_ml", tags: tags.length > 0 ? tags : ["ai"] };
   }
 
@@ -97,12 +108,12 @@ export function classifyArticleWithRules(title: string, excerpt: string | null):
 
   // 3. DevOps / Infra
   if (
-    /(kubernetes|k8s|쿠버네티스|docker|도커|aws|gcp|terraform|테라폼|ci\/cd|github actions|argo|helm|sre|모니터링|grafana|prometheus|보안|security|vpc|nginx)/i.test(
+    /(kubernetes|k8s|쿠버네티스|eks|gke|aks|docker|도커|aws|gcp|terraform|테라폼|ci\/cd|github actions|argo|helm|sre|모니터링|grafana|prometheus|보안|security|vpc|nginx)/i.test(
       text
     )
   ) {
     const tags: string[] = [];
-    if (/k8s|kubernetes|쿠버네티스/i.test(text)) tags.push("k8s");
+    if (/k8s|kubernetes|쿠버네티스|eks|gke|aks/i.test(text)) tags.push("k8s");
     if (/docker|도커/i.test(text)) tags.push("docker");
     if (/aws|gcp/i.test(text)) tags.push("cloud");
     if (/ci\/cd|github actions/i.test(text)) tags.push("cicd");
@@ -138,7 +149,7 @@ export function classifyArticleWithRules(title: string, excerpt: string | null):
 
   // 6. Backend
   if (
-    /(spring|스프링|java|자바|jpa|hibernate|node\.?js|nestjs|nest|express|golang|고랭|django|fastapi|python|파이썬|mysql|postgresql|redis|mongodb|rdbms|트랜잭션|database|데이터베이스|microservice|msa|아키텍처|architecture|api|grpc|rest api)/i.test(
+    /(spring|스프링|java|자바|jpa|hibernate|node\.?js|nestjs|nest|express|golang|고랭|django|fastapi|python|파이썬|mysql|postgresql|redis|mongodb|rdbms|트랜잭션|database|데이터베이스|microservice|msa|파티셔닝|partitioning|sharding|샤딩|아키텍처|architecture|api|grpc|rest api)/i.test(
       text
     )
   ) {
@@ -164,6 +175,24 @@ export function classifyArticleWithRules(title: string, excerpt: string | null):
   }
 
   return { category: "general", tags: [] };
+}
+
+/** Keep inferred tags useful when an AI response omits them for a specific category. */
+export function resolveArticleTags(
+  category: ArticleCategory,
+  candidateTags: readonly string[] | null | undefined,
+  title: string,
+  excerpt: string | null,
+): string[] {
+  const normalizedTags = [...new Set((candidateTags ?? [])
+    .map((tag) => tag.toLowerCase().trim().replace(/[^a-z0-9\-.]/g, ""))
+    .filter(Boolean))].slice(0, 3);
+  if (normalizedTags.length > 0) return normalizedTags;
+
+  const ruleTags = classifyArticleWithRules(title, excerpt).tags;
+  if (ruleTags.length > 0) return ruleTags.slice(0, 3);
+
+  return CATEGORY_FALLBACK_TAGS[category] ?? [];
 }
 
 /**
@@ -247,9 +276,8 @@ export async function classifyArticlesBatch(
       const cat = VALID_CATEGORIES.includes(r.category as ArticleCategory)
         ? (r.category as ArticleCategory)
         : "general";
-      const tags = Array.isArray(r.tags)
-        ? r.tags.map((t) => t.toLowerCase().trim().replace(/[^a-z0-9\-.]/g, "")).filter(Boolean)
-        : [];
+      const item = items[r.index];
+      const tags = resolveArticleTags(cat, Array.isArray(r.tags) ? r.tags : [], item?.title ?? "", item?.excerpt ?? null);
       resultMap.set(r.index, { category: cat, tags });
     }
 
