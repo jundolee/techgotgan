@@ -23,6 +23,7 @@ on:
           - ingest-first
           - ingest-retry
           - ingest-catchup
+          - probe-rss-proxy
           - summaries
           - embeddings
           - indexnow
@@ -51,6 +52,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: ${{ inputs.task != 'probe-rss-proxy' }}
       - name: Select maintenance task
         id: select-task
         env:
@@ -106,6 +108,12 @@ jobs:
           else
             npm run cron:ingest -- retry
           fi
+      - name: Probe authenticated RSS proxy
+        if: ${{ steps.select-task.outputs.task == 'probe-rss-proxy' }}
+        env:
+          RSS_PROXY_URL: ${{ vars.RSS_PROXY_URL }}
+          RSS_PROXY_TOKEN: ${{ secrets.RSS_PROXY_TOKEN }}
+        run: node scripts/probe-rss-proxy.mjs
       - name: Run summary worker
         if: ${{ steps.select-task.outputs.task == 'summaries' && vars.OPENAI_SUMMARY_ENABLED == 'true' }}
         env:
