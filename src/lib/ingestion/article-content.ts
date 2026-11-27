@@ -5,7 +5,7 @@ import { request as httpsRequest } from "node:https";
 import { isIP } from "node:net";
 import * as cheerio from "cheerio";
 import { INGESTION_USER_AGENT } from "./user-agent";
-import { getProxiedUrl, isBlockedDomain } from "./feed-proxy";
+import { getProxyAuthorizationHeaders, getProxiedUrl, isBlockedDomain } from "./feed-proxy";
 
 const MAX_RESPONSE_BYTES = 1_500_000;
 // Keep normal technical articles whole (including the 28k-char example verified during review).
@@ -130,7 +130,11 @@ async function requestPinnedUrl(rawUrl: string, deadline: number): Promise<Singl
   return new Promise((resolve, reject) => {
     const req = request(url, {
       method: "GET",
-      headers: { "User-Agent": INGESTION_USER_AGENT, Accept: "text/html,application/xhtml+xml" },
+      headers: {
+        "User-Agent": INGESTION_USER_AGENT,
+        Accept: "text/html,application/xhtml+xml",
+        ...getProxyAuthorizationHeaders(url.toString()),
+      },
       lookup: pinnedLookup(address, family),
       timeout: remainingMs,
     }, async (response) => {

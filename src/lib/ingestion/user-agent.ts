@@ -14,3 +14,6 @@ export const INGESTION_USER_AGENT =
  * 헤드리스 브라우저 없이 이 케이스를 해결하는 저비용 폴백.
  */
 export const BOT_USER_AGENT = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+
+/** Identifies the RSS proxy without impersonating a third-party crawler. */
+export const RSS_PROXY_USER_AGENT = "TechgotganRSS/1.0 (+https://www.techgotgan.co.kr)";
