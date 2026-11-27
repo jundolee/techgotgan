@@ -15,7 +15,8 @@ import { readWithTransientSupabaseRetry } from "./retry-supabase-read";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
 const ARTICLE_CONCURRENCY = 4;
-const ARTICLE_LOOKUP_BATCH_SIZE = 100;
+// Keep PostgREST `in` filters short enough for feed URLs with long slugs.
+const ARTICLE_LOOKUP_BATCH_SIZE = 25;
 const INGESTION_TIMING_SOURCE_IDS = new Set(
   (process.env.INGESTION_TIMING_SOURCE_IDS ?? "")
     .split(",")
@@ -216,6 +217,8 @@ export async function ingestSource(
               .eq("source_id", source.id)
               .in("dedup_key", batch.map(({ article }) => article.dedupKey)),
             "Read existing article dedup keys",
+            undefined,
+            signal,
           ),
         ),
         withSourceStageTiming(
@@ -226,6 +229,8 @@ export async function ingestSource(
               .select("id,canonical_url,discovered_at")
               .in("canonical_url", batch.map(({ canonicalUrl }) => canonicalUrl)),
             "Read existing canonical article URLs",
+            undefined,
+            signal,
           ),
         ),
       ]);
