@@ -10,7 +10,7 @@ import type { FeedType, NormalizedArticle, ScrapeConfig } from "./types";
 import { isArticleSummaryEnabled, isArticleSummaryQueueEnabled } from "./article-summary";
 import { enqueuePendingSummaryJobs, getRecentSummaryRetryIds } from "./summary-job-queue";
 import { summarizeArticlesDirect } from "./run-summary-jobs";
-import { IngestionInfrastructureError } from "./error-message";
+import { getIngestionErrorMessage, IngestionInfrastructureError } from "./error-message";
 import { readWithTransientSupabaseRetry } from "./retry-supabase-read";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
@@ -50,6 +50,7 @@ async function withSourceStageTiming<T>(
       stage,
       durationMs: Date.now() - startedAt,
       errorName: error instanceof Error ? error.name : "UnknownError",
+      error: getIngestionErrorMessage(error),
     }));
     throw error;
   }
@@ -206,18 +207,26 @@ export async function ingestSource(
   await withSourceStageTiming(source.id, "read_existing_articles", () =>
     mapWithConcurrency(candidateBatches, 2, async (batch) => {
       const [dedupRows, canonicalRows] = await Promise.all([
-        readWithTransientSupabaseRetry(
-          () => supabase.from("articles")
-            .select("id,dedup_key,discovered_at")
-            .eq("source_id", source.id)
-            .in("dedup_key", batch.map(({ article }) => article.dedupKey)),
-          "Read existing article dedup keys",
+        withSourceStageTiming(
+          source.id,
+          "read_source_dedup_keys",
+          () => readWithTransientSupabaseRetry(
+            () => supabase.from("articles")
+              .select("id,dedup_key,discovered_at")
+              .eq("source_id", source.id)
+              .in("dedup_key", batch.map(({ article }) => article.dedupKey)),
+            "Read existing article dedup keys",
+          ),
         ),
-        readWithTransientSupabaseRetry(
-          () => supabase.from("articles")
-            .select("id,canonical_url,discovered_at")
-            .in("canonical_url", batch.map(({ canonicalUrl }) => canonicalUrl)),
-          "Read existing canonical article URLs",
+        withSourceStageTiming(
+          source.id,
+          "read_canonical_urls",
+          () => readWithTransientSupabaseRetry(
+            () => supabase.from("articles")
+              .select("id,canonical_url,discovered_at")
+              .in("canonical_url", batch.map(({ canonicalUrl }) => canonicalUrl)),
+            "Read existing canonical article URLs",
+          ),
         ),
       ]);
 
