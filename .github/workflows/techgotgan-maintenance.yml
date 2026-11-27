@@ -83,7 +83,7 @@ jobs:
           RSS_PROXY_TOKEN: ${{ secrets.RSS_PROXY_TOKEN }}
           OPENAI_SUMMARY_ENABLED: ${{ vars.OPENAI_SUMMARY_ENABLED || 'false' }}
           MIRROR_THUMBNAILS_ENABLED: "false"
-          FAST_INGEST_SWEEP: ${{ github.event_name == 'workflow_dispatch' }}
+          FAST_INGEST_SWEEP: "true"
         run: |
           if [ "$FAST_INGEST_SWEEP" = "true" ]; then
             npm run cron:ingest -- first --fast
@@ -99,7 +99,7 @@ jobs:
           RSS_PROXY_TOKEN: ${{ secrets.RSS_PROXY_TOKEN }}
           OPENAI_SUMMARY_ENABLED: ${{ vars.OPENAI_SUMMARY_ENABLED || 'false' }}
           MIRROR_THUMBNAILS_ENABLED: "false"
-          FAST_INGEST_SWEEP: ${{ github.event_name == 'workflow_dispatch' || steps.select-task.outputs.task == 'ingest-catchup' }}
+          FAST_INGEST_SWEEP: "true"
         run: |
           if [ "$FAST_INGEST_SWEEP" = "true" ]; then
             npm run cron:ingest -- retry --fast
