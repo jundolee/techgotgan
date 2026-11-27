@@ -5,7 +5,7 @@ import { createSupabaseServiceFetch } from "./service-key-headers";
 
 // 서버 사이드 전용 클라이언트 (service role 키 사용, RLS 우회).
 // 클라이언트 컴포넌트에서 절대 import하지 않는다 — "server-only"가 실수로 그럴 경우 빌드 타임에 에러를 낸다.
-export function createServiceClient() {
+export function createServiceClient(requestSignal?: AbortSignal) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = getSupabaseServiceKey();
 
@@ -15,7 +15,7 @@ export function createServiceClient() {
     );
   }
 
-  const serviceFetch = createSupabaseServiceFetch(serviceKey);
+  const serviceFetch = createSupabaseServiceFetch(serviceKey, fetch, undefined, requestSignal);
   return createClient(url, serviceKey, {
     auth: { persistSession: false },
     // Per-user state such as read_status must reflect a write from the previous request.

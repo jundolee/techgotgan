@@ -31,15 +31,18 @@ interface SourceResult {
 
 async function ingestOne(client: Client, source: SourceWithCheck): Promise<SourceResult> {
   let timeout: ReturnType<typeof setTimeout> | undefined;
+  let sourceTimeout: IngestionSourceTimeoutError | undefined;
+  const sourceAbortController = new AbortController();
   let sourceIngestCompleted = false;
   try {
     const result = await Promise.race([
-      ingestSource(client, source),
+      ingestSource(createServiceClient(sourceAbortController.signal), source, sourceAbortController.signal),
       new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => reject(new IngestionSourceTimeoutError(
-          source.id,
-          SOURCE_TIMEOUT_MS,
-        )), SOURCE_TIMEOUT_MS);
+        timeout = setTimeout(() => {
+          sourceTimeout = new IngestionSourceTimeoutError(source.id, SOURCE_TIMEOUT_MS);
+          sourceAbortController.abort(sourceTimeout);
+          reject(sourceTimeout);
+        }, SOURCE_TIMEOUT_MS);
       }),
     ]);
     sourceIngestCompleted = true;
@@ -48,6 +51,7 @@ async function ingestOne(client: Client, source: SourceWithCheck): Promise<Sourc
       .update({ last_checked_at: checkedAt, last_success_at: checkedAt, last_error: null })
       .eq("id", source.id)
       .select("id")
+      .abortSignal(AbortSignal.timeout(5_000))
       .single();
     if (error) throw new Error(`Failed to record successful check: ${getIngestionErrorMessage(error)}`);
     return {
@@ -57,7 +61,9 @@ async function ingestOne(client: Client, source: SourceWithCheck): Promise<Sourc
       ...result,
     };
   } catch (cause) {
-    const message = getIngestionErrorMessage(cause);
+    const recordedCause = sourceTimeout ?? cause;
+    if (!sourceAbortController.signal.aborted) sourceAbortController.abort(recordedCause);
+    const message = getIngestionErrorMessage(recordedCause);
     let combined = message;
     let errorRecorded = false;
     try {
@@ -65,6 +71,7 @@ async function ingestOne(client: Client, source: SourceWithCheck): Promise<Sourc
         .update({ last_checked_at: new Date().toISOString(), last_error: message })
         .eq("id", source.id)
         .select("id")
+        .abortSignal(AbortSignal.timeout(5_000))
         .single();
       if (error) combined += `; failed to record source error: ${getIngestionErrorMessage(error)}`;
       else errorRecorded = true;
@@ -73,10 +80,11 @@ async function ingestOne(client: Client, source: SourceWithCheck): Promise<Sourc
     }
     const siteUrl = sanitizeDiagnosticError(source.site_url) ?? "[invalid URL]";
     console.error(`Cron ingestion failed for ${source.id} (${siteUrl}): ${combined}`);
-    const infrastructureFailure = isIngestionInfrastructureFailure(cause, sourceIngestCompleted, errorRecorded);
+    const infrastructureFailure = isIngestionInfrastructureFailure(recordedCause, sourceIngestCompleted, errorRecorded);
     return { sourceId: source.id, siteUrl, ok: false, error: combined, errorRecorded, infrastructureFailure };
   } finally {
     if (timeout) clearTimeout(timeout);
+    if (!sourceAbortController.signal.aborted) sourceAbortController.abort();
   }
 }
 
@@ -92,7 +100,8 @@ export async function runCronShard(shard: number, sweep: "first" | "retry"): Pro
       .eq("is_active", true)
       .eq("cron_shard", shard)
       .order("id", { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1);
+      .range(offset, offset + PAGE_SIZE - 1)
+      .abortSignal(AbortSignal.timeout(15_000));
     if (error) {
       const message = getIngestionErrorMessage(error);
       console.error(`Cron ${sweep} shard ${shard} source query failed: ${message}`);

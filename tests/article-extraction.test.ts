@@ -1,8 +1,40 @@
 import assert from "node:assert/strict";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { test } from "node:test";
-import { extractFeedExcerpt } from "../src/lib/ingestion/parse-feed";
+import { extractFeedExcerpt, parseFeed } from "../src/lib/ingestion/parse-feed";
 import { extractMainText } from "../src/lib/ingestion/article-content";
 import { ARTICLE_SUMMARY_MIN_INPUT_CHARS } from "../src/lib/ingestion/article-summary";
+
+test("parseFeed aborts a stalled HTTP request when the source signal is cancelled", async () => {
+  let responseClosed = false;
+  const server = createServer((_request, response) => {
+    response.on("close", () => { responseClosed = true; });
+  });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+
+  const responseClosedEvent = new Promise<void>((resolve) => {
+    server.once("request", (_request, response) => response.once("close", resolve));
+  });
+
+  try {
+    const address = server.address() as AddressInfo;
+    const controller = new AbortController();
+    const feedRequest = parseFeed(`http://127.0.0.1:${address.port}/feed`, controller.signal);
+    await new Promise<void>((resolve) => server.once("request", () => resolve()));
+    controller.abort(new Error("source timeout"));
+
+    await assert.rejects(feedRequest);
+    await responseClosedEvent;
+    assert.equal(responseClosed, true);
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});
 
 test("extractFeedExcerpt extracts from contentSnippet when available", () => {
   const text = "A".repeat(120);

@@ -6,6 +6,9 @@ on:
     - cron: "15 23 * * *"
     - cron: "45 23 * * *"
     - cron: "47 0 * * *"
+    - cron: "17 1 * * *"
+    - cron: "17 2 * * *"
+    - cron: "17 3 * * *"
     - cron: "45 5 * * *"
     - cron: "45 11 * * *"
     - cron: "45 17 * * *"
@@ -34,7 +37,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ (github.event.schedule == '15 22 * * *' || github.event.schedule == '15 23 * * *' || github.event.schedule == '47 0 * * *' || inputs.task == 'ingest-first' || inputs.task == 'ingest-retry' || inputs.task == 'ingest-catchup') && 'techgotgan-ingestion' || format('techgotgan-maintenance-{0}', github.event.schedule || inputs.task || 'manual') }}
+  group: ${{ (github.event.schedule == '15 22 * * *' || github.event.schedule == '15 23 * * *' || github.event.schedule == '47 0 * * *' || github.event.schedule == '17 1 * * *' || github.event.schedule == '17 2 * * *' || github.event.schedule == '17 3 * * *' || inputs.task == 'ingest-first' || inputs.task == 'ingest-retry' || inputs.task == 'ingest-catchup') && 'techgotgan-ingestion' || format('techgotgan-maintenance-{0}', github.event.schedule || inputs.task || 'manual') }}
   cancel-in-progress: false
 
 jobs:
@@ -62,6 +65,9 @@ jobs:
               "15 22 * * *") task="ingest-first" ;;
               "15 23 * * *") task="ingest-retry" ;;
               "47 0 * * *") task="ingest-catchup" ;;
+              "17 1 * * *") task="ingest-catchup" ;;
+              "17 2 * * *") task="ingest-catchup" ;;
+              "17 3 * * *") task="ingest-catchup" ;;
               "15 0 * * *") task="embeddings" ;;
               "30 0 * * *") task="indexnow" ;;
               *) task="summaries" ;;

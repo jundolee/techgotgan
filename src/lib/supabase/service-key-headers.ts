@@ -35,6 +35,7 @@ export function createSupabaseServiceFetch(
   key: string,
   fetchImplementation: typeof fetch = fetch,
   delay: RetryDelay = defaultDelay,
+  signal?: AbortSignal,
 ): typeof fetch {
   return async (input, init) => {
     const requestHeaders = input instanceof Request ? input.headers : undefined;
@@ -46,10 +47,17 @@ export function createSupabaseServiceFetch(
 
     const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
     const retryableRead = method === "GET" || method === "HEAD";
+    const requestSignal = signal && init?.signal
+      ? AbortSignal.any([signal, init.signal])
+      : signal ?? init?.signal;
     for (let attempt = 0; ; attempt += 1) {
       let response: Response;
       try {
-        response = await fetchImplementation(input, { ...init, headers });
+        response = await fetchImplementation(input, {
+          ...init,
+          headers,
+          ...(requestSignal ? { signal: requestSignal } : {}),
+        });
       } catch (cause) {
         if (!retryableRead || !isTransientTransportFailure(cause) || attempt >= READ_RETRY_DELAYS_MS.length) {
           throw cause;

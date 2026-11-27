@@ -111,6 +111,9 @@ test("GitHub Actions schedules every ingestion shard and keeps the retry sweep",
   assert.match(workflow, /cron: "15 23 \* \* \*"/);
   assert.match(workflow, /cron: "45 23 \* \* \*"/);
   assert.match(workflow, /cron: "47 0 \* \* \*"/);
+  assert.match(workflow, /cron: "17 1 \* \* \*"/);
+  assert.match(workflow, /cron: "17 2 \* \* \*"/);
+  assert.match(workflow, /cron: "17 3 \* \* \*"/);
   assert.match(workflow, /cron: "45 5 \* \* \*"/);
   assert.match(workflow, /cron: "45 11 \* \* \*"/);
   assert.match(workflow, /cron: "45 17 \* \* \*"/);

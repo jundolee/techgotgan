@@ -127,6 +127,30 @@ test("Supabase client errors are not retried", async () => {
   assert.equal(attempts, 1);
 });
 
+test("Supabase transport aborts in-flight requests when the source signal is cancelled", async () => {
+  const sourceController = new AbortController();
+  let receivedSignal: AbortSignal | undefined;
+  const serviceFetch = createSupabaseServiceFetch(
+    "sb_secret_test-key",
+    async (_input, init) => new Promise<Response>((_, reject) => {
+      receivedSignal = init?.signal ?? undefined;
+      receivedSignal?.addEventListener(
+        "abort",
+        () => reject(new DOMException("Request aborted", "AbortError")),
+        { once: true },
+      );
+    }),
+    async () => {},
+    sourceController.signal,
+  );
+
+  const request = serviceFetch("https://project.supabase.co/rest/v1/articles");
+  sourceController.abort(new Error("source timeout"));
+
+  await assert.rejects(request, /Request aborted/);
+  assert.equal(receivedSignal?.aborted, true);
+});
+
 test("new secret key takes precedence while legacy service-role remains a fallback", () => {
   const previousSecret = process.env.SUPABASE_SECRET_KEY;
   const previousLegacy = process.env.SUPABASE_SERVICE_ROLE_KEY;

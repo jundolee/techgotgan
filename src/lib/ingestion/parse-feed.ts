@@ -8,13 +8,20 @@ import { getProxiedUrl, isBlockedDomain, toHttpUrl, isSslError } from "./feed-pr
 // d2.naver.com/d2.atom처럼 Accept 헤더가 없으면 406(Not Acceptable)으로 거부하는 서버가 있어
 // (discoverFeed의 fetchText는 Accept:*/*를 이미 보내 문제없이 통과했지만, rss-parser 기본값에는
 // 없었음) 명시적으로 지정해 같은 문제를 피한다 (docs/decisions.md 참고).
-const parser = new Parser({
-  timeout: 10_000,
-  headers: {
-    "User-Agent": INGESTION_USER_AGENT,
-    Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
-  },
-});
+function createParser(signal?: AbortSignal): Parser {
+  const requestTimeoutSignal = AbortSignal.timeout(10_000);
+  const requestSignal = signal
+    ? AbortSignal.any([signal, requestTimeoutSignal])
+    : requestTimeoutSignal;
+  return new Parser({
+    timeout: 10_000,
+    requestOptions: { signal: requestSignal },
+    headers: {
+      "User-Agent": INGESTION_USER_AGENT,
+      Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+    },
+  });
+}
 
 function resolveUrl(raw: string, base: string): string | null {
   try {
@@ -155,7 +162,8 @@ export interface ParsedFeed {
 /**
  * RSS/Atom 피드 URL을 받아 목록 메타데이터로 정규화한다. architecture.md 3절 "RSS/Atom 파싱" 참고.
  */
-export async function parseFeed(feedUrl: string): Promise<ParsedFeed> {
+export async function parseFeed(feedUrl: string, signal?: AbortSignal): Promise<ParsedFeed> {
+  const parser = createParser(signal);
   const shouldUseProxy = isBlockedDomain(feedUrl);
   const targetUrl = shouldUseProxy ? getProxiedUrl(feedUrl) : feedUrl;
 

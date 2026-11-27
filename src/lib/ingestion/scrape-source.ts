@@ -36,11 +36,17 @@ export function extractDateFromUrl(url: string): string | null {
  * 검색엔진 크롤러 UA에 미리 렌더링된 HTML을 내려주는 사이트는 `config.useBotUserAgent`로
  * 예외적으로 지원한다 (docs/decisions.md 참고, 헤드리스 브라우저 없이 해결하는 저비용 폴백).
  */
-export async function scrapeSource(siteUrl: string, config: ScrapeConfig): Promise<NormalizedArticle[]> {
+export async function scrapeSource(
+  siteUrl: string,
+  config: ScrapeConfig,
+  signal?: AbortSignal,
+): Promise<NormalizedArticle[]> {
   const userAgent = config.useBotUserAgent ? BOT_USER_AGENT : INGESTION_USER_AGENT;
+  const timeoutSignal = AbortSignal.timeout(FETCH_TIMEOUT_MS);
+  const requestSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
   const res = await fetch(siteUrl, {
     headers: { "User-Agent": userAgent },
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    signal: requestSignal,
   });
   if (!res.ok) {
     throw new Error(`스크래핑 대상 페이지 요청 실패: ${res.status} ${siteUrl}`);

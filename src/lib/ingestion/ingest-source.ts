@@ -104,12 +104,12 @@ export async function processInsertedArticleMetadata(
   ]);
 }
 
-export async function fetchArticlesForSource(source: SourceRow): Promise<NormalizedArticle[]> {
+export async function fetchArticlesForSource(source: SourceRow, signal?: AbortSignal): Promise<NormalizedArticle[]> {
   if ((source.feed_type === "rss" || source.feed_type === "atom") && source.feed_url) {
-    return (await parseFeed(source.feed_url)).articles;
+    return (await parseFeed(source.feed_url, signal)).articles;
   }
   if (source.feed_type === "scrape" && source.scrape_config) {
-    return scrapeSource(source.site_url, source.scrape_config);
+    return scrapeSource(source.site_url, source.scrape_config, signal);
   }
   throw new Error(`소스(${source.id})의 수집 방식을 결정할 수 없습니다 (feed_type=${source.feed_type})`);
 }
@@ -130,9 +130,10 @@ export async function fetchArticlesForSource(source: SourceRow): Promise<Normali
  */
 export async function ingestSource(
   supabase: SupabaseClient,
-  source: SourceRow
+  source: SourceRow,
+  signal?: AbortSignal,
 ): Promise<{ found: number; inserted: number; duplicates: number }> {
-  const articles = await fetchArticlesForSource(source);
+  const articles = await fetchArticlesForSource(source, signal);
   if (articles.length === 0) {
     return { found: 0, inserted: 0, duplicates: 0 };
   }
