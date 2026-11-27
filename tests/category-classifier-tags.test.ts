@@ -10,6 +10,26 @@ test("recognizes EKS as a Kubernetes tag", () => {
   assert.deepEqual(resolveArticleTags("devops", [], "AWS EKS blue-green deployment", null), ["k8s", "cloud"]);
 });
 
+test("recognizes One UI articles as mobile", () => {
+  assert.deepEqual(resolveArticleTags("general", [], "Samsung One UI 9.5", "A camera feature update"), ["android"]);
+});
+
+test("adds UI and typography tags to font articles", () => {
+  assert.deepEqual(resolveArticleTags("general", [], "Allo, a free UI font", null), ["ui", "typography"]);
+});
+
+test("tags data-center GPU coverage with infrastructure terms", () => {
+  assert.deepEqual(resolveArticleTags("general", [], "GPU infrastructure and data center supply", null), ["gpu", "infrastructure"]);
+});
+
+test("tags article classification tooling", () => {
+  assert.deepEqual(resolveArticleTags("general", [], "Oxlint and Knip checks for PR diffs", null), ["devtools"]);
+});
+
+test("tags matrix multiplication theory as an algorithm topic", () => {
+  assert.deepEqual(resolveArticleTags("general", [], "Matrix multiplication exponent reaches 9/4", null), ["algorithm"]);
+});
+
 test("uses a category fallback when a specific category has no detectable term", () => {
   assert.deepEqual(resolveArticleTags("backend", [], "A team's internal playbook", null), ["backend"]);
 });
