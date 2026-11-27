@@ -1,0 +1,7 @@
+{
+  "name": "techgotgan-rss-proxy",
+  "main": "index.ts",
+  "workers_dev": true,
+  "preview_urls": false,
+  "compatibility_date": "2026-11-27"
+}
