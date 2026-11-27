@@ -53,8 +53,13 @@ export function isCompletedWithRecordedSourceFailures(
     result.infrastructureFailures === 0 && result.remaining.length === 0;
 }
 
-export function shouldFailIngestionSweep(failedShards: number, attempted: number, succeeded: number): boolean {
-  return failedShards > 0 || (attempted > 0 && succeeded === 0);
+export function shouldFailIngestionSweep(
+  sweep: IngestionSweep,
+  failedShards: number,
+  attempted: number,
+  succeeded: number,
+): boolean {
+  return failedShards > 0 || (sweep === "first" && attempted > 0 && succeeded === 0);
 }
 
 export function getIngestionSweepPlan(value: string): {

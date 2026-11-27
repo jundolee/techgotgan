@@ -61,7 +61,7 @@ async function main() {
   if (partialShards > 0) {
     console.warn(`${recordedSourceFailures} source failure(s) were recorded in the database across ${partialShards} completed shard(s)`);
   }
-  if (shouldFailIngestionSweep(failedShards, attemptedSources, succeededSources)) {
+  if (shouldFailIngestionSweep(plan.sweep, failedShards, attemptedSources, succeededSources)) {
     throw new Error(`${failedShards} ${plan.sweep} infrastructure/incomplete shard(s); ${succeededSources}/${attemptedSources} source(s) succeeded`);
   }
 }

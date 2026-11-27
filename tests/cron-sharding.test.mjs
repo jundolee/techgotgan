@@ -90,9 +90,11 @@ test("a shard with fully attempted, recorded publisher failures is partial rathe
     remaining: [],
   }, 200), true);
   assert.equal(isSuccessfulIngestionShardResult({ ok: true }, 200), false);
-  assert.equal(shouldFailIngestionSweep(0, 85, 81), false);
-  assert.equal(shouldFailIngestionSweep(0, 4, 0), true);
-  assert.equal(shouldFailIngestionSweep(1, 85, 81), true);
+  assert.equal(shouldFailIngestionSweep("first", 0, 85, 81), false);
+  assert.equal(shouldFailIngestionSweep("first", 0, 4, 0), true);
+  assert.equal(shouldFailIngestionSweep("retry", 0, 2, 0), false);
+  assert.equal(shouldFailIngestionSweep("retry", 1, 2, 0), true);
+  assert.equal(shouldFailIngestionSweep("first", 1, 85, 81), true);
 });
 
 test("GitHub Actions schedules every ingestion shard and keeps the retry sweep", () => {
