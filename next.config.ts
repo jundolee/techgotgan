@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    agentUpgrade: "security",
+  },
   images: {
     // Article thumbnail paths are stable; cache optimized variants for a month to reduce repeat-view transfers.
     minimumCacheTTL: 2_678_400,
