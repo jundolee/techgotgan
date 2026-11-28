@@ -8,13 +8,14 @@ import { isThumbnailMirroringEnabled } from "@/lib/storage/thumbnail-policy";
 import { classifyArticlesBatch } from "./category-classifier";
 import type { FeedType, NormalizedArticle, ScrapeConfig } from "./types";
 import { isArticleSummaryEnabled, isArticleSummaryQueueEnabled } from "./article-summary";
+import { createArticleLookupBatches, createArticleLookupRpcParameters } from "./article-lookup-batches";
+import { collectArticleLookupResults } from "./article-lookup-results";
 import { enqueuePendingSummaryJobs, getRecentSummaryRetryIds } from "./summary-job-queue";
 import { summarizeArticlesDirect } from "./run-summary-jobs";
 import { IngestionInfrastructureError } from "./error-message";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
 const ARTICLE_CONCURRENCY = 4;
-const ARTICLE_LOOKUP_BATCH_SIZE = 100;
 
 interface ArticleCandidate {
   article: NormalizedArticle;
@@ -148,37 +149,20 @@ export async function ingestSource(
   const existingDedupKeys = new Set<string>();
   const existingCanonicalUrls = new Set<string>();
   const existingSummaryCandidates = new Map<string, string | null>();
-  const candidateBatches = Array.from(
-    { length: Math.ceil(candidates.length / ARTICLE_LOOKUP_BATCH_SIZE) },
-    (_, batchIndex) => candidates.slice(
-      batchIndex * ARTICLE_LOOKUP_BATCH_SIZE,
-      (batchIndex + 1) * ARTICLE_LOOKUP_BATCH_SIZE
-    )
-  );
+  const candidateBatches = createArticleLookupBatches(candidates);
 
   // Check both unique keys before requesting og:image or inserting. Repeated feed entries
   // are common, so avoid fetching each old article's page just to discover a 23505 afterward.
   await mapWithConcurrency(candidateBatches, 2, async (batch) => {
-    const [dedupResult, canonicalResult] = await Promise.all([
-      supabase.from("articles")
-        .select("id,dedup_key,discovered_at")
-        .eq("source_id", source.id)
-        .in("dedup_key", batch.map(({ article }) => article.dedupKey)),
-      supabase.from("articles")
-        .select("id,canonical_url,discovered_at")
-        .in("canonical_url", batch.map(({ canonicalUrl }) => canonicalUrl)),
-    ]);
-
-    if (dedupResult.error) throw new IngestionInfrastructureError("Read existing article dedup keys", dedupResult.error);
-    if (canonicalResult.error) throw new IngestionInfrastructureError("Read existing canonical article URLs", canonicalResult.error);
-    for (const row of dedupResult.data ?? []) {
-      existingDedupKeys.add(row.dedup_key);
-      existingSummaryCandidates.set(row.id, row.discovered_at);
-    }
-    for (const row of canonicalResult.data ?? []) {
-      existingCanonicalUrls.add(row.canonical_url);
-      existingSummaryCandidates.set(row.id, row.discovered_at);
-    }
+    const { data, error } = await supabase.rpc(
+      "lookup_article_candidates",
+      createArticleLookupRpcParameters(source.id, batch),
+    );
+    if (error) throw new IngestionInfrastructureError("Read existing article lookup keys", error);
+    const matches = collectArticleLookupResults(data ?? [], source.id);
+    for (const dedupKey of matches.dedupKeys) existingDedupKeys.add(dedupKey);
+    for (const canonicalUrl of matches.canonicalUrls) existingCanonicalUrls.add(canonicalUrl);
+    for (const [id, discoveredAt] of matches.summaryCandidates) existingSummaryCandidates.set(id, discoveredAt);
   });
 
   const seenDedupKeys = new Set<string>();
@@ -242,6 +226,7 @@ export async function ingestSource(
   const insertedRows = insertResults.filter(
     (r): r is { duplicate: false; articleId: string; thumbnailUrl: string | null; index: number } => !r.duplicate
   );
+
   const duplicates = articles.length - insertedRows.length;
 
   // 새로 들어온 글만(중복 제외) (1) 썸네일을 우리 스토리지로 미러링하고 (2) AI로 카테고리/태그를

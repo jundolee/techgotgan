@@ -590,6 +590,7 @@ export function ArticlePreviewPanel({
                   href={currentArticle.url}
                   surface="article_preview"
                   className="article-preview-cta-btn"
+                  onClick={handleClose}
                 >
                   <span>{currentArticle.sourceTitle ? `${currentArticle.sourceTitle}에서 전체 원문 읽기` : "전체 원문 읽기"}</span>
                   <span aria-hidden="true">↗</span>
@@ -721,6 +722,7 @@ export function ArticlePreviewPanel({
             href={currentArticle.url}
             surface="article_preview"
             className="article-preview-cta-btn"
+            onClick={handleClose}
           >
             <span>{currentArticle.sourceTitle ? `${currentArticle.sourceTitle}에서 전체 원문 읽기` : "전체 원문 읽기"}</span>
             <span aria-hidden="true">↗</span>

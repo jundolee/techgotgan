@@ -19,13 +19,6 @@ interface ArticleLinkProps {
   onReadChange?: (articleId: string, isRead: boolean) => void;
 }
 
-declare global {
-  interface Window {
-    __techgotganPendingArticlePath?: string;
-    __techgotganPendingArticleSourceUrl?: string;
-  }
-}
-
 /**
  * 클릭 시 앱 안의 상세 경로로 이동해 인터셉트 모달을 열고 읽음 처리를 트리거한다.
  * 새 탭이나 직접 URL 진입에서는 같은 경로의 독립 상세 페이지를 보여준다.
@@ -85,21 +78,7 @@ export function ArticleLink({ articleId, articleTitle, href, sourceUrl, children
 
   useEffect(() => {
     linkRef.current?.setAttribute("data-article-hydrated", "true");
-    if (window.__techgotganPendingArticlePath !== articlePath) return;
-
-    // The root-layout bridge catches clicks that arrive before this client component hydrates.
-    // Replay them through the App Router as soon as the matching link becomes interactive.
-    const pendingSourceUrl = window.__techgotganPendingArticleSourceUrl || sourceUrl;
-    window.__techgotganPendingArticlePath = undefined;
-    window.__techgotganPendingArticleSourceUrl = undefined;
-    try { window.sessionStorage.setItem(`techgotgan-article-source:${articleId}`, pendingSourceUrl); } catch {}
-    window.setTimeout(() => {
-      trackClick();
-      setPendingNavigation({ sourcePath: pathname, targetPath: articlePath, sourceUrl: pendingSourceUrl });
-      router.push(articlePath, { scroll: false });
-      onRead?.(articleId);
-    }, 0);
-  }, [articleId, articlePath, onRead, pathname, router, sourceUrl, trackClick]);
+  }, []);
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (event.defaultPrevented) return;
@@ -112,10 +91,6 @@ export function ArticleLink({ articleId, articleTitle, href, sourceUrl, children
 
     if (href !== articlePath || !articleId) return;
 
-    // The pre-hydration bridge may have captured this same click before React attached its handler.
-    if (window.__techgotganPendingArticlePath === articlePath) {
-      window.__techgotganPendingArticlePath = undefined;
-    }
     rememberSourceUrl();
 
     // Route through the App Router explicitly so the article intercepting route is used on

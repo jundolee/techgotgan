@@ -1,10 +1,8 @@
 import { listArticles } from "@/lib/data/articles";
 import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "@/app/seo";
 
-export const runtime = "edge";
-export const preferredRegion = "global";
-// listArticles가 내부적으로 60초 캐시(getCachedArticleFeed)를 쓰므로 여기서도 같은 주기로 맞춘다.
-export const revalidate = 60;
+// RSS는 배포 빌드 때 DB에 접근하지 않고 요청 시 생성한다.
+export const dynamic = "force-dynamic";
 
 function escapeXml(value: string): string {
   return value

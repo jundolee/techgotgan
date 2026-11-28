@@ -1,9 +1,16 @@
 import * as cheerio from "cheerio";
 import type { FeedDiscoveryResult, FeedType } from "./types";
 import { INGESTION_USER_AGENT } from "./user-agent";
-import { getProxiedUrl, isBlockedDomain, toHttpUrl, isSslError } from "./feed-proxy";
+import {
+  getProxyFetchOptions,
+  getProxyUpstreamUserAgent,
+  getProxiedUrl,
+  isBlockedDomain,
+  isRssProxyUrl,
+  toHttpUrl,
+  isSslError,
+} from "./feed-proxy";
 
-const USER_AGENT = INGESTION_USER_AGENT;
 const FETCH_TIMEOUT_MS = 10_000;
 const CANDIDATE_PATHS = [
   "/feed",
@@ -17,20 +24,25 @@ const CANDIDATE_PATHS = [
 
 async function fetchText(url: string): Promise<{ contentType: string; text: string } | null> {
   const targetUrl = isBlockedDomain(url) ? getProxiedUrl(url) : url;
+  const proxyOptions = isRssProxyUrl(targetUrl) ? getProxyFetchOptions(targetUrl) : null;
   let res: Response | null = null;
   try {
     res = await fetch(targetUrl, {
-      headers: { "User-Agent": USER_AGENT, Accept: "*/*" },
+      headers: {
+        "User-Agent": getProxyUpstreamUserAgent(url) || INGESTION_USER_AGENT,
+        Accept: "*/*",
+        ...(proxyOptions?.headers ?? {}),
+      },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      redirect: "follow",
+      redirect: proxyOptions?.redirect ?? "follow",
     });
   } catch (err) {
-    if (targetUrl !== url && isSslError(err)) {
+    if (targetUrl !== url && !isRssProxyUrl(targetUrl) && isSslError(err)) {
       const httpUrl = toHttpUrl(targetUrl);
       if (httpUrl) {
         try {
           res = await fetch(httpUrl, {
-            headers: { "User-Agent": USER_AGENT, Accept: "*/*" },
+            headers: { "User-Agent": getProxyUpstreamUserAgent(url) || INGESTION_USER_AGENT, Accept: "*/*" },
             signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
             redirect: "follow",
           });
@@ -42,7 +54,7 @@ async function fetchText(url: string): Promise<{ contentType: string; text: stri
     if (!res && targetUrl !== url) {
       try {
         res = await fetch(url, {
-          headers: { "User-Agent": USER_AGENT, Accept: "*/*" },
+          headers: { "User-Agent": getProxyUpstreamUserAgent(url) || INGESTION_USER_AGENT, Accept: "*/*" },
           signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
           redirect: "follow",
         });
@@ -56,11 +68,16 @@ async function fetchText(url: string): Promise<{ contentType: string; text: stri
     if (res?.status === 403 && targetUrl === url) {
       const fallbackUrl = getProxiedUrl(url);
       if (fallbackUrl !== url) {
+        const fallbackProxyOptions = isRssProxyUrl(fallbackUrl) ? getProxyFetchOptions(fallbackUrl) : null;
         try {
           res = await fetch(fallbackUrl, {
-            headers: { "User-Agent": USER_AGENT, Accept: "*/*" },
+            headers: {
+              "User-Agent": getProxyUpstreamUserAgent(url) || INGESTION_USER_AGENT,
+              Accept: "*/*",
+              ...(fallbackProxyOptions?.headers ?? {}),
+            },
             signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-            redirect: "follow",
+            redirect: fallbackProxyOptions?.redirect ?? "follow",
           });
         } catch {
           res = null;

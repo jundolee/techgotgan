@@ -19,7 +19,6 @@ import discoveryStyles from "./home-discovery.module.css";
 import {
   ARTICLE_PAGE_SIZE_OPTIONS,
   ARTICLE_VIEW_COOKIE,
-  HOME_STATIC_PREVIEW_LIMIT,
   type ArticlePageSize,
 } from "@/lib/article-feed-constants";
 
@@ -61,6 +60,7 @@ async function ArticleListSection({
   initialQuery,
   deferFirstThumbnail,
   deferInteractiveList,
+  hasSupabaseAuthCookie,
 }: {
   initialFilter: ArticleFilter;
   initialSourceId: string;
@@ -70,13 +70,16 @@ async function ArticleListSection({
   initialQuery: string;
   deferFirstThumbnail: boolean;
   deferInteractiveList: boolean;
+  hasSupabaseAuthCookie: boolean;
 }) {
   const shouldSearchInitially = Array.from(initialQuery.trim()).length >= 2;
   const shouldDeferInteractiveList = deferInteractiveList && !shouldSearchInitially;
   if (shouldDeferInteractiveList) {
+    // Signed-in users need the same feed window as the deferred list before filtering unread items.
+    // Anonymous users have no read state, so fetching only the selected page is enough for a stable preview.
     const [user, rawArticles, sources] = await Promise.all([
       getCurrentUser(),
-      getCachedArticleFeed(HOME_STATIC_PREVIEW_LIMIT),
+      getCachedArticleFeed(hasSupabaseAuthCookie ? undefined : initialPageSize),
       listSources(),
     ]);
     const articles = await attachUserState(rawArticles, user?.id ?? null);
@@ -176,6 +179,10 @@ export default async function Home({
   const initialCategory = parseCategory(rawCategory);
   const initialPageSize = parsePageSize(rawPageSize);
   const deferInteractiveList = !initialQuery && !rawFilter && !sourceId && !rawCategory;
+  // Use the same session-cookie check as getCurrentUser to decide whether the preview needs a full unread-filter window.
+  const hasSupabaseAuthCookie = cookieStore
+    .getAll()
+    .some((cookie) => cookie.name.startsWith("sb-") && cookie.name.includes("-auth-token"));
 
   return (
     <main>
@@ -234,6 +241,7 @@ export default async function Home({
           initialQuery={initialQuery}
           deferFirstThumbnail={deferFirstThumbnail}
           deferInteractiveList={deferInteractiveList}
+          hasSupabaseAuthCookie={hasSupabaseAuthCookie}
         />
       </Suspense>
     </main>
