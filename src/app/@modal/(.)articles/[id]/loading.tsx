@@ -146,7 +146,7 @@ export default function ArticleModalLoading() {
           {/* 데스크톱 원문 CTA: 목록에서 전달받은 URL로 스켈레톤 없이 표시 */}
           <div className="article-preview-inline-cta">
             {sourceUrl && (
-              <SourceArticleLink href={sourceUrl} surface="article_preview_loading" className="article-preview-cta-btn">
+              <SourceArticleLink href={sourceUrl} surface="article_preview_loading" className="article-preview-cta-btn" onClick={() => router.back()}>
                 <span>원문 읽기</span><span aria-hidden="true">↗</span>
               </SourceArticleLink>
             )}
@@ -213,7 +213,7 @@ export default function ArticleModalLoading() {
         {/* 모바일 고정 CTA 영역도 URL이 도착하면 실제 링크로 표시한다. */}
         <div className="article-preview-bottom-bar">
           {sourceUrl && (
-            <SourceArticleLink href={sourceUrl} surface="article_preview_loading" className="article-preview-cta-btn">
+            <SourceArticleLink href={sourceUrl} surface="article_preview_loading" className="article-preview-cta-btn" onClick={() => router.back()}>
               <span>원문 읽기</span><span aria-hidden="true">↗</span>
             </SourceArticleLink>
           )}

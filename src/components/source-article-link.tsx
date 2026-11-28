@@ -9,12 +9,14 @@ export function SourceArticleLink({
   children,
   className,
   style,
+  onClick,
 }: {
   href: string;
   surface: SourceArticleSurface;
   children: ReactNode;
   className?: string;
   style?: CSSProperties;
+  onClick?: () => void;
 }) {
   return (
     <a
@@ -23,7 +25,10 @@ export function SourceArticleLink({
       rel="noopener noreferrer"
       className={className}
       style={style}
-      onClick={() => trackSourceArticleClick(href, surface)}
+      onClick={() => {
+        trackSourceArticleClick(href, surface);
+        onClick?.();
+      }}
     >
       {children}
     </a>

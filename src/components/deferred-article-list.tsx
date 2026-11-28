@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { loadArticleFeedAction } from "@/app/articles/actions";
 import type { ArticleFilter } from "@/lib/data/articles";
 import type { CategoryId } from "@/lib/categories";
@@ -49,12 +50,19 @@ function getPendingArticleTitle(anchor: HTMLAnchorElement): string {
 }
 
 export function DeferredArticleList({ deferFirstThumbnail, children, ...props }: DeferredArticleListProps) {
+  const pathname = usePathname();
   const [loaded, setLoaded] = useState<LoadedFeed | null>(null);
   const feed = loaded?.feed ?? null;
   const [loadFailed, setLoadFailed] = useState(false);
   const [hasOpenControlMenu, setHasOpenControlMenu] = useState(false);
   const [pendingArticleOpen, setPendingArticleOpen] = useState<PendingArticleOpen | null>(null);
   const loadStartedRef = useRef(false);
+
+  useEffect(() => {
+    if (!/^\/articles\/[0-9a-f-]+$/i.test(pathname)) return;
+    const timeoutId = window.setTimeout(() => setPendingArticleOpen(null), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [pathname]);
 
   const loadFeed = useCallback(() => {
     if (loadStartedRef.current || feed) return;

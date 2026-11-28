@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import Script from "next/script";
 import { AmplitudeAnalytics } from "@/components/amplitude-analytics";
+import { ArticleNavigationBridge } from "@/components/article-navigation-bridge";
 import { DeferredGoogleTagManager } from "@/components/deferred-google-tag-manager";
 import { PageFooter } from "@/components/page-footer";
 import { DEFAULT_OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "./seo";
@@ -228,10 +229,12 @@ export default function RootLayout({
               event.preventDefault();
               window.__techgotganPendingArticlePath = url.pathname;
               const sourceUrl = anchor.getAttribute("data-article-source-url");
+              window.__techgotganPendingArticleTitle = anchor.querySelector("h3")?.textContent?.trim() || anchor.textContent?.trim() || "기사";
               if (sourceUrl) {
                 window.__techgotganPendingArticleSourceUrl = sourceUrl;
                 try { sessionStorage.setItem("techgotgan-article-source:" + url.pathname.split("/").pop(), sourceUrl); } catch {}
               }
+              window.dispatchEvent(new Event("techgotgan:article-navigation-pending"));
             }, true);
           })();`}
         </Script>
@@ -254,6 +257,7 @@ export default function RootLayout({
           {children}
           <PageFooter />
         </div>
+        <ArticleNavigationBridge />
         {modal}
       </body>
     </html>
