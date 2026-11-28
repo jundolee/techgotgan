@@ -3,10 +3,14 @@
 import { useEffect, useState } from "react";
 import Script from "next/script";
 
+const PRODUCTION_ANALYTICS_HOSTS = new Set(["techgotgan.co.kr", "www.techgotgan.co.kr"]);
+
 export function DeferredGoogleTagManager({ gtmId }: { gtmId: string }) {
   const [shouldLoad, setShouldLoad] = useState(false);
 
   useEffect(() => {
+    if (!PRODUCTION_ANALYTICS_HOSTS.has(window.location.hostname)) return;
+
     const browserWindow = window as Window & {
       requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
       cancelIdleCallback?: (handle: number) => void;

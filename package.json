@@ -6,9 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "build:cloudflare": "opennextjs-cloudflare build",
-    "preview:cloudflare": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy:cloudflare": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "build:cloudflare": "NEXT_PUBLIC_ANALYTICS_ENABLED=false NEXT_PUBLIC_GTM_ENABLED=false opennextjs-cloudflare build",
+    "preview:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare preview",
+    "deploy:cloudflare": "NEXT_PUBLIC_ANALYTICS_ENABLED=false NEXT_PUBLIC_GTM_ENABLED=true opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "deploy:cloudflare:direct": "NEXT_PUBLIC_ANALYTICS_ENABLED=false NEXT_PUBLIC_GTM_ENABLED=true opennextjs-cloudflare build && OPEN_NEXT_DEPLOY=true wrangler deploy --config wrangler.jsonc",
     "smoke:cloudflare": "node scripts/smoke-cloudflare-preview.mjs",
     "lint": "eslint",
     "test": "tsx --conditions react-server --test tests/*.test.ts tests/*.test.mjs",
@@ -55,5 +56,11 @@
     "tsx": "^4.23.15",
     "typescript": "^5",
     "wrangler": "^4.165.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "fsevents@2.3.3": true,
+    "unrs-resolver@1.12.2": true,
+    "workerd@1.20261118.1": true
   }
 }

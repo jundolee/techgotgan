@@ -13,6 +13,12 @@ npm run preview:cloudflare
 
 `npm run smoke:cloudflare` starts a temporary local Worker, verifies the public pages and APIs against Supabase, then removes the temporary secret file and runtime state. The manual GitHub Actions workflow `Cloudflare preview smoke` performs the same check using the repository's Supabase URL and secret.
 
+Analytics stays off in local and Preview builds. The Production deploy script sets `NEXT_PUBLIC_ANALYTICS_ENABLED=false` and `NEXT_PUBLIC_GTM_ENABLED=true` while building, so the Cloudflare Worker loads Google Tag Manager without enabling Amplitude. The GTM loader runs only on `techgotgan.co.kr` and `www.techgotgan.co.kr`; the Worker’s `workers.dev` hostname does not send analytics.
+
+If OpenNext deployment stops during remote KV cache pre-population with Cloudflare error 10048 (daily free bulk-write limit), use `npm run deploy:cloudflare:direct`. It builds with the same Production-only GTM flags and uploads the Worker and static assets directly with Wrangler, skipping cache pre-population. Afterward, verify the live routes and allow runtime requests to warm the cache; use the regular deploy command again after the KV quota resets.
+
+If OpenNext deployment stops during remote KV cache pre-population with Cloudflare error 10048 (daily free bulk-write limit), use `npm run deploy:cloudflare:direct`. It builds with the same Production-only GTM flags and uploads the Worker and static assets directly with Wrangler, skipping cache pre-population. Afterward, verify the live routes and allow runtime requests to warm the cache; use the regular deploy command again after the KV quota resets.
+
 ## First deployment
 
 1. Sign in to a Cloudflare account with Workers Free enabled.
@@ -35,7 +41,7 @@ Production fails closed for `/sources`, its Server Actions, and the admin backfi
 - The Images binding uses Cloudflare's free transformations, currently limited to 5,000 unique transformations each month; new transformations are rejected after that limit rather than billed automatically.
 - The OpenNext adapter warns that Next.js 16 `proxy.ts` support is experimental. The preview smoke workflow checks that `/sources` remains protected.
 - The GitHub Actions preview workflow exposes `SUPABASE_SECRET_KEY` only to the smoke-test step, not dependency installation or the build.
-- Production is served on the account's `workers.dev` route; per-version Preview URLs are disabled.
+- Production is served through the Cloudflare routes for `techgotgan.co.kr` and `www.techgotgan.co.kr`. The account's `workers.dev` hostname remains available for validation; the GTM loader is restricted to the production hostnames.
 - The RSS proxy endpoint accepts only HTTPS URLs for explicitly allowlisted public blog domains and requires a bearer token. GitHub scheduled ingestion passes that token only to ingestion and summary steps.
 
 Cloudflare documents the [Workers Free limits](https://developers.cloudflare.com/workers/platform/limits/), [Durable Objects pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/), [R2 pricing](https://developers.cloudflare.com/r2/pricing/), [Images pricing](https://developers.cloudflare.com/images/pricing/), and [OpenNext Cloudflare adapter](https://opennext.js.org/cloudflare).

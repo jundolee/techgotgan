@@ -27,6 +27,7 @@ const GTM_CONTAINER_ID = "GTM-P2HHB9CG";
 const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
 const NAVER_SITE_VERIFICATION = "e9c96b3b65c94140f2c0ddeddf0d3ca3dee8a5b5";
 const ANALYTICS_ENABLED = process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === "true";
+const GTM_ENABLED = ANALYTICS_ENABLED || process.env.NEXT_PUBLIC_GTM_ENABLED === "true";
 
 const freesentation = localFont({
   variable: "--font-freesentation",
@@ -143,7 +144,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" data-seed-color-mode="light" className={freesentation.variable}>
-      {ANALYTICS_ENABLED && (
+      {GTM_ENABLED && (
         <Script id="gtm-init" strategy="beforeInteractive">
           {`(function(w,l){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});})(window,'dataLayer');`}
         </Script>
@@ -252,7 +253,7 @@ export default function RootLayout({
             />
           </noscript>
         )}
-        {ANALYTICS_ENABLED && <DeferredGoogleTagManager gtmId={GTM_CONTAINER_ID} />}
+        {GTM_ENABLED && <DeferredGoogleTagManager gtmId={GTM_CONTAINER_ID} />}
         <div className="app-shell">
           {children}
           <PageFooter />
